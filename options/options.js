@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const domain = cleanDomain(inputValue);
 
     if (!domain) {
-      validationMsg.textContent = 'Nieprawidłowy format domeny lub adresu URL.';
+      validationMsg.textContent = 'Invalid domain or URL format.';
       return;
     }
 
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const blacklist = data.blacklist || [];
 
       if (blacklist.includes(domain)) {
-        validationMsg.textContent = 'Ta domena jest już na liście wykluczeń.';
+        validationMsg.textContent = 'This website is already excluded.';
         return;
       }
 
@@ -39,8 +39,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadAndRenderBlacklist();
       await notifyAllTabs();
     } catch (err) {
-      console.error('Błąd dodawania domeny:', err);
-      validationMsg.textContent = 'Błąd zapisu ustawień.';
+      console.error('Error adding domain:', err);
+      validationMsg.textContent = 'Error saving settings.';
     }
   });
 
@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               <line x1="12" y1="8" x2="12" y2="12"></line>
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
-            <h3>Brak wykluczonych stron</h3>
-            <p>Rozszerzenie będzie automatycznie uruchamiane na wszystkich stronach z wideo.</p>
+            <h3>No exclusions yet</h3>
+            <p>Theater mode will activate automatically on all video pages.</p>
           </div>
         `;
         return;
@@ -86,14 +86,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const badgeSpan = document.createElement('span');
         badgeSpan.className = 'status-badge';
-        badgeSpan.textContent = 'Zablokowane';
+        badgeSpan.textContent = 'Excluded';
 
         infoDiv.appendChild(domainSpan);
         infoDiv.appendChild(badgeSpan);
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-btn';
-        deleteBtn.title = 'Usuń wykluczenie';
+        deleteBtn.title = 'Remove exclusion';
         deleteBtn.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -111,8 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
     } catch (err) {
-      console.error('Błąd wczytywania czarnej listy:', err);
-      container.innerHTML = '<div style="padding: 20px; color: var(--danger-color)">Błąd podczas ładowania ustawień.</div>';
+      console.error('Error loading exclusion list:', err);
+      container.innerHTML = '<div style="padding: 20px; color: var(--danger-color)">Error loading settings.</div>';
     }
   }
 
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadAndRenderBlacklist();
       await notifyAllTabs();
     } catch (err) {
-      console.error('Błąd usuwania domeny:', err);
+      console.error('Error removing domain:', err);
     }
   }
 
@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Basic domain check: must have at least one dot, and length > 3
       if (host && host.includes('.') && host.length > 3) {
-        // Strip leading 'www.' if present for cleaner matching, or keep it. Let's keep it but normalize.
         return host;
       }
       return null;
@@ -171,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch (err) {
-      console.error('Błąd wysyłania powiadomień do kart:', err);
+      console.error('Error notifying tabs:', err);
     }
   }
 });

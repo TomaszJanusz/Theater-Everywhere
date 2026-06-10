@@ -5,6 +5,14 @@ let theaterElement = null;
 let ancestorsList = [];
 let isInitialized = false;
 
+// Prevent custom player containers from double-toggling play/pause
+function preventDoubleToggle(e) {
+  if (theaterElement) {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }
+}
+
 // Event listener references for clean removal
 const listeners = {
   keydown: null,
@@ -212,6 +220,10 @@ function enterTheaterMode(element) {
     if (!originalControls) {
       theaterElement.setAttribute('controls', 'true');
     }
+
+    // Isolate clicks to native controls and block propagation to page custom controls
+    theaterElement.addEventListener('click', preventDoubleToggle, false);
+    theaterElement.addEventListener('dblclick', preventDoubleToggle, false);
   }
 
   // Traverse ancestors and apply override class
@@ -244,6 +256,10 @@ function exitTheaterMode() {
       theaterElement.removeAttribute('controls');
     }
     delete theaterElement.dataset.originalControls;
+
+    // Clean up event isolation click blockers
+    theaterElement.removeEventListener('click', preventDoubleToggle, false);
+    theaterElement.removeEventListener('dblclick', preventDoubleToggle, false);
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');

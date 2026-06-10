@@ -26,18 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await updateStatusUI();
       } else {
         // System pages (chrome://, about://, etc.)
-        domainNameEl.textContent = 'Strona systemowa';
+        domainNameEl.textContent = 'System page';
         toggleEl.disabled = true;
-        setUIState(false, 'Nieaktywny (systemowa)');
+        setUIState(false, 'Inactive (system)');
       }
     } else {
-      domainNameEl.textContent = 'Brak aktywnej strony';
+      domainNameEl.textContent = 'No active page';
       toggleEl.disabled = true;
-      setUIState(false, 'Niedostępny');
+      setUIState(false, 'Unavailable');
     }
   } catch (err) {
-    console.error('Błąd inicjalizacji popupu:', err);
-    domainNameEl.textContent = 'Błąd wczytywania';
+    console.error('Popup initialization error:', err);
+    domainNameEl.textContent = 'Error loading';
     toggleEl.disabled = true;
   }
 
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await chrome.storage.sync.set({ blacklist });
       
       // Update local UI
-      setUIState(isActive, isActive ? 'Włączony' : 'Wyłączony');
+      setUIState(isActive, isActive ? 'Active' : 'Disabled');
 
       // Notify the active tab's content script to update its state dynamically
       if (activeTabId) {
@@ -77,11 +77,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           await chrome.tabs.sendMessage(activeTabId, { action: 'statusChanged' });
         } catch (msgErr) {
           // Content script might not be injected (e.g. extension just installed, or page loading)
-          console.log('Nie udało się wysłać wiadomości do karty (content script nieaktywny):', msgErr);
+          console.log('Could not send message to tab (content script inactive):', msgErr);
         }
       }
     } catch (err) {
-      console.error('Błąd podczas zapisywania ustawień:', err);
+      console.error('Error saving settings:', err);
     }
   });
 
@@ -95,9 +95,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // In blacklist = not active = checkbox unchecked
       const isActive = !isBlacklisted;
       toggleEl.checked = isActive;
-      setUIState(isActive, isActive ? 'Włączony' : 'Wyłączony');
+      setUIState(isActive, isActive ? 'Active' : 'Disabled');
     } catch (err) {
-      console.error('Błąd odczytu storage:', err);
+      console.error('Error reading storage:', err);
     }
   }
 
