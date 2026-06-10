@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Theater Everywhere - Ustawienia</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <header class="header">
+      <div class="logo-area">
+        <div class="logo-icon-svg">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+            <polygon points="10 8 16 11 10 14 10 8" fill="#6366f1"></polygon>
+          </svg>
+        </div>
+        <h1>Theater <span class="accent">Everywhere</span></h1>
+      </div>
+      <p class="subtitle">Zarządzaj czarną listą witryn, na których automatyczna aktywacja trybu kinowego klawiszem [T] powinna być wyłączona.</p>
+    </header>
+
+    <main class="main-card">
+      <section class="add-section">
+        <h2>Dodaj wykluczenie</h2>
+        <form id="add-domain-form" class="add-form">
+          <div class="input-wrapper">
+            <input type="text" id="domain-input" placeholder="Wpisz domenę (np. youtube.com) lub wklej adres URL" required autocomplete="off">
+            <span id="validation-msg" class="validation-msg"></span>
+          </div>
+          <button type="submit" class="primary-btn">Dodaj domenę</button>
+        </form>
+      </section>
+
+      <section class="list-section">
+        <div class="section-header">
+          <h2>Wykluczone domeny</h2>
+          <span id="blacklist-count" class="badge">0</span>
+        </div>
+        <div id="blacklist-container" class="blacklist-container">
+          <!-- Zawartość generowana dynamicznie przez JS -->
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <p>Wskazówka: Możesz również wyłączać i włączać rozszerzenie bezpośrednio z wyskakującego okienka na pasku narzędzi przeglądarki.</p>
+        <p class="copyright">&copy; 2026 Theater Everywhere.</p>
+      </div>
+    </footer>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
