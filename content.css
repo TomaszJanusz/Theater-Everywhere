@@ -33,6 +33,7 @@
   clip-path: none !important;
   mask: none !important;
   will-change: auto !important;
+  z-index: 2147483647 !important;
 }
 
 /* Hide scrollbars on the document when theater mode is active */
