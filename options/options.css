@@ -103,6 +103,7 @@ section h2 {
 .add-form {
   display: flex;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .input-wrapper {
@@ -122,6 +123,7 @@ section h2 {
   width: 100%;
   outline: none;
   transition: all 0.2s ease;
+  height: 42px;
 }
 
 .add-form input:focus {
@@ -141,12 +143,16 @@ section h2 {
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
-  padding: 10px 20px;
   cursor: pointer;
   transition: all 0.2s ease;
-  height: 43px; /* Align with input height */
+  height: 42px;
+  width: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .primary-btn:hover {
