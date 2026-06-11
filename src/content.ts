@@ -52,6 +52,9 @@ function showToolbar(): void {
   if (!controls) return;
   
   controls.classList.add('visible');
+  if (theaterElement && theaterElement.tagName === 'VIDEO') {
+    theaterElement.classList.add('controls-visible');
+  }
   document.body.style.cursor = 'default';
   
   if (toolbarTimer) clearTimeout(toolbarTimer);
@@ -59,6 +62,9 @@ function showToolbar(): void {
     const isScrubberDragging = document.querySelector('.theater-scrubber-container.dragging') !== null;
     if (controls && !controls.matches(':hover') && !isScrubberDragging && theaterElement) {
       controls.classList.remove('visible');
+      if (theaterElement.tagName === 'VIDEO') {
+        theaterElement.classList.remove('controls-visible');
+      }
       document.body.style.cursor = 'none';
     }
   }, 2500);
@@ -475,6 +481,7 @@ function exitTheaterMode(): void {
 
     // Clean up custom controls
     destroyCustomControls();
+    video.classList.remove('controls-visible');
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
@@ -948,11 +955,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   });
 
   const onDocumentClick = (e: MouseEvent) => {
-    if (ccMenu.style.display !== 'none' && !ccMenu.contains(e.target as Node) && e.target !== ccBtn) {
+    if (ccMenu.style.display !== 'none' && !ccMenu.contains(e.target as Node) && !ccBtn.contains(e.target as Node)) {
       ccMenu.style.display = 'none';
     }
   };
-  document.addEventListener('click', onDocumentClick);
+  window.addEventListener('click', onDocumentClick, true);
 
   rightSec.appendChild(ccBtn);
   rightSec.appendChild(speedBtn);
@@ -1288,7 +1295,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (video.textTracks) {
       video.textTracks.removeEventListener('change', checkCCActive);
     }
-    document.removeEventListener('click', onDocumentClick);
+    window.removeEventListener('click', onDocumentClick, true);
     loadingIndicator.remove();
   };
 
