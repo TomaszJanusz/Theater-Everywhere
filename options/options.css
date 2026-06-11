@@ -352,6 +352,38 @@ section h2 {
   font-weight: 400;
 }
 
+.shortcut-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reset-single-btn {
+  background-color: #18181b;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.reset-single-btn:hover {
+  color: var(--accent-color);
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-color);
+}
+
+.reset-single-btn svg {
+  display: block;
+}
+
+
 /* Actions Row */
 .shortcuts-actions {
   display: flex;

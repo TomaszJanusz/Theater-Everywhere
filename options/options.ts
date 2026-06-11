@@ -1,4 +1,8 @@
 /* Options script for Theater Everywhere */
+import { fetchAndApplyTheme } from '../src/themeHelper';
+
+// Apply browser theme colors immediately
+fetchAndApplyTheme();
 
 document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('add-domain-form') as HTMLFormElement;
@@ -194,10 +198,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function loadAndRenderShortcuts() {
     try {
-      const data = await chrome.storage.sync.get({ shortcuts: defaultShortcuts });
+      const data = await chrome.storage.sync.get('shortcuts');
+      const saved = data.shortcuts || {};
+      
       const shortcuts = {
-        ...defaultShortcuts,
-        ...(data.shortcuts || {})
+        toggle: saved.toggle || defaultShortcuts.toggle,
+        exit: saved.exit || defaultShortcuts.exit,
+        seekBack: saved.seekBack || defaultShortcuts.seekBack,
+        seekForward: saved.seekForward || defaultShortcuts.seekForward
       } as Shortcuts;
       
       const toggleInput = document.getElementById('shortcut-toggle') as HTMLInputElement;
@@ -231,6 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function setupShortcutListeners() {
+    // 1. Keyboard recording listener
     const inputs = document.querySelectorAll('.shortcut-input') as NodeListOf<HTMLInputElement>;
     inputs.forEach(input => {
       input.addEventListener('keydown', async (e: KeyboardEvent) => {
@@ -256,8 +265,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Save to storage
         try {
-          const data = await chrome.storage.sync.get({ shortcuts: defaultShortcuts });
-          const shortcuts = (data.shortcuts || { ...defaultShortcuts }) as Shortcuts;
+          const data = await chrome.storage.sync.get('shortcuts');
+          const saved = data.shortcuts || {};
+          const shortcuts = {
+            toggle: saved.toggle || defaultShortcuts.toggle,
+            exit: saved.exit || defaultShortcuts.exit,
+            seekBack: saved.seekBack || defaultShortcuts.seekBack,
+            seekForward: saved.seekForward || defaultShortcuts.seekForward
+          } as Shortcuts;
 
           const shortcutId = input.id;
           if (shortcutId === 'shortcut-toggle') shortcuts.toggle = shortcutStr;
@@ -273,6 +288,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
 
+    // 2. Individual reset buttons listener
+    const singleResetBtns = document.querySelectorAll('.reset-single-btn') as NodeListOf<HTMLButtonElement>;
+    singleResetBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const shortcutKey = btn.getAttribute('data-shortcut') as keyof Shortcuts;
+        if (!shortcutKey || !defaultShortcuts[shortcutKey]) return;
+
+        try {
+          const data = await chrome.storage.sync.get('shortcuts');
+          const saved = data.shortcuts || {};
+          const shortcuts = {
+            toggle: saved.toggle || defaultShortcuts.toggle,
+            exit: saved.exit || defaultShortcuts.exit,
+            seekBack: saved.seekBack || defaultShortcuts.seekBack,
+            seekForward: saved.seekForward || defaultShortcuts.seekForward
+          } as Shortcuts;
+
+          shortcuts[shortcutKey] = defaultShortcuts[shortcutKey];
+
+          await chrome.storage.sync.set({ shortcuts });
+          await loadAndRenderShortcuts();
+          await notifyAllTabs();
+        } catch (err) {
+          console.error(`Error resetting individual shortcut ${shortcutKey}:`, err);
+        }
+      });
+    });
+
+    // 3. Reset all to defaults button listener
     const resetBtn = document.getElementById('reset-shortcuts-btn') as HTMLButtonElement | null;
     if (resetBtn) {
       resetBtn.addEventListener('click', async () => {

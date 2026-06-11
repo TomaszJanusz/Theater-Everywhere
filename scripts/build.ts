@@ -112,6 +112,12 @@ async function run() {
         strict_min_version: '109.0'
       }
     };
+    if (!firefoxManifest.permissions) {
+      firefoxManifest.permissions = [];
+    }
+    if (!firefoxManifest.permissions.includes('theme')) {
+      firefoxManifest.permissions.push('theme');
+    }
     fs.writeFileSync(
       firefoxManifestPath,
       JSON.stringify(firefoxManifest, null, 2),

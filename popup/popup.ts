@@ -1,4 +1,8 @@
 /* Popup script for Theater Everywhere */
+import { fetchAndApplyTheme } from '../src/themeHelper';
+
+// Apply browser theme colors immediately
+fetchAndApplyTheme();
 
 document.addEventListener('DOMContentLoaded', async () => {
   const domainNameEl = document.getElementById('domain-name') as HTMLElement;
@@ -41,10 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleEl.disabled = true;
   }
 
-  // Load shortcuts and update keycap label
   try {
-    const data = await chrome.storage.sync.get({ shortcuts: { toggle: 'T' } });
-    const toggleShortcut = (data.shortcuts?.toggle || 'T') as string;
+    const data = await chrome.storage.sync.get('shortcuts');
+    const toggleShortcut = (data.shortcuts && data.shortcuts.toggle) || 'T';
     const keyCapEl = document.querySelector('.key-cap') as HTMLElement | null;
     if (keyCapEl) {
       keyCapEl.textContent = toggleShortcut;

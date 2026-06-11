@@ -48,15 +48,17 @@ function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
 
 // Show/hide floating quick actions toolbar based on mouse activity
 function showToolbar(): void {
-  const toolbar = document.querySelector('.theater-everywhere-toolbar') as HTMLElement | null;
-  if (!toolbar) return;
+  const controls = document.querySelector('.theater-controls-wrapper') as HTMLElement | null;
+  if (!controls) return;
   
-  toolbar.classList.add('visible');
+  controls.classList.add('visible');
+  document.body.style.cursor = 'default';
   
   if (toolbarTimer) clearTimeout(toolbarTimer);
   toolbarTimer = setTimeout(() => {
-    if (toolbar && !toolbar.matches(':hover')) {
-      toolbar.classList.remove('visible');
+    if (controls && !controls.matches(':hover') && theaterElement) {
+      controls.classList.remove('visible');
+      document.body.style.cursor = 'none';
     }
   }, 2500);
 }
@@ -64,10 +66,6 @@ function showToolbar(): void {
 // Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
 function preventDoubleToggle(e: Event): void {
   if (!theaterElement) return;
-
-  const rect = theaterElement.getBoundingClientRect();
-  const mouseEvent = e as MouseEvent;
-  const clickY = mouseEvent.clientY - rect.top;
 
   // Block double clicks completely to avoid site-level fullscreen conflicts
   if (e.type === 'dblclick') {
@@ -78,31 +76,24 @@ function preventDoubleToggle(e: Event): void {
     return;
   }
   
-  console.log(`[Theater Everywhere] Intercepted pointer/mouse event: "${e.type}" | Y-coord: ${clickY}px (height: ${rect.height}px)`);
+  console.log(`[Theater Everywhere] Intercepted pointer/mouse event: "${e.type}" on video surface.`);
 
-  // If event is in the top portion (main video surface), isolate completely
-  if (clickY < rect.height - 60) {
-    console.log(`[Theater Everywhere] Blocking propagation of event "${e.type}" on video surface...`);
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+  // Isolate completely
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-    // Only toggle play/pause on 'click' to guarantee it happens exactly once per mouse release
-    if (e.type === 'click' && theaterElement.tagName === 'VIDEO') {
-      const video = theaterElement as HTMLVideoElement;
-      console.log(`[Theater Everywhere] Click completed. Toggling playback state manually...`);
-      if (video.paused) {
-        video.play().catch(err => {
-          console.error('[Theater Everywhere] Programmatic play failed:', err);
-        });
-      } else {
-        video.pause();
-      }
+  // Only toggle play/pause on 'click' to guarantee it happens exactly once per mouse release
+  if (e.type === 'click' && theaterElement.tagName === 'VIDEO') {
+    const video = theaterElement as HTMLVideoElement;
+    console.log(`[Theater Everywhere] Click completed. Toggling playback state manually...`);
+    if (video.paused) {
+      video.play().catch(err => {
+        console.error('[Theater Everywhere] Programmatic play failed:', err);
+      });
+    } else {
+      video.pause();
     }
-  } else {
-    // Event is on the controls bar. Let native controls process it, block bubbling only
-    console.log(`[Theater Everywhere] Passing event "${e.type}" to native controls bar and blocking bubble-up...`);
-    e.stopPropagation();
   }
 }
 
@@ -128,11 +119,15 @@ async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
   
   try {
-    const data = await chrome.storage.sync.get({ blacklist: [], shortcuts: defaultShortcuts });
+    const data = await chrome.storage.sync.get(['blacklist', 'shortcuts']);
     const blacklist = (data.blacklist || []) as string[];
+    const saved = data.shortcuts || {};
+    
     configuredShortcuts = {
-      ...defaultShortcuts,
-      ...(data.shortcuts || {})
+      toggle: saved.toggle || defaultShortcuts.toggle,
+      exit: saved.exit || defaultShortcuts.exit,
+      seekBack: saved.seekBack || defaultShortcuts.seekBack,
+      seekForward: saved.seekForward || defaultShortcuts.seekForward
     } as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
@@ -185,8 +180,16 @@ function initialize(): void {
       }
     } else if (theaterElement && theaterElement.tagName === 'VIDEO') {
       const video = theaterElement as HTMLVideoElement;
-      // Seek keys (ArrowLeft / ArrowRight) in theater mode
-      if (matchesShortcut(event, shortcuts.seekBack)) {
+      
+      // Spacebar toggling play/pause in theater mode
+      if (event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        if (video.paused) {
+          video.play().catch(console.error);
+        } else {
+          video.pause();
+        }
+      } else if (matchesShortcut(event, shortcuts.seekBack)) {
         event.preventDefault();
         video.currentTime = Math.max(0, video.currentTime - 5);
         triggerSeekIndicator('left');
@@ -349,10 +352,8 @@ function enterTheaterMode(element: HTMLElement): void {
     const originalControls = video.hasAttribute('controls');
     video.dataset.originalControls = originalControls ? 'true' : 'false';
     
-    // Enable browser native controls so the video remains controllable in theater mode
-    if (!originalControls) {
-      video.setAttribute('controls', 'true');
-    }
+    // Hide browser native controls so we use our custom controls overlay instead
+    video.removeAttribute('controls');
 
     // Force loading of paused/unloaded videos to display the initial frame instead of a gray/black screen
     if (video.readyState === 0) {
@@ -367,8 +368,8 @@ function enterTheaterMode(element: HTMLElement): void {
       video.addEventListener(type, preventDoubleToggle, true);
     });
 
-    // Create and inject the floating overlay toolbar for quick actions (PiP, Speed, Close)
-    createQuickActionsToolbar(video);
+    // Create and inject our unified bottom player controls
+    createCustomControls(video);
   }
 
   // Traverse ancestors and apply override class
@@ -398,7 +399,9 @@ function exitTheaterMode(): void {
   if (theaterElement.tagName === 'VIDEO') {
     const video = theaterElement as HTMLVideoElement;
     const originalControls = video.dataset.originalControls;
-    if (originalControls === 'false') {
+    if (originalControls === 'true') {
+      video.setAttribute('controls', 'true');
+    } else {
       video.removeAttribute('controls');
     }
     delete video.dataset.originalControls;
@@ -409,8 +412,8 @@ function exitTheaterMode(): void {
       video.removeEventListener(type, preventDoubleToggle, true);
     });
 
-    // Clean up toolbar
-    destroyQuickActionsToolbar();
+    // Clean up custom controls
+    destroyCustomControls();
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
@@ -455,56 +458,204 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 });
 
-// Run blacklist check on load
+// Run blacklist check and apply theme on load
 checkBlacklistAndInit();
+fetchAndApplyTheme();
 
-interface ExtendedHTMLButtonElement extends HTMLButtonElement {
-  _rateChangeHandler?: () => void;
+interface ExtendedHTMLDivElement extends HTMLDivElement {
+  _videoListenersCleanup?: () => void;
 }
 
-// Creates floating overlay toolbar
-function createQuickActionsToolbar(video: HTMLVideoElement): void {
-  // If it already exists, remove it
-  destroyQuickActionsToolbar();
+// Creates unified bottom player controls
+function createCustomControls(video: HTMLVideoElement): void {
+  destroyCustomControls();
 
-  const toolbar = document.createElement('div');
-  toolbar.className = 'theater-everywhere-toolbar';
+  const wrapper = document.createElement('div') as ExtendedHTMLDivElement;
+  wrapper.className = 'theater-controls-wrapper';
 
-  // Playback speed cycle list
+  // Prevent event propagation so clicking controls doesn't trigger parent actions or play/pause
+  wrapper.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  wrapper.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  });
+  wrapper.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+  });
+
+  // 1. Scrubber (Progress bar)
+  const scrubberContainer = document.createElement('div');
+  scrubberContainer.className = 'theater-scrubber-container';
+
+  const scrubberTrack = document.createElement('div');
+  scrubberTrack.className = 'theater-scrubber-track';
+
+  const scrubberFill = document.createElement('div');
+  scrubberFill.className = 'theater-scrubber-fill';
+
+  const scrubberHandle = document.createElement('div');
+  scrubberHandle.className = 'theater-scrubber-handle';
+
+  scrubberTrack.appendChild(scrubberFill);
+  scrubberTrack.appendChild(scrubberHandle);
+  scrubberContainer.appendChild(scrubberTrack);
+
+  // 2. Control Row
+  const controlsRow = document.createElement('div');
+  controlsRow.className = 'theater-controls-row';
+
+  // Left Controls Section
+  const leftSec = document.createElement('div');
+  leftSec.className = 'theater-controls-left';
+
+  // Play/Pause Button
+  const playPauseBtn = document.createElement('button');
+  playPauseBtn.className = 'theater-control-btn play-pause-btn';
+  playPauseBtn.title = 'Play / Pause';
+
+  const playIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+  `;
+  const pauseIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+      <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+      <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+    </svg>
+  `;
+
+  playPauseBtn.innerHTML = video.paused ? playIcon : pauseIcon;
+  playPauseBtn.addEventListener('click', () => {
+    if (video.paused) {
+      video.play().catch(console.error);
+    } else {
+      video.pause();
+    }
+  });
+
+  // Volume Container
+  const volumeContainer = document.createElement('div');
+  volumeContainer.className = 'theater-volume-container';
+
+  const volumeBtn = document.createElement('button');
+  volumeBtn.className = 'theater-control-btn volume-btn';
+  volumeBtn.title = 'Mute';
+
+  const volumeSlider = document.createElement('input');
+  volumeSlider.type = 'range';
+  volumeSlider.className = 'theater-volume-slider';
+  volumeSlider.min = '0';
+  volumeSlider.max = '1';
+  volumeSlider.step = '0.05';
+  volumeSlider.value = video.muted ? '0' : String(video.volume);
+
+  const volHighIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>
+  `;
+  const volLowIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>
+  `;
+  const volMutedIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <line x1="23" y1="9" x2="17" y2="15"></line>
+      <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>
+  `;
+
+  const updateVolumeIcon = () => {
+    if (video.muted || video.volume === 0) {
+      volumeBtn.innerHTML = volMutedIcon;
+      volumeBtn.title = 'Unmute';
+    } else if (video.volume < 0.5) {
+      volumeBtn.innerHTML = volLowIcon;
+      volumeBtn.title = 'Mute';
+    } else {
+      volumeBtn.innerHTML = volHighIcon;
+      volumeBtn.title = 'Mute';
+    }
+  };
+  updateVolumeIcon();
+
+  volumeBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+  });
+
+  volumeSlider.addEventListener('input', (e) => {
+    const val = parseFloat((e.target as HTMLInputElement).value);
+    video.volume = val;
+    if (val > 0 && video.muted) {
+      video.muted = false;
+    }
+  });
+
+  volumeContainer.appendChild(volumeBtn);
+  volumeContainer.appendChild(volumeSlider);
+
+  // Time label display
+  const timeDisplay = document.createElement('span');
+  timeDisplay.className = 'theater-time-display';
+  timeDisplay.textContent = '0:00 / 0:00';
+
+  const formatTime = (secs: number): string => {
+    if (isNaN(secs) || !isFinite(secs)) return '0:00';
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    const sStr = s < 10 ? '0' + s : String(s);
+    if (h > 0) {
+      const mStr = m < 10 ? '0' + m : String(m);
+      return `${h}:${mStr}:${sStr}`;
+    }
+    return `${m}:${sStr}`;
+  };
+
+  const updateTimeDisplay = () => {
+    timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+  };
+  updateTimeDisplay();
+
+  leftSec.appendChild(playPauseBtn);
+  leftSec.appendChild(volumeContainer);
+  leftSec.appendChild(timeDisplay);
+
+  // Right Controls Section
+  const rightSec = document.createElement('div');
+  rightSec.className = 'theater-controls-right';
+
+  // Speed Cycle Button
   const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.5];
-  
-  // 1. Speed button
-  const speedBtn = document.createElement('button') as ExtendedHTMLButtonElement;
-  speedBtn.className = 'theater-btn speed-btn';
-  speedBtn.title = 'Cycle Playback Speed';
-  
+  const speedBtn = document.createElement('button');
+  speedBtn.className = 'theater-control-btn speed-btn';
+  speedBtn.title = 'Playback Speed';
+
   const speedLabel = document.createElement('span');
   speedLabel.className = 'speed-label';
-  // Set initial text
   const updateSpeedLabelText = () => {
     speedLabel.textContent = video.playbackRate.toFixed(2).replace(/\.00$|\.0$/, '') + 'x';
   };
   updateSpeedLabelText();
   speedBtn.appendChild(speedLabel);
 
-  // Speed click handler
-  speedBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  speedBtn.addEventListener('click', () => {
     let currentIdx = speeds.indexOf(video.playbackRate);
     if (currentIdx === -1) currentIdx = 0;
     const nextIdx = (currentIdx + 1) % speeds.length;
     video.playbackRate = speeds[nextIdx];
   });
 
-  // Track rate change events (in case changed from other controls/menus)
-  video.addEventListener('ratechange', updateSpeedLabelText);
-  // Save ratechange reference for cleanup
-  speedBtn._rateChangeHandler = updateSpeedLabelText;
-
-  // 2. Picture-in-Picture Button
+  // PiP Button
   const pipBtn = document.createElement('button');
-  pipBtn.className = 'theater-btn pip-btn';
+  pipBtn.className = 'theater-control-btn pip-btn';
   pipBtn.title = 'Picture-in-Picture';
   pipBtn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -512,10 +663,7 @@ function createQuickActionsToolbar(video: HTMLVideoElement): void {
       <rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect>
     </svg>
   `;
-  
-  pipBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  pipBtn.addEventListener('click', () => {
     if (document.pictureInPictureElement) {
       document.exitPictureInPicture().catch(console.error);
     } else {
@@ -523,9 +671,47 @@ function createQuickActionsToolbar(video: HTMLVideoElement): void {
     }
   });
 
-  // 3. Exit button
+  // Fullscreen Button
+  const fullscreenBtn = document.createElement('button');
+  fullscreenBtn.className = 'theater-control-btn fullscreen-btn';
+  fullscreenBtn.title = 'Fullscreen';
+
+  const enterFullscreenIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+    </svg>
+  `;
+  const exitFullscreenIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"></path>
+    </svg>
+  `;
+
+  fullscreenBtn.innerHTML = document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon;
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(console.error);
+    } else {
+      const target = video.parentElement || video;
+      target.requestFullscreen().catch(() => {
+        video.requestFullscreen().catch(console.error);
+      });
+    }
+  };
+
+  fullscreenBtn.addEventListener('click', () => {
+    toggleFullscreen();
+  });
+
+  const onFullscreenChange = () => {
+    fullscreenBtn.innerHTML = document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon;
+  };
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+
+  // Close Button
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'theater-btn close-btn';
+  closeBtn.className = 'theater-control-btn close-btn';
   closeBtn.title = 'Exit Theater Mode';
   closeBtn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -533,40 +719,145 @@ function createQuickActionsToolbar(video: HTMLVideoElement): void {
       <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
   `;
-  closeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  closeBtn.addEventListener('click', () => {
     exitTheaterMode();
   });
 
-  toolbar.appendChild(speedBtn);
-  toolbar.appendChild(pipBtn);
-  toolbar.appendChild(closeBtn);
-  
+  rightSec.appendChild(speedBtn);
+  rightSec.appendChild(pipBtn);
+  rightSec.appendChild(fullscreenBtn);
+  rightSec.appendChild(closeBtn);
+
+  controlsRow.appendChild(leftSec);
+  controlsRow.appendChild(rightSec);
+
+  wrapper.appendChild(scrubberContainer);
+  wrapper.appendChild(controlsRow);
+
   if (video.parentElement) {
-    video.parentElement.appendChild(toolbar);
+    video.parentElement.appendChild(wrapper);
   }
 
-  // Bind mousemove to show toolbar
+  // Scrubber updates
+  let isDragging = false;
+
+  const updateScrubber = () => {
+    if (isDragging) return;
+    const dur = video.duration || 0;
+    const cur = video.currentTime || 0;
+    const pct = dur > 0 ? (cur / dur) * 100 : 0;
+    scrubberFill.style.width = `${pct}%`;
+    scrubberHandle.style.left = `${pct}%`;
+  };
+  updateScrubber();
+
+  const handleSeekEvent = (clientX: number) => {
+    const rect = scrubberContainer.getBoundingClientRect();
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const pct = pos * 100;
+    scrubberFill.style.width = `${pct}%`;
+    scrubberHandle.style.left = `${pct}%`;
+    
+    const targetTime = pos * (video.duration || 0);
+    timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(video.duration || 0)}`;
+    return targetTime;
+  };
+
+  const onScrubberMouseDown = (e: MouseEvent) => {
+    e.preventDefault();
+    isDragging = true;
+    handleSeekEvent(e.clientX);
+    
+    const onMouseMove = (moveEvt: MouseEvent) => {
+      handleSeekEvent(moveEvt.clientX);
+    };
+
+    const onMouseUp = (upEvt: MouseEvent) => {
+      const finalTime = handleSeekEvent(upEvt.clientX);
+      video.currentTime = finalTime;
+      isDragging = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  scrubberContainer.addEventListener('mousedown', onScrubberMouseDown);
+
+  const onScrubberTouchStart = (e: TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    isDragging = true;
+    handleSeekEvent(e.touches[0].clientX);
+
+    const onTouchMove = (moveEvt: TouchEvent) => {
+      if (moveEvt.touches.length === 1) {
+        handleSeekEvent(moveEvt.touches[0].clientX);
+      }
+    };
+
+    const onTouchEnd = (endEvt: TouchEvent) => {
+      if (endEvt.changedTouches.length === 1) {
+        const finalTime = handleSeekEvent(endEvt.changedTouches[0].clientX);
+        video.currentTime = finalTime;
+      }
+      isDragging = false;
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+    };
+
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onTouchEnd);
+  };
+  scrubberContainer.addEventListener('touchstart', onScrubberTouchStart, { passive: true });
+
+  // Event hookups
+  const onPlay = () => { playPauseBtn.innerHTML = pauseIcon; };
+  const onPause = () => { playPauseBtn.innerHTML = playIcon; };
+  const onTimeUpdate = () => { updateScrubber(); updateTimeDisplay(); };
+  const onDurationChange = () => { updateScrubber(); updateTimeDisplay(); };
+  const onVolumeChange = () => {
+    volumeSlider.value = video.muted ? '0' : String(video.volume);
+    updateVolumeIcon();
+  };
+  const onRateChange = () => { updateSpeedLabelText(); };
+
+  video.addEventListener('play', onPlay);
+  video.addEventListener('pause', onPause);
+  video.addEventListener('timeupdate', onTimeUpdate);
+  video.addEventListener('durationchange', onDurationChange);
+  video.addEventListener('volumechange', onVolumeChange);
+  video.addEventListener('ratechange', onRateChange);
+
+  wrapper._videoListenersCleanup = () => {
+    video.removeEventListener('play', onPlay);
+    video.removeEventListener('pause', onPause);
+    video.removeEventListener('timeupdate', onTimeUpdate);
+    video.removeEventListener('durationchange', onDurationChange);
+    video.removeEventListener('volumechange', onVolumeChange);
+    video.removeEventListener('ratechange', onRateChange);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+  };
+
+  // Setup mousemove listeners
   document.addEventListener('mousemove', showToolbar, { passive: true });
-  
-  // Show immediately
   showToolbar();
 }
 
-// Cleans up the toolbar
-function destroyQuickActionsToolbar(): void {
-  const toolbar = document.querySelector('.theater-everywhere-toolbar') as HTMLElement | null;
-  if (toolbar) {
-    const speedBtn = toolbar.querySelector('.speed-btn') as ExtendedHTMLButtonElement | null;
-    if (speedBtn && speedBtn._rateChangeHandler && theaterElement) {
-      theaterElement.removeEventListener('ratechange', speedBtn._rateChangeHandler);
+// Cleans up custom controls
+function destroyCustomControls(): void {
+  const wrapper = document.querySelector('.theater-controls-wrapper') as ExtendedHTMLDivElement | null;
+  if (wrapper) {
+    if (wrapper._videoListenersCleanup) {
+      wrapper._videoListenersCleanup();
     }
-    toolbar.remove();
+    wrapper.remove();
   }
   
   document.removeEventListener('mousemove', showToolbar);
   if (toolbarTimer) clearTimeout(toolbarTimer);
+  document.body.style.cursor = 'default';
 }
 
 // Triggers and animates the seek overlay indicator (YouTube-style)
@@ -617,4 +908,80 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
       overlay.remove();
     }
   }, 650);
+}
+
+// Browser theme application functions (inlined to prevent ES module imports in classic content script context)
+function fetchAndApplyTheme() {
+  if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
+    applyFallbackTheme();
+    return;
+  }
+
+  try {
+    chrome.runtime.sendMessage({ action: 'getBrowserTheme' }, (response: any) => {
+      if (chrome.runtime.lastError) {
+        applyFallbackTheme();
+        return;
+      }
+
+      if (response && response.theme) {
+        applyBrowserTheme(response.theme);
+      } else {
+        applyFallbackTheme();
+      }
+    });
+  } catch (e) {
+    applyFallbackTheme();
+  }
+}
+
+function applyBrowserTheme(theme: any) {
+  const root = document.documentElement;
+  const colors = theme.colors;
+
+  if (!colors) {
+    applyFallbackTheme();
+    return;
+  }
+
+  const setVar = (name: string, value: string | undefined) => {
+    if (value) {
+      root.style.setProperty(name, value);
+    }
+  };
+
+  const bg = colors.popup || colors.toolbar || colors.frame || colors.accentcolor || colors.ntp_background;
+  setVar('--bg-color', bg);
+
+  const cardBg = colors.tab_selected || colors.toolbar_field || colors.toolbar || colors.popup;
+  setVar('--card-bg', cardBg);
+
+  const border = colors.popup_border || colors.toolbar_field_border || colors.sidebar_border;
+  setVar('--border-color', border);
+
+  const textPrimary = colors.popup_text || colors.toolbar_text || colors.textcolor || colors.toolbar_field_text || colors.ntp_text;
+  setVar('--text-primary', textPrimary);
+
+  if (textPrimary && bg) {
+    root.style.setProperty('--text-secondary', `color-mix(in srgb, ${textPrimary} 70%, ${bg})`);
+  }
+
+  const accent = colors.tab_line || colors.popup_border || colors.sidebar_border;
+  if (accent) {
+    setVar('--accent-color', accent);
+    root.style.setProperty('--accent-hover', `color-mix(in srgb, ${accent} 85%, black)`);
+  } else {
+    applyAccentFallback();
+  }
+}
+
+function applyAccentFallback() {
+  const root = document.documentElement;
+  root.style.setProperty('--accent-color', 'var(--native-accent, AccentColor)');
+  root.style.setProperty('--accent-text', 'var(--native-accent-text, AccentColorText)');
+  root.style.setProperty('--accent-hover', 'color-mix(in srgb, var(--accent-color) 85%, black)');
+}
+
+function applyFallbackTheme() {
+  applyAccentFallback();
 }
