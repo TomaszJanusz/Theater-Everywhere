@@ -276,32 +276,58 @@ function initialize(): void {
   };
   window.addEventListener('keydown', listeners.keydown, true);
 
-  // 2. Mouse Move Listener (Track video under cursor using elementsFromPoint)
+  // 2. Mouse Move Listener (Track video under cursor using composedPath)
   listeners.mousemove = (event: MouseEvent) => {
     try {
-      const elements = document.elementsFromPoint(event.clientX, event.clientY);
-      const video = elements.find(el => el && el.tagName === 'VIDEO') as HTMLVideoElement | undefined;
-      if (video) {
-        activeVideo = video;
+      const path = event.composedPath();
+      for (const target of path) {
+        if (!(target instanceof HTMLElement || target instanceof ShadowRoot)) continue;
+        
+        // If the element itself is a video
+        if (target instanceof HTMLElement && target.tagName === 'VIDEO') {
+          activeVideo = target as HTMLVideoElement;
+          return;
+        }
+        
+        // If it's a shadow host containing a video
+        if (target instanceof HTMLElement && target.shadowRoot) {
+          const video = target.shadowRoot.querySelector('video');
+          if (video) {
+            activeVideo = video;
+            return;
+          }
+        }
+        
+        // If it's a container in light DOM containing a video
+        if (target instanceof HTMLElement) {
+          const video = target.querySelector('video');
+          if (video) {
+            activeVideo = video;
+            return;
+          }
+        }
       }
     } catch (e) {
-      // elementsFromPoint might fail in edge cases
+      // Ignore errors
     }
   };
   document.addEventListener('mousemove', listeners.mousemove, { passive: true });
 
   // 3. Play/Pause event tracking
   listeners.play = (event: Event) => {
-    if (event.target && (event.target as HTMLElement).tagName === 'VIDEO') {
-      activeVideo = event.target as HTMLVideoElement;
-      console.log(`[Theater Everywhere] Media event "play" detected on:`, event.target, `| paused:`, activeVideo.paused);
+    const path = event.composedPath();
+    const video = path[0];
+    if (video && video instanceof HTMLVideoElement) {
+      activeVideo = video;
+      console.log(`[Theater Everywhere] Media event "play" detected on:`, video, `| paused:`, video.paused);
     }
   };
   document.addEventListener('play', listeners.play, true); // Use capture phase since 'play' does not bubble
 
   listeners.pause = (event: Event) => {
-    if (event.target && (event.target as HTMLElement).tagName === 'VIDEO') {
-      const video = event.target as HTMLVideoElement;
+    const path = event.composedPath();
+    const video = path[0];
+    if (video && video instanceof HTMLVideoElement) {
       console.log(`[Theater Everywhere] Media event "pause" detected on:`, video, `| paused:`, video.paused);
     }
   };
@@ -498,6 +524,13 @@ function enterTheaterMode(element: HTMLElement): void {
   if (theaterElement) return;
 
   theaterElement = element;
+
+  // If the active video is inside a Shadow DOM, inject styling into its root node
+  const rootNode = element.getRootNode();
+  if (rootNode instanceof ShadowRoot) {
+    injectStylesIntoShadowRoot(rootNode);
+  }
+
   theaterElement.classList.add('theater-everywhere-video-active');
 
   // Specific setup for HTML5 <video> elements
@@ -629,6 +662,46 @@ interface ExtendedHTMLDivElement extends HTMLDivElement {
   _videoListenersCleanup?: () => void;
 }
 
+interface TooltipState {
+  element: HTMLDivElement | null;
+}
+const tooltipState: TooltipState = {
+  element: null
+};
+
+function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => string): void {
+  button.removeAttribute('title');
+
+  const show = () => {
+    if (!tooltipState.element) {
+      tooltipState.element = document.createElement('div');
+      tooltipState.element.className = 'theater-button-tooltip';
+      document.body.appendChild(tooltipState.element);
+    }
+    
+    tooltipState.element.innerHTML = getTooltipText();
+    tooltipState.element.classList.add('visible');
+    
+    // Position
+    const rect = button.getBoundingClientRect();
+    const tooltipX = rect.left + rect.width / 2;
+    const tooltipY = rect.top - 8;
+    
+    tooltipState.element.style.left = `${tooltipX}px`;
+    tooltipState.element.style.top = `${tooltipY}px`;
+  };
+
+  const hide = () => {
+    if (tooltipState.element) {
+      tooltipState.element.classList.remove('visible');
+    }
+  };
+
+  button.addEventListener('mouseenter', show);
+  button.addEventListener('mouseleave', hide);
+  button.addEventListener('click', hide);
+}
+
 // Creates unified bottom player controls
 function createCustomControls(video: HTMLVideoElement): void {
   destroyCustomControls();
@@ -695,7 +768,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Play/Pause Button
   const playPauseBtn = document.createElement('button');
   playPauseBtn.className = 'theater-control-btn play-pause-btn';
-  playPauseBtn.title = 'Play / Pause';
+  
+  bindCustomTooltip(playPauseBtn, () => {
+    const action = video.paused ? 'Play' : 'Pause';
+    return `${action} <kbd>Space</kbd>`;
+  });
 
   const playIcon = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -724,7 +801,10 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const volumeBtn = document.createElement('button');
   volumeBtn.className = 'theater-control-btn volume-btn';
-  volumeBtn.title = 'Mute';
+  
+  bindCustomTooltip(volumeBtn, () => {
+    return video.muted || video.volume === 0 ? 'Unmute' : 'Mute';
+  });
 
   const volumeSlider = document.createElement('input');
   volumeSlider.type = 'range';
@@ -757,13 +837,10 @@ function createCustomControls(video: HTMLVideoElement): void {
   const updateVolumeIcon = () => {
     if (video.muted || video.volume === 0) {
       volumeBtn.innerHTML = volMutedIcon;
-      volumeBtn.title = 'Unmute';
     } else if (video.volume < 0.5) {
       volumeBtn.innerHTML = volLowIcon;
-      volumeBtn.title = 'Mute';
     } else {
       volumeBtn.innerHTML = volHighIcon;
-      volumeBtn.title = 'Mute';
     }
   };
   updateVolumeIcon();
@@ -870,7 +947,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const speedBtn = document.createElement('button');
   speedBtn.className = 'theater-control-btn speed-btn';
-  speedBtn.title = 'Playback Speed';
+  bindCustomTooltip(speedBtn, () => 'Playback Speed');
 
   const speedLabel = document.createElement('span');
   speedLabel.className = 'speed-label';
@@ -908,7 +985,6 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const speedTick1x = document.createElement('div');
   speedTick1x.className = 'speed-tick-1x';
-  speedTick1x.title = 'Normal speed (1x)';
 
   speedSliderWrapper.appendChild(speedSlider);
   speedSliderWrapper.appendChild(speedTick1x);
@@ -975,7 +1051,9 @@ function createCustomControls(video: HTMLVideoElement): void {
   // PiP Button
   const pipBtn = document.createElement('button');
   pipBtn.className = 'theater-control-btn pip-btn';
-  pipBtn.title = 'Picture-in-Picture';
+  
+  bindCustomTooltip(pipBtn, () => 'Picture-in-Picture');
+
   pipBtn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
@@ -993,7 +1071,10 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Fullscreen Button
   const fullscreenBtn = document.createElement('button');
   fullscreenBtn.className = 'theater-control-btn fullscreen-btn';
-  fullscreenBtn.title = 'Fullscreen';
+  
+  bindCustomTooltip(fullscreenBtn, () => {
+    return document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+  });
 
   const enterFullscreenIcon = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1031,7 +1112,13 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Close Button
   const closeBtn = document.createElement('button');
   closeBtn.className = 'theater-control-btn close-btn';
-  closeBtn.title = 'Exit Theater Mode';
+  
+  bindCustomTooltip(closeBtn, () => {
+    const toggleKey = (configuredShortcuts.toggle || 'T').toUpperCase();
+    const exitKey = configuredShortcuts.exit === 'Escape' ? 'Esc' : (configuredShortcuts.exit || 'Esc');
+    return `Exit Theater Mode <kbd>${toggleKey}</kbd> or <kbd>${exitKey}</kbd>`;
+  });
+
   closeBtn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1045,7 +1132,17 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Subtitles / CC Button
   const ccBtn = document.createElement('button');
   ccBtn.className = 'theater-control-btn cc-btn';
-  ccBtn.title = 'Subtitles / Captions';
+  
+  bindCustomTooltip(ccBtn, () => {
+    const tracks = video.textTracks;
+    const hasTracks = tracks && tracks.length > 0;
+    if (!hasTracks) {
+      return 'No subtitles available';
+    }
+    const isCCActive = ccBtn.classList.contains('active');
+    return isCCActive ? 'Disable Subtitles' : 'Enable Subtitles';
+  });
+
   ccBtn.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="4" width="18" height="16" rx="2"></rect>
@@ -1065,12 +1162,10 @@ function createCustomControls(video: HTMLVideoElement): void {
       ccBtn.classList.add('disabled');
       ccBtn.style.opacity = '0.35';
       ccBtn.style.pointerEvents = 'none';
-      ccBtn.title = 'No subtitles available';
     } else {
       ccBtn.classList.remove('disabled');
       ccBtn.style.opacity = '';
       ccBtn.style.pointerEvents = '';
-      ccBtn.title = 'Subtitles / Captions';
     }
 
     let isAnyShowing = false;
@@ -1559,6 +1654,11 @@ function destroyCustomControls(): void {
       wrapper._videoListenersCleanup();
     }
     wrapper.remove();
+  }
+
+  if (tooltipState.element) {
+    tooltipState.element.remove();
+    tooltipState.element = null;
   }
   
   document.removeEventListener('mousemove', showToolbar);
