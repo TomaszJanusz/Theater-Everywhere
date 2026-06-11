@@ -466,7 +466,7 @@ function createQuickActionsToolbar(video) {
   toolbar.appendChild(speedBtn);
   toolbar.appendChild(pipBtn);
   toolbar.appendChild(closeBtn);
-  document.body.appendChild(toolbar);
+  video.parentElement.appendChild(toolbar);
 
   // Bind mousemove to show toolbar
   document.addEventListener('mousemove', showToolbar, { passive: true });
@@ -528,7 +528,7 @@ function triggerSeekIndicator(direction) {
     overlay.appendChild(textSpan);
   }
 
-  document.body.appendChild(overlay);
+  theaterElement.parentElement.appendChild(overlay);
 
   // Automatically remove after animation completes
   setTimeout(() => {
