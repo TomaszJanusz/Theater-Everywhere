@@ -4,6 +4,22 @@ let activeVideo = null;
 let theaterElement = null;
 let ancestorsList = [];
 let isInitialized = false;
+let toolbarTimer = null;
+
+// Show/hide floating quick actions toolbar based on mouse activity
+function showToolbar() {
+  const toolbar = document.querySelector('.theater-everywhere-toolbar');
+  if (!toolbar) return;
+  
+  toolbar.classList.add('visible');
+  
+  clearTimeout(toolbarTimer);
+  toolbarTimer = setTimeout(() => {
+    if (toolbar && !toolbar.matches(':hover')) {
+      toolbar.classList.remove('visible');
+    }
+  }, 2500);
+}
 
 // Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
 function preventDoubleToggle(e) {
@@ -271,6 +287,9 @@ function enterTheaterMode(element) {
     eventTypes.forEach(type => {
       theaterElement.addEventListener(type, preventDoubleToggle, true);
     });
+
+    // Create and inject the floating overlay toolbar for quick actions (PiP, Speed, Close)
+    createQuickActionsToolbar(theaterElement);
   }
 
   // Traverse ancestors and apply override class
@@ -309,6 +328,9 @@ function exitTheaterMode() {
     eventTypes.forEach(type => {
       theaterElement.removeEventListener(type, preventDoubleToggle, true);
     });
+
+    // Clean up toolbar
+    destroyQuickActionsToolbar();
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
@@ -352,3 +374,107 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Run blacklist check on load
 checkBlacklistAndInit();
+
+// Creates floating overlay toolbar
+function createQuickActionsToolbar(video) {
+  // If it already exists, remove it
+  destroyQuickActionsToolbar();
+
+  const toolbar = document.createElement('div');
+  toolbar.className = 'theater-everywhere-toolbar';
+
+  // Playback speed cycle list
+  const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.5];
+  
+  // 1. Speed button
+  const speedBtn = document.createElement('button');
+  speedBtn.className = 'theater-btn speed-btn';
+  speedBtn.title = 'Cycle Playback Speed';
+  
+  const speedLabel = document.createElement('span');
+  speedLabel.className = 'speed-label';
+  // Set initial text
+  const updateSpeedLabelText = () => {
+    speedLabel.textContent = video.playbackRate.toFixed(1) + 'x';
+  };
+  updateSpeedLabelText();
+  speedBtn.appendChild(speedLabel);
+
+  // Speed click handler
+  speedBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    let currentIdx = speeds.indexOf(video.playbackRate);
+    if (currentIdx === -1) currentIdx = 0;
+    const nextIdx = (currentIdx + 1) % speeds.length;
+    video.playbackRate = speeds[nextIdx];
+  });
+
+  // Track rate change events (in case changed from other controls/menus)
+  video.addEventListener('ratechange', updateSpeedLabelText);
+  // Save ratechange reference for cleanup
+  speedBtn._rateChangeHandler = updateSpeedLabelText;
+
+  // 2. Picture-in-Picture Button
+  const pipBtn = document.createElement('button');
+  pipBtn.className = 'theater-btn pip-btn';
+  pipBtn.title = 'Picture-in-Picture';
+  pipBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+      <rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect>
+    </svg>
+  `;
+  
+  pipBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture().catch(console.error);
+    } else {
+      video.requestPictureInPicture().catch(console.error);
+    }
+  });
+
+  // 3. Exit button
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'theater-btn close-btn';
+  closeBtn.title = 'Exit Theater Mode';
+  closeBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  `;
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    exitTheaterMode();
+  });
+
+  toolbar.appendChild(speedBtn);
+  toolbar.appendChild(pipBtn);
+  toolbar.appendChild(closeBtn);
+  document.body.appendChild(toolbar);
+
+  // Bind mousemove to show toolbar
+  document.addEventListener('mousemove', showToolbar, { passive: true });
+  
+  // Show immediately
+  showToolbar();
+}
+
+// Cleans up the toolbar
+function destroyQuickActionsToolbar() {
+  const toolbar = document.querySelector('.theater-everywhere-toolbar');
+  if (toolbar) {
+    const speedBtn = toolbar.querySelector('.speed-btn');
+    if (speedBtn && speedBtn._rateChangeHandler && theaterElement) {
+      theaterElement.removeEventListener('ratechange', speedBtn._rateChangeHandler);
+    }
+    toolbar.remove();
+  }
+  
+  document.removeEventListener('mousemove', showToolbar);
+  clearTimeout(toolbarTimer);
+}
