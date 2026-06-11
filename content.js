@@ -127,6 +127,17 @@ function initialize() {
         event.preventDefault();
         exitTheaterMode();
       }
+    } else if (theaterElement && theaterElement.tagName === 'VIDEO') {
+      // Seek keys (ArrowLeft / ArrowRight) in theater mode
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        theaterElement.currentTime = Math.max(0, theaterElement.currentTime - 5);
+        triggerSeekIndicator('left');
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        theaterElement.currentTime = Math.min(theaterElement.duration, theaterElement.currentTime + 5);
+        triggerSeekIndicator('right');
+      }
     }
   };
   document.addEventListener('keydown', listeners.keydown, true);
@@ -477,4 +488,52 @@ function destroyQuickActionsToolbar() {
   
   document.removeEventListener('mousemove', showToolbar);
   clearTimeout(toolbarTimer);
+}
+
+// Triggers and animates the seek overlay indicator (YouTube-style)
+function triggerSeekIndicator(direction) {
+  // If an overlay already exists in that direction, remove it to reset the animation
+  const existing = document.querySelector(`.theater-everywhere-seek-overlay.${direction}`);
+  if (existing) {
+    existing.remove();
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = `theater-everywhere-seek-overlay ${direction} animate`;
+
+  const iconWrapper = document.createElement('div');
+  iconWrapper.className = 'seek-icon-wrapper';
+
+  if (direction === 'left') {
+    iconWrapper.innerHTML = `
+      <div class="seek-arrow left left-3"></div>
+      <div class="seek-arrow left left-2"></div>
+      <div class="seek-arrow left left-1"></div>
+    `;
+    overlay.appendChild(iconWrapper);
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = '5 seconds';
+    overlay.appendChild(textSpan);
+  } else {
+    iconWrapper.innerHTML = `
+      <div class="seek-arrow right right-1"></div>
+      <div class="seek-arrow right right-2"></div>
+      <div class="seek-arrow right right-3"></div>
+    `;
+    overlay.appendChild(iconWrapper);
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = '5 seconds';
+    overlay.appendChild(textSpan);
+  }
+
+  document.body.appendChild(overlay);
+
+  // Automatically remove after animation completes
+  setTimeout(() => {
+    if (overlay && overlay.parentNode) {
+      overlay.remove();
+    }
+  }, 650);
 }
