@@ -947,7 +947,13 @@ function createCustomControls(video: HTMLVideoElement): void {
     setBuffering(false);
   };
   const onPause = () => { playPauseBtn.innerHTML = playIcon; };
-  const onTimeUpdate = () => { updateScrubber(); updateTimeDisplay(); };
+  const onTimeUpdate = () => { 
+    updateScrubber(); 
+    updateTimeDisplay(); 
+    if (!video.paused && !video.seeking && video.readyState >= 3) {
+      setBuffering(false);
+    }
+  };
   const onProgress = () => { updateScrubber(); };
   const onDurationChange = () => { updateScrubber(); updateTimeDisplay(); };
   const onVolumeChange = () => {
@@ -964,6 +970,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     setBuffering(false); 
   };
   const onCanPlay = () => { setBuffering(false); };
+  const onPlaying = () => { setBuffering(false); };
   const onStalled = () => {
     if (!video.paused) {
       setBuffering(true);
@@ -981,6 +988,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   video.addEventListener('waiting', onWaiting);
   video.addEventListener('seeking', onSeeking);
   video.addEventListener('canplay', onCanPlay);
+  video.addEventListener('playing', onPlaying);
   video.addEventListener('stalled', onStalled);
 
   wrapper._videoListenersCleanup = () => {
@@ -995,6 +1003,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     video.removeEventListener('waiting', onWaiting);
     video.removeEventListener('seeking', onSeeking);
     video.removeEventListener('canplay', onCanPlay);
+    video.removeEventListener('playing', onPlaying);
     video.removeEventListener('stalled', onStalled);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     if (bufferingTimeout) {
