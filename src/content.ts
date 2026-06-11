@@ -768,11 +768,11 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const updateScrubber = () => {
     const dur = video.duration || 0;
+    const cur = video.currentTime || 0;
     
     // Update buffering progress
     if (dur > 0 && video.buffered && video.buffered.length > 0) {
-      const cur = video.currentTime || 0;
-      let bufferedEnd = 0;
+      let bufferedEnd = cur;
       for (let i = 0; i < video.buffered.length; i++) {
         const start = video.buffered.start(i);
         const end = video.buffered.end(i);
@@ -781,9 +781,6 @@ function createCustomControls(video: HTMLVideoElement): void {
           break;
         }
       }
-      if (bufferedEnd === 0 && video.buffered.length > 0) {
-        bufferedEnd = video.buffered.end(video.buffered.length - 1);
-      }
       const bufPct = (bufferedEnd / dur) * 100;
       scrubberBuffer.style.width = `${bufPct}%`;
     } else {
@@ -791,7 +788,6 @@ function createCustomControls(video: HTMLVideoElement): void {
     }
 
     if (isDragging || video.seeking) return;
-    const cur = video.currentTime || 0;
     const pct = dur > 0 ? (cur / dur) * 100 : 0;
     scrubberFill.style.width = `${pct}%`;
     scrubberHandle.style.left = `${pct}%`;

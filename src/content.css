@@ -83,7 +83,7 @@
 
 .theater-scrubber-track {
   height: 4px !important;
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
   border-radius: 2px !important;
   position: relative !important;
   transition: height 0.15s ease !important;
@@ -95,7 +95,7 @@
 }
 
 .theater-scrubber-buffer {
-  background-color: rgba(255, 255, 255, 0.25) !important;
+  background-color: rgba(255, 255, 255, 0.4) !important;
   height: 100% !important;
   width: 0%;
   border-radius: 2px !important;
