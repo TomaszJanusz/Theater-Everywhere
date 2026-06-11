@@ -195,7 +195,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadAndRenderShortcuts() {
     try {
       const data = await chrome.storage.sync.get({ shortcuts: defaultShortcuts });
-      const shortcuts = (data.shortcuts || defaultShortcuts) as Shortcuts;
+      const shortcuts = {
+        ...defaultShortcuts,
+        ...(data.shortcuts || {})
+      } as Shortcuts;
       
       const toggleInput = document.getElementById('shortcut-toggle') as HTMLInputElement;
       const exitInput = document.getElementById('shortcut-exit') as HTMLInputElement;

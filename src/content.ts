@@ -130,7 +130,10 @@ async function checkBlacklistAndInit(): Promise<void> {
   try {
     const data = await chrome.storage.sync.get({ blacklist: [], shortcuts: defaultShortcuts });
     const blacklist = (data.blacklist || []) as string[];
-    configuredShortcuts = (data.shortcuts || { ...defaultShortcuts }) as Shortcuts;
+    configuredShortcuts = {
+      ...defaultShortcuts,
+      ...(data.shortcuts || {})
+    } as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
       return currentHostname === domain || currentHostname.endsWith('.' + domain);
