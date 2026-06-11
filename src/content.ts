@@ -153,14 +153,52 @@ async function checkBlacklistAndInit(): Promise<void> {
   }
 }
 
+function getActiveElementDeep(): Element | null {
+  let activeEl = document.activeElement;
+  while (activeEl && activeEl.shadowRoot && activeEl.shadowRoot.activeElement) {
+    activeEl = activeEl.shadowRoot.activeElement;
+  }
+  return activeEl;
+}
+
+function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
+  const shortcuts = configuredShortcuts || defaultShortcuts;
+  
+  if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('[Theater Everywhere] Spacebar detected inside theater mode. Toggling playback.');
+    if (video.paused) {
+      video.play().catch(err => {
+        console.error('[Theater Everywhere] Play failed:', err);
+      });
+    } else {
+      video.pause();
+    }
+  } else if (matchesShortcut(e, shortcuts.seekBack)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.currentTime = Math.max(0, video.currentTime - 5);
+    triggerSeekIndicator('left');
+  } else if (matchesShortcut(e, shortcuts.seekForward)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.currentTime = Math.min(video.duration, video.currentTime + 5);
+    triggerSeekIndicator('right');
+  }
+}
+
 // Setup event listeners
 function initialize(): void {
   if (isInitialized) return;
 
   // 1. Keyboard Listener (T and Escape)
   listeners.keydown = (event: KeyboardEvent) => {
-    // Ignore key presses in inputs/textareas/editable elements
-    const activeEl = document.activeElement as HTMLElement | null;
+    // Ignore key presses in inputs/textareas/editable elements (including inside Shadow DOM)
+    const activeEl = getActiveElementDeep() as HTMLElement | null;
     const isEditable = activeEl && (
       activeEl.tagName === 'INPUT' ||
       activeEl.tagName === 'TEXTAREA' ||
@@ -173,35 +211,44 @@ function initialize(): void {
 
     if (matchesShortcut(event, shortcuts.toggle)) {
       event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
       toggleTheaterMode();
     } else if (matchesShortcut(event, shortcuts.exit)) {
       if (theaterElement) {
         event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
         exitTheaterMode();
       }
-    } else if (theaterElement && theaterElement.tagName === 'VIDEO') {
-      const video = theaterElement as HTMLVideoElement;
-      
-      // Spacebar toggling play/pause in theater mode
-      if (event.key === ' ' || event.key === 'Spacebar') {
-        event.preventDefault();
-        if (video.paused) {
-          video.play().catch(console.error);
-        } else {
-          video.pause();
+    } else if (theaterElement) {
+      if (theaterElement.tagName === 'VIDEO') {
+        const video = theaterElement as HTMLVideoElement;
+        handleVideoKey(event, video);
+      } else if (theaterElement.tagName === 'IFRAME') {
+        const iframe = theaterElement as HTMLIFrameElement;
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            type: 'theater-everywhere-key',
+            key: event.key,
+            code: event.code,
+            ctrlKey: event.ctrlKey,
+            altKey: event.altKey,
+            shiftKey: event.shiftKey,
+            metaKey: event.metaKey
+          }, '*');
+          if (event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space' ||
+              matchesShortcut(event, shortcuts.seekBack) ||
+              matchesShortcut(event, shortcuts.seekForward)) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+          }
         }
-      } else if (matchesShortcut(event, shortcuts.seekBack)) {
-        event.preventDefault();
-        video.currentTime = Math.max(0, video.currentTime - 5);
-        triggerSeekIndicator('left');
-      } else if (matchesShortcut(event, shortcuts.seekForward)) {
-        event.preventDefault();
-        video.currentTime = Math.min(video.duration, video.currentTime + 5);
-        triggerSeekIndicator('right');
       }
     }
   };
-  document.addEventListener('keydown', listeners.keydown, true);
+  window.addEventListener('keydown', listeners.keydown, true);
 
   // 2. Mouse Move Listener (Track video under cursor using elementsFromPoint)
   listeners.mousemove = (event: MouseEvent) => {
@@ -263,6 +310,19 @@ function initialize(): void {
     } else if (data.type === 'theater-everywhere-exit-down') {
       // Parent frame told us to exit theater mode
       exitTheaterMode();
+    } else if (data.type === 'theater-everywhere-key') {
+      if (theaterElement && theaterElement.tagName === 'VIDEO') {
+        const video = theaterElement as HTMLVideoElement;
+        handleVideoKey({
+          key: data.key,
+          code: data.code,
+          ctrlKey: data.ctrlKey,
+          altKey: data.altKey,
+          shiftKey: data.shiftKey,
+          metaKey: data.metaKey,
+          preventDefault: () => {}
+        } as KeyboardEvent, video);
+      }
     }
   };
   window.addEventListener('message', listeners.message);
@@ -279,7 +339,7 @@ function destroy(): void {
     exitTheaterMode();
   }
 
-  if (listeners.keydown) document.removeEventListener('keydown', listeners.keydown, true);
+  if (listeners.keydown) window.removeEventListener('keydown', listeners.keydown, true);
   if (listeners.mousemove) document.removeEventListener('mousemove', listeners.mousemove);
   if (listeners.play) document.removeEventListener('play', listeners.play, true);
   if (listeners.pause) document.removeEventListener('pause', listeners.pause, true);
@@ -520,6 +580,10 @@ function createCustomControls(video: HTMLVideoElement): void {
   scrubberTrack.appendChild(scrubberHandle);
   scrubberContainer.appendChild(scrubberTrack);
 
+  const tooltip = document.createElement('div');
+  tooltip.className = 'theater-scrubber-tooltip';
+  scrubberContainer.appendChild(tooltip);
+
   // 2. Control Row
   const controlsRow = document.createElement('div');
   controlsRow.className = 'theater-controls-row';
@@ -622,6 +686,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Time label display
   const timeDisplay = document.createElement('span');
   timeDisplay.className = 'theater-time-display';
+  timeDisplay.style.cursor = 'pointer';
   timeDisplay.textContent = '0:00 / 0:00';
 
   const formatTime = (secs: number): string => {
@@ -637,8 +702,22 @@ function createCustomControls(video: HTMLVideoElement): void {
     return `${m}:${sStr}`;
   };
 
+  let showRemainingTime = false;
+  timeDisplay.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showRemainingTime = !showRemainingTime;
+    updateTimeDisplay();
+  });
+
   const updateTimeDisplay = () => {
-    timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+    const cur = video.currentTime || 0;
+    const dur = video.duration || 0;
+    if (showRemainingTime) {
+      const remaining = Math.max(0, dur - cur);
+      timeDisplay.textContent = `-${formatTime(remaining)} / ${formatTime(dur)}`;
+    } else {
+      timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+    }
   };
   updateTimeDisplay();
 
@@ -747,9 +826,9 @@ function createCustomControls(video: HTMLVideoElement): void {
   rightSec.appendChild(closeBtn);
 
   controlsRow.appendChild(leftSec);
+  controlsRow.appendChild(scrubberContainer);
   controlsRow.appendChild(rightSec);
 
-  wrapper.appendChild(scrubberContainer);
   wrapper.appendChild(controlsRow);
 
   if (video.parentElement) {
@@ -815,6 +894,34 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateScrubber();
 
+  const updateTooltip = (clientX: number) => {
+    const rect = scrubberContainer.getBoundingClientRect();
+    if (rect.width === 0) return;
+    
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const duration = video.duration || 0;
+    const time = pos * duration;
+    
+    tooltip.textContent = formatTime(time);
+    const leftPx = pos * rect.width;
+    tooltip.style.left = `${leftPx}px`;
+    tooltip.classList.add('visible');
+  };
+
+  const onScrubberMouseMove = (e: MouseEvent) => {
+    if (isDragging) return;
+    updateTooltip(e.clientX);
+  };
+
+  const onScrubberMouseLeave = () => {
+    if (!isDragging) {
+      tooltip.classList.remove('visible');
+    }
+  };
+
+  scrubberContainer.addEventListener('mousemove', onScrubberMouseMove);
+  scrubberContainer.addEventListener('mouseleave', onScrubberMouseLeave);
+
   const handleSeekEvent = (clientX: number, seekMode: 'none' | 'immediate' | 'throttled' = 'none') => {
     const rect = scrubberContainer.getBoundingClientRect();
     if (rect.width === 0) return 0;
@@ -830,7 +937,16 @@ function createCustomControls(video: HTMLVideoElement): void {
     }
     
     const targetTime = pos * duration;
-    timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(duration)}`;
+    if (showRemainingTime) {
+      const remaining = Math.max(0, duration - targetTime);
+      timeDisplay.textContent = `-${formatTime(remaining)} / ${formatTime(duration)}`;
+    } else {
+      timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(duration)}`;
+    }
+    
+    if (isDragging) {
+      updateTooltip(clientX);
+    }
     
     if (seekMode === 'immediate') {
       if (seekTimeout) {
@@ -863,6 +979,17 @@ function createCustomControls(video: HTMLVideoElement): void {
         isDragging = false;
         scrubberContainer.classList.remove('dragging');
         video.removeEventListener('seeked', onSeeked);
+        
+        // Hide tooltip if cursor is not over the scrubber container
+        const rect = scrubberContainer.getBoundingClientRect();
+        if (
+          upEvt.clientX < rect.left ||
+          upEvt.clientX > rect.right ||
+          upEvt.clientY < rect.top ||
+          upEvt.clientY > rect.bottom
+        ) {
+          tooltip.classList.remove('visible');
+        }
       };
       video.addEventListener('seeked', onSeeked);
       
@@ -870,6 +997,17 @@ function createCustomControls(video: HTMLVideoElement): void {
         isDragging = false;
         scrubberContainer.classList.remove('dragging');
         video.removeEventListener('seeked', onSeeked);
+        
+        // Hide tooltip if cursor is not over the scrubber container
+        const rect = scrubberContainer.getBoundingClientRect();
+        if (
+          upEvt.clientX < rect.left ||
+          upEvt.clientX > rect.right ||
+          upEvt.clientY < rect.top ||
+          upEvt.clientY > rect.bottom
+        ) {
+          tooltip.classList.remove('visible');
+        }
       }, 150);
 
       document.removeEventListener('mousemove', onMouseMove, true);
@@ -902,6 +1040,7 @@ function createCustomControls(video: HTMLVideoElement): void {
         isDragging = false;
         scrubberContainer.classList.remove('dragging');
         video.removeEventListener('seeked', onSeeked);
+        tooltip.classList.remove('visible');
       };
       video.addEventListener('seeked', onSeeked);
       
@@ -909,6 +1048,7 @@ function createCustomControls(video: HTMLVideoElement): void {
         isDragging = false;
         scrubberContainer.classList.remove('dragging');
         video.removeEventListener('seeked', onSeeked);
+        tooltip.classList.remove('visible');
       }, 150);
 
       document.removeEventListener('touchmove', onTouchMove, true);
