@@ -921,11 +921,21 @@ function createCustomControls(video: HTMLVideoElement): void {
   scrubberContainer.addEventListener('touchstart', onScrubberTouchStart, { passive: true });
 
   // Buffering / Loading State Helper
+  let bufferingTimeout: number | null = null;
+
   const setBuffering = (isBuffering: boolean) => {
     if (isBuffering) {
-      loadingIndicator.classList.add('visible');
-      scrubberContainer.classList.add('buffering');
+      if (bufferingTimeout || loadingIndicator.classList.contains('visible')) return;
+      bufferingTimeout = window.setTimeout(() => {
+        loadingIndicator.classList.add('visible');
+        scrubberContainer.classList.add('buffering');
+        bufferingTimeout = null;
+      }, 250);
     } else {
+      if (bufferingTimeout) {
+        clearTimeout(bufferingTimeout);
+        bufferingTimeout = null;
+      }
       loadingIndicator.classList.remove('visible');
       scrubberContainer.classList.remove('buffering');
     }
@@ -987,6 +997,10 @@ function createCustomControls(video: HTMLVideoElement): void {
     video.removeEventListener('canplay', onCanPlay);
     video.removeEventListener('stalled', onStalled);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
+    if (bufferingTimeout) {
+      clearTimeout(bufferingTimeout);
+      bufferingTimeout = null;
+    }
     loadingIndicator.remove();
   };
 
