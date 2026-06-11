@@ -65,6 +65,11 @@ function showToolbar(): void {
       if (theaterElement.tagName === 'VIDEO') {
         theaterElement.classList.remove('controls-visible');
       }
+      // Also hide subtitles menu if open
+      const ccMenu = controls.querySelector('.theater-cc-menu') as HTMLElement | null;
+      if (ccMenu) {
+        ccMenu.style.display = 'none';
+      }
       document.body.style.cursor = 'none';
     }
   }, 2500);
@@ -961,6 +966,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   window.addEventListener('click', onDocumentClick, true);
 
+  const onWindowBlur = () => {
+    ccMenu.style.display = 'none';
+  };
+  window.addEventListener('blur', onWindowBlur);
+
   rightSec.appendChild(ccBtn);
   rightSec.appendChild(speedBtn);
   rightSec.appendChild(pipBtn);
@@ -1296,6 +1306,7 @@ function createCustomControls(video: HTMLVideoElement): void {
       video.textTracks.removeEventListener('change', checkCCActive);
     }
     window.removeEventListener('click', onDocumentClick, true);
+    window.removeEventListener('blur', onWindowBlur);
     loadingIndicator.remove();
   };
 
