@@ -199,6 +199,18 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     e.stopImmediatePropagation();
     video.currentTime = Math.min(video.duration, video.currentTime + 5);
     triggerSeekIndicator('right');
+  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'N') {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.currentTime = Math.max(0, video.currentTime - 0.04);
+    console.log('[Theater Everywhere] N key detected. Stepping 1 frame backward.');
+  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'M') {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
+    console.log('[Theater Everywhere] M key detected. Stepping 1 frame forward.');
   }
 }
 
@@ -211,7 +223,7 @@ function initialize(): void {
     // Ignore key presses in inputs/textareas/editable elements (including inside Shadow DOM)
     const activeEl = getActiveElementDeep() as HTMLElement | null;
     const isEditable = activeEl && (
-      activeEl.tagName === 'INPUT' ||
+      (activeEl.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'button', 'submit', 'image', 'file'].includes((activeEl as HTMLInputElement).type)) ||
       activeEl.tagName === 'TEXTAREA' ||
       activeEl.isContentEditable ||
       activeEl.getAttribute('role') === 'textbox'
@@ -225,7 +237,7 @@ function initialize(): void {
       event.stopPropagation();
       event.stopImmediatePropagation();
       toggleTheaterMode();
-    } else if (matchesShortcut(event, shortcuts.exit)) {
+    } else if (matchesShortcut(event, shortcuts.exit) || event.key === 'Escape' || event.key === 'Esc') {
       if (theaterElement) {
         event.preventDefault();
         event.stopPropagation();
@@ -248,9 +260,12 @@ function initialize(): void {
             shiftKey: event.shiftKey,
             metaKey: event.metaKey
           }, '*');
+          const keyUpper = event.key.toUpperCase();
+          const isFrameStep = !event.ctrlKey && !event.altKey && !event.metaKey && (keyUpper === 'N' || keyUpper === 'M');
           if (event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space' ||
               matchesShortcut(event, shortcuts.seekBack) ||
-              matchesShortcut(event, shortcuts.seekForward)) {
+              matchesShortcut(event, shortcuts.seekForward) ||
+              isFrameStep) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -680,6 +695,15 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateVolumeIcon();
 
+  const updateVolumeSliderFill = () => {
+    const val = video.muted ? 0 : video.volume;
+    const pct = val * 100;
+    const accentColor = 'var(--accent-color, #6366f1)';
+    const grad = `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${pct}%, rgba(255, 255, 255, 0.2) ${pct}%, rgba(255, 255, 255, 0.2) 100%)`;
+    volumeSlider.style.setProperty('background', grad, 'important');
+  };
+  updateVolumeSliderFill();
+
   volumeBtn.addEventListener('click', () => {
     video.muted = !video.muted;
   });
@@ -690,6 +714,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (val > 0 && video.muted) {
       video.muted = false;
     }
+    updateVolumeSliderFill();
   });
 
   volumeContainer.appendChild(volumeBtn);
@@ -848,8 +873,22 @@ function createCustomControls(video: HTMLVideoElement): void {
   wrapper.appendChild(ccMenu);
 
   const checkCCActive = () => {
-    let isAnyShowing = false;
     const tracks = video.textTracks;
+    const hasTracks = tracks && tracks.length > 0;
+    
+    if (!hasTracks) {
+      ccBtn.classList.add('disabled');
+      ccBtn.style.opacity = '0.35';
+      ccBtn.style.pointerEvents = 'none';
+      ccBtn.title = 'No subtitles available';
+    } else {
+      ccBtn.classList.remove('disabled');
+      ccBtn.style.opacity = '';
+      ccBtn.style.pointerEvents = '';
+      ccBtn.title = 'Subtitles / Captions';
+    }
+
+    let isAnyShowing = false;
     if (tracks) {
       for (let i = 0; i < tracks.length; i++) {
         if (tracks[i].mode === 'showing') {
@@ -864,8 +903,16 @@ function createCustomControls(video: HTMLVideoElement): void {
       ccBtn.classList.remove('active');
     }
   };
+
+  const handleTrackChange = () => {
+    checkCCActive();
+    updateCCMenu();
+  };
+
   if (video.textTracks) {
     video.textTracks.addEventListener('change', checkCCActive);
+    video.textTracks.addEventListener('addtrack', handleTrackChange);
+    video.textTracks.addEventListener('removetrack', handleTrackChange);
   }
   checkCCActive();
 
@@ -1250,6 +1297,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   const onVolumeChange = () => {
     volumeSlider.value = video.muted ? '0' : String(video.volume);
     updateVolumeIcon();
+    updateVolumeSliderFill();
   };
   const onRateChange = () => { updateSpeedLabelText(); };
   
@@ -1303,6 +1351,8 @@ function createCustomControls(video: HTMLVideoElement): void {
     }
     if (video.textTracks) {
       video.textTracks.removeEventListener('change', checkCCActive);
+      video.textTracks.removeEventListener('addtrack', handleTrackChange);
+      video.textTracks.removeEventListener('removetrack', handleTrackChange);
     }
     window.removeEventListener('click', onDocumentClick, true);
     window.removeEventListener('blur', onWindowBlur);
