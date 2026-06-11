@@ -23,6 +23,7 @@
 
 /* Ancestor override to ensure overflow is visible and no new stacking contexts are created */
 .theater-everywhere-parent-active {
+  position: relative !important;
   overflow: visible !important;
   transform: none !important;
   filter: none !important;
@@ -343,11 +344,11 @@
 
 /* Center loading spinner */
 .theater-loading-indicator {
-  position: fixed !important;
+  position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  z-index: 2147483646 !important;
+  z-index: 2147483647 !important;
   pointer-events: none !important;
   opacity: 0 !important;
   transition: opacity 0.2s ease !important;
