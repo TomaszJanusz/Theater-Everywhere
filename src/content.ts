@@ -820,6 +820,141 @@ function createCustomControls(video: HTMLVideoElement): void {
     exitTheaterMode();
   });
 
+  // Subtitles / CC Button
+  const ccBtn = document.createElement('button');
+  ccBtn.className = 'theater-control-btn cc-btn';
+  ccBtn.title = 'Subtitles / Captions';
+  ccBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+      <path d="M7 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0M14 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0"></path>
+    </svg>
+  `;
+
+  const ccMenu = document.createElement('div');
+  ccMenu.className = 'theater-cc-menu';
+  ccMenu.style.display = 'none';
+  wrapper.appendChild(ccMenu);
+
+  const checkCCActive = () => {
+    let isAnyShowing = false;
+    const tracks = video.textTracks;
+    if (tracks) {
+      for (let i = 0; i < tracks.length; i++) {
+        if (tracks[i].mode === 'showing') {
+          isAnyShowing = true;
+          break;
+        }
+      }
+    }
+    if (isAnyShowing) {
+      ccBtn.classList.add('active');
+    } else {
+      ccBtn.classList.remove('active');
+    }
+  };
+  if (video.textTracks) {
+    video.textTracks.addEventListener('change', checkCCActive);
+  }
+  checkCCActive();
+
+  const updateCCMenu = () => {
+    ccMenu.innerHTML = '';
+    const tracks = video.textTracks;
+    
+    if (!tracks || tracks.length === 0) {
+      const item = document.createElement('div');
+      item.className = 'theater-cc-menu-item';
+      item.textContent = 'No subtitles';
+      item.style.opacity = '0.5';
+      item.style.cursor = 'default';
+      ccMenu.appendChild(item);
+      return;
+    }
+    
+    // Add "Off" option
+    const offItem = document.createElement('button');
+    offItem.className = 'theater-cc-menu-item';
+    offItem.textContent = 'Off';
+    
+    let isAnyShowing = false;
+    for (let i = 0; i < tracks.length; i++) {
+      if (tracks[i].mode === 'showing') {
+        isAnyShowing = true;
+      }
+    }
+    
+    if (!isAnyShowing) {
+      offItem.classList.add('active');
+      const checkIcon = document.createElement('span');
+      checkIcon.innerHTML = '✓';
+      checkIcon.style.marginLeft = '8px';
+      offItem.appendChild(checkIcon);
+    }
+    
+    offItem.addEventListener('click', () => {
+      for (let i = 0; i < tracks.length; i++) {
+        tracks[i].mode = 'disabled';
+      }
+      updateCCMenu();
+      checkCCActive();
+      ccMenu.style.display = 'none';
+    });
+    ccMenu.appendChild(offItem);
+    
+    // Add each track
+    for (let i = 0; i < tracks.length; i++) {
+      const track = tracks[i];
+      const item = document.createElement('button');
+      item.className = 'theater-cc-menu-item';
+      
+      const label = track.label || track.language || `Track ${i + 1}`;
+      item.textContent = label;
+      
+      if (track.mode === 'showing') {
+        item.classList.add('active');
+        const checkIcon = document.createElement('span');
+        checkIcon.innerHTML = '✓';
+        checkIcon.style.marginLeft = '8px';
+        item.appendChild(checkIcon);
+      }
+      
+      item.addEventListener('click', () => {
+        for (let j = 0; j < tracks.length; j++) {
+          tracks[j].mode = j === i ? 'showing' : 'disabled';
+        }
+        updateCCMenu();
+        checkCCActive();
+        ccMenu.style.display = 'none';
+      });
+      ccMenu.appendChild(item);
+    }
+  };
+
+  ccBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (ccMenu.style.display === 'none') {
+      updateCCMenu();
+      ccMenu.style.display = 'flex';
+      
+      // Position menu relative to the CC button
+      const rect = ccBtn.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      ccMenu.style.right = `${wrapperRect.right - rect.right}px`;
+      ccMenu.style.bottom = `${rect.height + 10}px`;
+    } else {
+      ccMenu.style.display = 'none';
+    }
+  });
+
+  const onDocumentClick = (e: MouseEvent) => {
+    if (ccMenu.style.display !== 'none' && !ccMenu.contains(e.target as Node) && e.target !== ccBtn) {
+      ccMenu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', onDocumentClick);
+
+  rightSec.appendChild(ccBtn);
   rightSec.appendChild(speedBtn);
   rightSec.appendChild(pipBtn);
   rightSec.appendChild(fullscreenBtn);
@@ -1150,6 +1285,10 @@ function createCustomControls(video: HTMLVideoElement): void {
       clearTimeout(bufferingTimeout);
       bufferingTimeout = null;
     }
+    if (video.textTracks) {
+      video.textTracks.removeEventListener('change', checkCCActive);
+    }
+    document.removeEventListener('click', onDocumentClick);
     loadingIndicator.remove();
   };
 
