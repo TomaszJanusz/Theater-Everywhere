@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Theater Everywhere",
+  "name": "Theater Mode Everywhere",
   "version": "1.0.0",
   "author": "Tomasz Janusz",
-  "description": "Maximize any HTML5 video player to fill the browser viewport with a single keypress [T].",
+  "description": "Maximize any HTML5 video player to fill the browser viewport with a single keypress.",
   "permissions": [
     "storage",
     "tabs"
