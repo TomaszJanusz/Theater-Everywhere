@@ -474,6 +474,19 @@ function createCustomControls(video: HTMLVideoElement): void {
   const wrapper = document.createElement('div') as ExtendedHTMLDivElement;
   wrapper.className = 'theater-controls-wrapper';
 
+  // Create loading indicator
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.className = 'theater-loading-indicator';
+  
+  const loadingSpinner = document.createElement('div');
+  loadingSpinner.className = 'theater-loading-spinner';
+  
+  loadingIndicator.appendChild(loadingSpinner);
+  
+  if (video.parentElement) {
+    video.parentElement.appendChild(loadingIndicator);
+  }
+
   // Prevent event propagation so clicking controls doesn't trigger parent actions or play/pause
   wrapper.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -899,8 +912,22 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   scrubberContainer.addEventListener('touchstart', onScrubberTouchStart, { passive: true });
 
+  // Buffering / Loading State Helper
+  const setBuffering = (isBuffering: boolean) => {
+    if (isBuffering) {
+      loadingIndicator.classList.add('visible');
+      scrubberContainer.classList.add('buffering');
+    } else {
+      loadingIndicator.classList.remove('visible');
+      scrubberContainer.classList.remove('buffering');
+    }
+  };
+
   // Event hookups
-  const onPlay = () => { playPauseBtn.innerHTML = pauseIcon; };
+  const onPlay = () => { 
+    playPauseBtn.innerHTML = pauseIcon; 
+    setBuffering(false);
+  };
   const onPause = () => { playPauseBtn.innerHTML = playIcon; };
   const onTimeUpdate = () => { updateScrubber(); updateTimeDisplay(); };
   const onProgress = () => { updateScrubber(); };
@@ -910,26 +937,49 @@ function createCustomControls(video: HTMLVideoElement): void {
     updateVolumeIcon();
   };
   const onRateChange = () => { updateSpeedLabelText(); };
+  
+  const onWaiting = () => { setBuffering(true); };
+  const onSeeking = () => { setBuffering(true); };
+  const onSeeked = () => { 
+    updateScrubber(); 
+    updateTimeDisplay(); 
+    setBuffering(false); 
+  };
+  const onCanPlay = () => { setBuffering(false); };
+  const onStalled = () => {
+    if (!video.paused) {
+      setBuffering(true);
+    }
+  };
 
   video.addEventListener('play', onPlay);
   video.addEventListener('pause', onPause);
   video.addEventListener('timeupdate', onTimeUpdate);
   video.addEventListener('progress', onProgress);
-  video.addEventListener('seeked', onTimeUpdate);
+  video.addEventListener('seeked', onSeeked);
   video.addEventListener('durationchange', onDurationChange);
   video.addEventListener('volumechange', onVolumeChange);
   video.addEventListener('ratechange', onRateChange);
+  video.addEventListener('waiting', onWaiting);
+  video.addEventListener('seeking', onSeeking);
+  video.addEventListener('canplay', onCanPlay);
+  video.addEventListener('stalled', onStalled);
 
   wrapper._videoListenersCleanup = () => {
     video.removeEventListener('play', onPlay);
     video.removeEventListener('pause', onPause);
     video.removeEventListener('timeupdate', onTimeUpdate);
     video.removeEventListener('progress', onProgress);
-    video.removeEventListener('seeked', onTimeUpdate);
+    video.removeEventListener('seeked', onSeeked);
     video.removeEventListener('durationchange', onDurationChange);
     video.removeEventListener('volumechange', onVolumeChange);
     video.removeEventListener('ratechange', onRateChange);
+    video.removeEventListener('waiting', onWaiting);
+    video.removeEventListener('seeking', onSeeking);
+    video.removeEventListener('canplay', onCanPlay);
+    video.removeEventListener('stalled', onStalled);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
+    loadingIndicator.remove();
   };
 
   // Setup mousemove listeners
