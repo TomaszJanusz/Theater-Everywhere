@@ -930,7 +930,7 @@ function createCustomControls(video: HTMLVideoElement): void {
         loadingIndicator.classList.add('visible');
         scrubberContainer.classList.add('buffering');
         bufferingTimeout = null;
-      }, 250);
+      }, 1000);
     } else {
       if (bufferingTimeout) {
         clearTimeout(bufferingTimeout);
