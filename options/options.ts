@@ -269,5 +269,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
     });
+
+    const resetBtn = document.getElementById('reset-shortcuts-btn') as HTMLButtonElement | null;
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async () => {
+        try {
+          await chrome.storage.sync.set({ shortcuts: defaultShortcuts });
+          await loadAndRenderShortcuts();
+          await notifyAllTabs();
+        } catch (err) {
+          console.error('Error resetting shortcuts:', err);
+        }
+      });
+    }
   }
 });
