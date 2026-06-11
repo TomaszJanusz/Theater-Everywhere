@@ -293,6 +293,13 @@ function enterTheaterMode(element) {
       theaterElement.setAttribute('controls', 'true');
     }
 
+    // Force loading of paused/unloaded videos to display the initial frame instead of a gray/black screen
+    if (theaterElement.readyState === 0) {
+      console.log('[Theater Everywhere] Video has readyState = 0. Force setting preload="auto" and calling load().');
+      theaterElement.preload = 'auto';
+      theaterElement.load();
+    }
+
     // Isolate pointer and mouse events to block double-toggles in custom players
     const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
     eventTypes.forEach(type => {
