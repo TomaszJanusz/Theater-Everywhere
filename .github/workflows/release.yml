@@ -29,7 +29,7 @@ jobs:
             echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
 
-      - name: Create and Push Tag (Manual Run)
+      - name: Create, Bump version and Push Tag (Manual Run)
         if: github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
@@ -39,8 +39,31 @@ jobs:
           git fetch --tags
           
           if git rev-parse "${{ env.RELEASE_TAG }}" >/dev/null 2>&1; then
-            echo "Tag ${{ env.RELEASE_TAG }} already exists. Skipping creation."
+            echo "Tag ${{ env.RELEASE_TAG }} already exists. Skipping version bump and tag creation."
           else
+            # Strip leading 'v' if present (e.g. v1.0.0 -> 1.0.0)
+            VERSION_NUMBER=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
+            echo "Bumping version in package.json and manifest.json to $VERSION_NUMBER..."
+            
+            # Bump version in package.json & package-lock.json
+            npm version "$VERSION_NUMBER" --no-git-tag-version
+            
+            # Bump version in manifest.json
+            node -e "
+              const fs = require('fs');
+              const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+              manifest.version = '$VERSION_NUMBER';
+              fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+            "
+            
+            # Commit changes
+            git add package.json package-lock.json manifest.json
+            git commit -m "chore(release): bump version to $VERSION_NUMBER"
+            
+            # Push changes back to the triggering branch
+            git push origin HEAD:${{ github.ref_name }}
+            
+            # Tag the new commit and push tag
             echo "Creating and pushing tag ${{ env.RELEASE_TAG }}..."
             git tag "${{ env.RELEASE_TAG }}"
             git push origin "${{ env.RELEASE_TAG }}"
