@@ -493,12 +493,16 @@ function createCustomControls(video: HTMLVideoElement): void {
   const scrubberTrack = document.createElement('div');
   scrubberTrack.className = 'theater-scrubber-track';
 
+  const scrubberBuffer = document.createElement('div');
+  scrubberBuffer.className = 'theater-scrubber-buffer';
+
   const scrubberFill = document.createElement('div');
   scrubberFill.className = 'theater-scrubber-fill';
 
   const scrubberHandle = document.createElement('div');
   scrubberHandle.className = 'theater-scrubber-handle';
 
+  scrubberTrack.appendChild(scrubberBuffer);
   scrubberTrack.appendChild(scrubberFill);
   scrubberTrack.appendChild(scrubberHandle);
   scrubberContainer.appendChild(scrubberTrack);
@@ -763,8 +767,30 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
 
   const updateScrubber = () => {
-    if (isDragging || video.seeking) return;
     const dur = video.duration || 0;
+    
+    // Update buffering progress
+    if (dur > 0 && video.buffered && video.buffered.length > 0) {
+      const cur = video.currentTime || 0;
+      let bufferedEnd = 0;
+      for (let i = 0; i < video.buffered.length; i++) {
+        const start = video.buffered.start(i);
+        const end = video.buffered.end(i);
+        if (cur >= start && cur <= end) {
+          bufferedEnd = end;
+          break;
+        }
+      }
+      if (bufferedEnd === 0 && video.buffered.length > 0) {
+        bufferedEnd = video.buffered.end(video.buffered.length - 1);
+      }
+      const bufPct = (bufferedEnd / dur) * 100;
+      scrubberBuffer.style.width = `${bufPct}%`;
+    } else {
+      scrubberBuffer.style.width = '0%';
+    }
+
+    if (isDragging || video.seeking) return;
     const cur = video.currentTime || 0;
     const pct = dur > 0 ? (cur / dur) * 100 : 0;
     scrubberFill.style.width = `${pct}%`;
@@ -881,6 +907,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   const onPlay = () => { playPauseBtn.innerHTML = pauseIcon; };
   const onPause = () => { playPauseBtn.innerHTML = playIcon; };
   const onTimeUpdate = () => { updateScrubber(); updateTimeDisplay(); };
+  const onProgress = () => { updateScrubber(); };
   const onDurationChange = () => { updateScrubber(); updateTimeDisplay(); };
   const onVolumeChange = () => {
     volumeSlider.value = video.muted ? '0' : String(video.volume);
@@ -891,6 +918,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   video.addEventListener('play', onPlay);
   video.addEventListener('pause', onPause);
   video.addEventListener('timeupdate', onTimeUpdate);
+  video.addEventListener('progress', onProgress);
   video.addEventListener('seeked', onTimeUpdate);
   video.addEventListener('durationchange', onDurationChange);
   video.addEventListener('volumechange', onVolumeChange);
@@ -900,6 +928,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     video.removeEventListener('play', onPlay);
     video.removeEventListener('pause', onPause);
     video.removeEventListener('timeupdate', onTimeUpdate);
+    video.removeEventListener('progress', onProgress);
     video.removeEventListener('seeked', onTimeUpdate);
     video.removeEventListener('durationchange', onDurationChange);
     video.removeEventListener('volumechange', onVolumeChange);
