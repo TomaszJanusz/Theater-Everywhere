@@ -1,17 +1,17 @@
 /* Options script for Theater Everywhere */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const form = document.getElementById('add-domain-form');
-  const input = document.getElementById('domain-input');
-  const validationMsg = document.getElementById('validation-msg');
-  const container = document.getElementById('blacklist-container');
-  const countBadge = document.getElementById('blacklist-count');
+  const form = document.getElementById('add-domain-form') as HTMLFormElement;
+  const input = document.getElementById('domain-input') as HTMLInputElement;
+  const validationMsg = document.getElementById('validation-msg') as HTMLElement;
+  const container = document.getElementById('blacklist-container') as HTMLElement;
+  const countBadge = document.getElementById('blacklist-count') as HTMLElement;
 
   // Load and render blacklist on startup
   await loadAndRenderBlacklist();
 
   // Handle Form Submit
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e: Event) => {
     e.preventDefault();
     validationMsg.textContent = '';
 
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      const blacklist = data.blacklist || [];
+      const blacklist = (data.blacklist || []) as string[];
 
       if (blacklist.includes(domain)) {
         validationMsg.textContent = 'This website is already excluded.';
@@ -48,12 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadAndRenderBlacklist() {
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      const blacklist = data.blacklist || [];
+      const blacklist = (data.blacklist || []) as string[];
       
       // Sort alphabetically
       blacklist.sort();
 
-      countBadge.textContent = blacklist.length;
+      countBadge.textContent = String(blacklist.length);
       container.innerHTML = '';
 
       if (blacklist.length === 0) {
@@ -117,10 +117,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Remove domain from storage
-  async function removeDomain(domain) {
+  async function removeDomain(domain: string) {
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      let blacklist = data.blacklist || [];
+      let blacklist = (data.blacklist || []) as string[];
       
       blacklist = blacklist.filter(d => d !== domain);
       await chrome.storage.sync.set({ blacklist });
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Clean and validate domain input (resolves urls into hostnames)
-  function cleanDomain(inputVal) {
+  function cleanDomain(inputVal: string) {
     let str = inputVal.trim().toLowerCase();
     if (!str) return null;
 

@@ -1,19 +1,19 @@
-/* Content script for Theater Everywhere extension */
+import './content.css';
 
-let activeVideo = null;
-let theaterElement = null;
-let ancestorsList = [];
+let activeVideo: HTMLVideoElement | null = null;
+let theaterElement: HTMLElement | null = null;
+let ancestorsList: HTMLElement[] = [];
 let isInitialized = false;
-let toolbarTimer = null;
+let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Show/hide floating quick actions toolbar based on mouse activity
-function showToolbar() {
-  const toolbar = document.querySelector('.theater-everywhere-toolbar');
+function showToolbar(): void {
+  const toolbar = document.querySelector('.theater-everywhere-toolbar') as HTMLElement | null;
   if (!toolbar) return;
   
   toolbar.classList.add('visible');
   
-  clearTimeout(toolbarTimer);
+  if (toolbarTimer) clearTimeout(toolbarTimer);
   toolbarTimer = setTimeout(() => {
     if (toolbar && !toolbar.matches(':hover')) {
       toolbar.classList.remove('visible');
@@ -22,11 +22,12 @@ function showToolbar() {
 }
 
 // Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
-function preventDoubleToggle(e) {
+function preventDoubleToggle(e: Event): void {
   if (!theaterElement) return;
 
   const rect = theaterElement.getBoundingClientRect();
-  const clickY = e.clientY - rect.top;
+  const mouseEvent = e as MouseEvent;
+  const clickY = mouseEvent.clientY - rect.top;
 
   // Block double clicks completely to avoid site-level fullscreen conflicts
   if (e.type === 'dblclick') {
@@ -48,13 +49,14 @@ function preventDoubleToggle(e) {
 
     // Only toggle play/pause on 'click' to guarantee it happens exactly once per mouse release
     if (e.type === 'click' && theaterElement.tagName === 'VIDEO') {
+      const video = theaterElement as HTMLVideoElement;
       console.log(`[Theater Everywhere] Click completed. Toggling playback state manually...`);
-      if (theaterElement.paused) {
-        theaterElement.play().catch(err => {
+      if (video.paused) {
+        video.play().catch(err => {
           console.error('[Theater Everywhere] Programmatic play failed:', err);
         });
       } else {
-        theaterElement.pause();
+        video.pause();
       }
     }
   } else {
@@ -64,8 +66,16 @@ function preventDoubleToggle(e) {
   }
 }
 
+interface Listeners {
+  keydown: ((event: KeyboardEvent) => void) | null;
+  mousemove: ((event: MouseEvent) => void) | null;
+  play: ((event: Event) => void) | null;
+  pause: ((event: Event) => void) | null;
+  message: ((event: MessageEvent) => void) | null;
+}
+
 // Event listener references for clean removal
-const listeners = {
+const listeners: Listeners = {
   keydown: null,
   mousemove: null,
   play: null,
@@ -74,12 +84,12 @@ const listeners = {
 };
 
 // Check blacklist and initialize or destroy listeners
-async function checkBlacklistAndInit() {
+async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
   
   try {
     const data = await chrome.storage.sync.get({ blacklist: [] });
-    const blacklist = data.blacklist || [];
+    const blacklist = (data.blacklist || []) as string[];
     
     const isBlacklisted = blacklist.some(domain => {
       return currentHostname === domain || currentHostname.endsWith('.' + domain);
@@ -104,13 +114,13 @@ async function checkBlacklistAndInit() {
 }
 
 // Setup event listeners
-function initialize() {
+function initialize(): void {
   if (isInitialized) return;
 
   // 1. Keyboard Listener (T and Escape)
-  listeners.keydown = (event) => {
+  listeners.keydown = (event: KeyboardEvent) => {
     // Ignore key presses in inputs/textareas/editable elements
-    const activeEl = document.activeElement;
+    const activeEl = document.activeElement as HTMLElement | null;
     const isEditable = activeEl && (
       activeEl.tagName === 'INPUT' ||
       activeEl.tagName === 'TEXTAREA' ||
@@ -128,14 +138,15 @@ function initialize() {
         exitTheaterMode();
       }
     } else if (theaterElement && theaterElement.tagName === 'VIDEO') {
+      const video = theaterElement as HTMLVideoElement;
       // Seek keys (ArrowLeft / ArrowRight) in theater mode
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        theaterElement.currentTime = Math.max(0, theaterElement.currentTime - 5);
+        video.currentTime = Math.max(0, video.currentTime - 5);
         triggerSeekIndicator('left');
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        theaterElement.currentTime = Math.min(theaterElement.duration, theaterElement.currentTime + 5);
+        video.currentTime = Math.min(video.duration, video.currentTime + 5);
         triggerSeekIndicator('right');
       }
     }
@@ -143,10 +154,10 @@ function initialize() {
   document.addEventListener('keydown', listeners.keydown, true);
 
   // 2. Mouse Move Listener (Track video under cursor using elementsFromPoint)
-  listeners.mousemove = (event) => {
+  listeners.mousemove = (event: MouseEvent) => {
     try {
       const elements = document.elementsFromPoint(event.clientX, event.clientY);
-      const video = elements.find(el => el && el.tagName === 'VIDEO');
+      const video = elements.find(el => el && el.tagName === 'VIDEO') as HTMLVideoElement | undefined;
       if (video) {
         activeVideo = video;
       }
@@ -157,23 +168,24 @@ function initialize() {
   document.addEventListener('mousemove', listeners.mousemove, { passive: true });
 
   // 3. Play/Pause event tracking
-  listeners.play = (event) => {
-    if (event.target && event.target.tagName === 'VIDEO') {
-      activeVideo = event.target;
-      console.log(`[Theater Everywhere] Media event "play" detected on:`, event.target, `| paused:`, event.target.paused);
+  listeners.play = (event: Event) => {
+    if (event.target && (event.target as HTMLElement).tagName === 'VIDEO') {
+      activeVideo = event.target as HTMLVideoElement;
+      console.log(`[Theater Everywhere] Media event "play" detected on:`, event.target, `| paused:`, activeVideo.paused);
     }
   };
   document.addEventListener('play', listeners.play, true); // Use capture phase since 'play' does not bubble
 
-  listeners.pause = (event) => {
-    if (event.target && event.target.tagName === 'VIDEO') {
-      console.log(`[Theater Everywhere] Media event "pause" detected on:`, event.target, `| paused:`, event.target.paused);
+  listeners.pause = (event: Event) => {
+    if (event.target && (event.target as HTMLElement).tagName === 'VIDEO') {
+      const video = event.target as HTMLVideoElement;
+      console.log(`[Theater Everywhere] Media event "pause" detected on:`, video, `| paused:`, video.paused);
     }
   };
   document.addEventListener('pause', listeners.pause, true); // Use capture phase since 'pause' does not bubble
 
   // 4. Cross-iframe postMessage listener
-  listeners.message = (event) => {
+  listeners.message = (event: MessageEvent) => {
     const data = event.data;
     if (!data || typeof data !== 'object') return;
 
@@ -210,7 +222,7 @@ function initialize() {
 }
 
 // Cleanup and remove listeners
-function destroy() {
+function destroy(): void {
   if (!isInitialized) return;
 
   if (theaterElement) {
@@ -228,7 +240,7 @@ function destroy() {
 }
 
 // Smart video selection algorithm
-function findBestVideo() {
+function findBestVideo(): HTMLVideoElement | null {
   // If the currently tracked active video is still in the DOM and visible
   if (activeVideo && document.body.contains(activeVideo) && activeVideo.offsetWidth > 0) {
     return activeVideo;
@@ -258,7 +270,7 @@ function findBestVideo() {
 }
 
 // Toggle theater mode on or off
-function toggleTheaterMode() {
+function toggleTheaterMode(): void {
   if (theaterElement) {
     exitTheaterMode();
   } else {
@@ -269,14 +281,16 @@ function toggleTheaterMode() {
       // No video found locally, ask child iframes to toggle
       const iframes = document.querySelectorAll('iframe');
       iframes.forEach(iframe => {
-        iframe.contentWindow.postMessage({ type: 'theater-everywhere-toggle' }, '*');
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'theater-everywhere-toggle' }, '*');
+        }
       });
     }
   }
 }
 
 // Enter theater mode
-function enterTheaterMode(element) {
+function enterTheaterMode(element: HTMLElement): void {
   if (theaterElement) return;
 
   theaterElement = element;
@@ -284,30 +298,31 @@ function enterTheaterMode(element) {
 
   // Specific setup for HTML5 <video> elements
   if (theaterElement.tagName === 'VIDEO') {
+    const video = theaterElement as HTMLVideoElement;
     // Save original controls attribute state
-    const originalControls = theaterElement.hasAttribute('controls');
-    theaterElement.dataset.originalControls = originalControls ? 'true' : 'false';
+    const originalControls = video.hasAttribute('controls');
+    video.dataset.originalControls = originalControls ? 'true' : 'false';
     
     // Enable browser native controls so the video remains controllable in theater mode
     if (!originalControls) {
-      theaterElement.setAttribute('controls', 'true');
+      video.setAttribute('controls', 'true');
     }
 
     // Force loading of paused/unloaded videos to display the initial frame instead of a gray/black screen
-    if (theaterElement.readyState === 0) {
+    if (video.readyState === 0) {
       console.log('[Theater Everywhere] Video has readyState = 0. Force setting preload="auto" and calling load().');
-      theaterElement.preload = 'auto';
-      theaterElement.load();
+      video.preload = 'auto';
+      video.load();
     }
 
     // Isolate pointer and mouse events to block double-toggles in custom players
     const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
     eventTypes.forEach(type => {
-      theaterElement.addEventListener(type, preventDoubleToggle, true);
+      video.addEventListener(type, preventDoubleToggle, true);
     });
 
     // Create and inject the floating overlay toolbar for quick actions (PiP, Speed, Close)
-    createQuickActionsToolbar(theaterElement);
+    createQuickActionsToolbar(video);
   }
 
   // Traverse ancestors and apply override class
@@ -330,21 +345,22 @@ function enterTheaterMode(element) {
 }
 
 // Exit theater mode
-function exitTheaterMode() {
+function exitTheaterMode(): void {
   if (!theaterElement) return;
 
   // Restore HTML5 video attributes
   if (theaterElement.tagName === 'VIDEO') {
-    const originalControls = theaterElement.dataset.originalControls;
+    const video = theaterElement as HTMLVideoElement;
+    const originalControls = video.dataset.originalControls;
     if (originalControls === 'false') {
-      theaterElement.removeAttribute('controls');
+      video.removeAttribute('controls');
     }
-    delete theaterElement.dataset.originalControls;
+    delete video.dataset.originalControls;
 
     // Clean up event isolation blockers
     const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
     eventTypes.forEach(type => {
-      theaterElement.removeEventListener(type, preventDoubleToggle, true);
+      video.removeEventListener(type, preventDoubleToggle, true);
     });
 
     // Clean up toolbar
@@ -367,8 +383,11 @@ function exitTheaterMode() {
 
   // If this was an iframe, propagate exit to child window inside it
   if (theaterElement.tagName === 'IFRAME') {
+    const iframe = theaterElement as HTMLIFrameElement;
     try {
-      theaterElement.contentWindow.postMessage({ type: 'theater-everywhere-exit-down' }, '*');
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'theater-everywhere-exit-down' }, '*');
+      }
     } catch (e) {
       // Ignore cross-origin exceptions
     }
@@ -383,7 +402,7 @@ function exitTheaterMode() {
 }
 
 // Listen to state changes from the extension popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === 'statusChanged') {
     checkBlacklistAndInit();
     sendResponse({ success: true });
@@ -393,8 +412,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Run blacklist check on load
 checkBlacklistAndInit();
 
+interface ExtendedHTMLButtonElement extends HTMLButtonElement {
+  _rateChangeHandler?: () => void;
+}
+
 // Creates floating overlay toolbar
-function createQuickActionsToolbar(video) {
+function createQuickActionsToolbar(video: HTMLVideoElement): void {
   // If it already exists, remove it
   destroyQuickActionsToolbar();
 
@@ -405,7 +428,7 @@ function createQuickActionsToolbar(video) {
   const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.5];
   
   // 1. Speed button
-  const speedBtn = document.createElement('button');
+  const speedBtn = document.createElement('button') as ExtendedHTMLButtonElement;
   speedBtn.className = 'theater-btn speed-btn';
   speedBtn.title = 'Cycle Playback Speed';
   
@@ -413,7 +436,7 @@ function createQuickActionsToolbar(video) {
   speedLabel.className = 'speed-label';
   // Set initial text
   const updateSpeedLabelText = () => {
-    speedLabel.textContent = video.playbackRate.toFixed(1) + 'x';
+    speedLabel.textContent = video.playbackRate.toFixed(2).replace(/\.00$|\.0$/, '') + 'x';
   };
   updateSpeedLabelText();
   speedBtn.appendChild(speedLabel);
@@ -473,7 +496,10 @@ function createQuickActionsToolbar(video) {
   toolbar.appendChild(speedBtn);
   toolbar.appendChild(pipBtn);
   toolbar.appendChild(closeBtn);
-  video.parentElement.appendChild(toolbar);
+  
+  if (video.parentElement) {
+    video.parentElement.appendChild(toolbar);
+  }
 
   // Bind mousemove to show toolbar
   document.addEventListener('mousemove', showToolbar, { passive: true });
@@ -483,10 +509,10 @@ function createQuickActionsToolbar(video) {
 }
 
 // Cleans up the toolbar
-function destroyQuickActionsToolbar() {
-  const toolbar = document.querySelector('.theater-everywhere-toolbar');
+function destroyQuickActionsToolbar(): void {
+  const toolbar = document.querySelector('.theater-everywhere-toolbar') as HTMLElement | null;
   if (toolbar) {
-    const speedBtn = toolbar.querySelector('.speed-btn');
+    const speedBtn = toolbar.querySelector('.speed-btn') as ExtendedHTMLButtonElement | null;
     if (speedBtn && speedBtn._rateChangeHandler && theaterElement) {
       theaterElement.removeEventListener('ratechange', speedBtn._rateChangeHandler);
     }
@@ -494,13 +520,15 @@ function destroyQuickActionsToolbar() {
   }
   
   document.removeEventListener('mousemove', showToolbar);
-  clearTimeout(toolbarTimer);
+  if (toolbarTimer) clearTimeout(toolbarTimer);
 }
 
 // Triggers and animates the seek overlay indicator (YouTube-style)
-function triggerSeekIndicator(direction) {
+function triggerSeekIndicator(direction: 'left' | 'right'): void {
+  if (!theaterElement || !theaterElement.parentElement) return;
+
   // If an overlay already exists in that direction, remove it to reset the animation
-  const existing = document.querySelector(`.theater-everywhere-seek-overlay.${direction}`);
+  const existing = document.querySelector(`.theater-everywhere-seek-overlay.${direction}`) as HTMLElement | null;
   if (existing) {
     existing.remove();
   }

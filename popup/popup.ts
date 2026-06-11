@@ -1,19 +1,19 @@
 /* Popup script for Theater Everywhere */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const domainNameEl = document.getElementById('domain-name');
-  const toggleEl = document.getElementById('extension-toggle');
-  const statusDotEl = document.getElementById('status-dot');
-  const statusTextEl = document.getElementById('status-text');
-  const optionsBtn = document.getElementById('options-btn');
+  const domainNameEl = document.getElementById('domain-name') as HTMLElement;
+  const toggleEl = document.getElementById('extension-toggle') as HTMLInputElement;
+  const statusDotEl = document.getElementById('status-dot') as HTMLElement;
+  const statusTextEl = document.getElementById('status-text') as HTMLElement;
+  const optionsBtn = document.getElementById('options-btn') as HTMLButtonElement;
 
   let currentDomain = '';
-  let activeTabId = null;
+  let activeTabId: number | null = null;
 
   // 1. Get current active tab
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab && tab.url) {
+    if (tab && tab.url && tab.id !== undefined) {
       activeTabId = tab.id;
       const url = new URL(tab.url);
       
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      let blacklist = data.blacklist || [];
+      let blacklist = (data.blacklist || []) as string[];
 
       if (isActive) {
         // Remove from blacklist to activate
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function updateStatusUI() {
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      const blacklist = data.blacklist || [];
+      const blacklist = (data.blacklist || []) as string[];
       const isBlacklisted = blacklist.includes(currentDomain);
 
       // In blacklist = not active = checkbox unchecked
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Helper to change classes/texts of indicators
-  function setUIState(active, text) {
+  function setUIState(active: boolean, text: string) {
     statusTextEl.textContent = text;
     if (active) {
       statusDotEl.className = 'dot active';

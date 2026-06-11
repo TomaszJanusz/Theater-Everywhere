@@ -1,0 +1,21 @@
+{
+  "name": "theater-everywhere",
+  "version": "1.0.0",
+  "description": "Maximize any HTML5 video player to fill the browser viewport with a single keypress [T].",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsx scripts/build.ts"
+  },
+  "author": "Tomasz Janusz",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^20.12.7",
+    "@types/archiver": "^6.0.2",
+    "archiver": "^7.0.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.10",
+    "tsx": "^4.7.2"
+  }
+}
