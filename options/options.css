@@ -102,15 +102,15 @@ section h2 {
 /* Form block */
 .add-form {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.input-wrapper {
-  flex-grow: 1;
-  display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
 }
 
 .add-form input {
