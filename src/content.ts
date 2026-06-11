@@ -56,7 +56,8 @@ function showToolbar(): void {
   
   if (toolbarTimer) clearTimeout(toolbarTimer);
   toolbarTimer = setTimeout(() => {
-    if (controls && !controls.matches(':hover') && theaterElement) {
+    const isScrubberDragging = document.querySelector('.theater-scrubber-container.dragging') !== null;
+    if (controls && !controls.matches(':hover') && !isScrubberDragging && theaterElement) {
       controls.classList.remove('visible');
       document.body.style.cursor = 'none';
     }
@@ -740,9 +741,29 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   // Scrubber updates
   let isDragging = false;
+  let lastSeekTime = 0;
+  let seekTimeout: number | null = null;
+
+  const throttledSeek = (time: number) => {
+    const now = Date.now();
+    if (now - lastSeekTime >= 100) {
+      video.currentTime = time;
+      lastSeekTime = now;
+      if (seekTimeout) {
+        clearTimeout(seekTimeout);
+        seekTimeout = null;
+      }
+    } else {
+      if (seekTimeout) clearTimeout(seekTimeout);
+      seekTimeout = window.setTimeout(() => {
+        video.currentTime = time;
+        lastSeekTime = Date.now();
+      }, 100 - (now - lastSeekTime));
+    }
+  };
 
   const updateScrubber = () => {
-    if (isDragging) return;
+    if (isDragging || video.seeking) return;
     const dur = video.duration || 0;
     const cur = video.currentTime || 0;
     const pct = dur > 0 ? (cur / dur) * 100 : 0;
@@ -751,37 +772,69 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateScrubber();
 
-  const handleSeekEvent = (clientX: number) => {
+  const handleSeekEvent = (clientX: number, seekMode: 'none' | 'immediate' | 'throttled' = 'none') => {
     const rect = scrubberContainer.getBoundingClientRect();
+    if (rect.width === 0) return 0;
+    
     const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const pct = pos * 100;
     scrubberFill.style.width = `${pct}%`;
     scrubberHandle.style.left = `${pct}%`;
     
-    const targetTime = pos * (video.duration || 0);
-    timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(video.duration || 0)}`;
+    const duration = video.duration;
+    if (isNaN(duration) || !isFinite(duration) || duration <= 0) {
+      return 0;
+    }
+    
+    const targetTime = pos * duration;
+    timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(duration)}`;
+    
+    if (seekMode === 'immediate') {
+      if (seekTimeout) {
+        clearTimeout(seekTimeout);
+        seekTimeout = null;
+      }
+      video.currentTime = targetTime;
+      lastSeekTime = Date.now();
+    } else if (seekMode === 'throttled') {
+      throttledSeek(targetTime);
+    }
+    
     return targetTime;
   };
 
   const onScrubberMouseDown = (e: MouseEvent) => {
     e.preventDefault();
     isDragging = true;
-    handleSeekEvent(e.clientX);
+    scrubberContainer.classList.add('dragging');
+    handleSeekEvent(e.clientX, 'immediate');
     
     const onMouseMove = (moveEvt: MouseEvent) => {
-      handleSeekEvent(moveEvt.clientX);
+      handleSeekEvent(moveEvt.clientX, 'throttled');
     };
 
     const onMouseUp = (upEvt: MouseEvent) => {
-      const finalTime = handleSeekEvent(upEvt.clientX);
-      video.currentTime = finalTime;
-      isDragging = false;
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      handleSeekEvent(upEvt.clientX, 'immediate');
+      
+      const onSeeked = () => {
+        isDragging = false;
+        scrubberContainer.classList.remove('dragging');
+        video.removeEventListener('seeked', onSeeked);
+      };
+      video.addEventListener('seeked', onSeeked);
+      
+      setTimeout(() => {
+        isDragging = false;
+        scrubberContainer.classList.remove('dragging');
+        video.removeEventListener('seeked', onSeeked);
+      }, 150);
+
+      document.removeEventListener('mousemove', onMouseMove, true);
+      document.removeEventListener('mouseup', onMouseUp, true);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mousemove', onMouseMove, true);
+    document.addEventListener('mouseup', onMouseUp, true);
   };
 
   scrubberContainer.addEventListener('mousedown', onScrubberMouseDown);
@@ -789,26 +842,38 @@ function createCustomControls(video: HTMLVideoElement): void {
   const onScrubberTouchStart = (e: TouchEvent) => {
     if (e.touches.length !== 1) return;
     isDragging = true;
-    handleSeekEvent(e.touches[0].clientX);
+    scrubberContainer.classList.add('dragging');
+    handleSeekEvent(e.touches[0].clientX, 'immediate');
 
     const onTouchMove = (moveEvt: TouchEvent) => {
       if (moveEvt.touches.length === 1) {
-        handleSeekEvent(moveEvt.touches[0].clientX);
+        handleSeekEvent(moveEvt.touches[0].clientX, 'throttled');
       }
     };
 
     const onTouchEnd = (endEvt: TouchEvent) => {
       if (endEvt.changedTouches.length === 1) {
-        const finalTime = handleSeekEvent(endEvt.changedTouches[0].clientX);
-        video.currentTime = finalTime;
+        handleSeekEvent(endEvt.changedTouches[0].clientX, 'immediate');
       }
-      isDragging = false;
-      document.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('touchend', onTouchEnd);
+      const onSeeked = () => {
+        isDragging = false;
+        scrubberContainer.classList.remove('dragging');
+        video.removeEventListener('seeked', onSeeked);
+      };
+      video.addEventListener('seeked', onSeeked);
+      
+      setTimeout(() => {
+        isDragging = false;
+        scrubberContainer.classList.remove('dragging');
+        video.removeEventListener('seeked', onSeeked);
+      }, 150);
+
+      document.removeEventListener('touchmove', onTouchMove, true);
+      document.removeEventListener('touchend', onTouchEnd, true);
     };
 
-    document.addEventListener('touchmove', onTouchMove, { passive: true });
-    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
+    document.addEventListener('touchend', onTouchEnd, true);
   };
   scrubberContainer.addEventListener('touchstart', onScrubberTouchStart, { passive: true });
 
@@ -826,6 +891,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   video.addEventListener('play', onPlay);
   video.addEventListener('pause', onPause);
   video.addEventListener('timeupdate', onTimeUpdate);
+  video.addEventListener('seeked', onTimeUpdate);
   video.addEventListener('durationchange', onDurationChange);
   video.addEventListener('volumechange', onVolumeChange);
   video.addEventListener('ratechange', onRateChange);
@@ -834,6 +900,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     video.removeEventListener('play', onPlay);
     video.removeEventListener('pause', onPause);
     video.removeEventListener('timeupdate', onTimeUpdate);
+    video.removeEventListener('seeked', onTimeUpdate);
     video.removeEventListener('durationchange', onDurationChange);
     video.removeEventListener('volumechange', onVolumeChange);
     video.removeEventListener('ratechange', onRateChange);

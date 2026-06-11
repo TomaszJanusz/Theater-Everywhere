@@ -89,7 +89,8 @@
   transition: height 0.15s ease !important;
 }
 
-.theater-scrubber-container:hover .theater-scrubber-track {
+.theater-scrubber-container:hover .theater-scrubber-track,
+.theater-scrubber-container.dragging .theater-scrubber-track {
   height: 6px !important;
 }
 
@@ -116,7 +117,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
 }
 
-.theater-scrubber-container:hover .theater-scrubber-handle {
+.theater-scrubber-container:hover .theater-scrubber-handle,
+.theater-scrubber-container.dragging .theater-scrubber-handle {
   transform: translate(-50%, -50%) scale(1) !important;
 }
 
