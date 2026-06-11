@@ -570,9 +570,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   
   loadingIndicator.appendChild(loadingSpinner);
   
-  if (video.parentElement) {
-    video.parentElement.appendChild(loadingIndicator);
-  }
+  document.body.appendChild(loadingIndicator);
 
   // Prevent event propagation so clicking controls doesn't trigger parent actions or play/pause
   wrapper.addEventListener('click', (e) => {
@@ -1141,9 +1139,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   wrapper.appendChild(controlsRow);
 
-  if (video.parentElement) {
-    video.parentElement.appendChild(wrapper);
-  }
+  document.body.appendChild(wrapper);
 
   // Scrubber updates
   let isDragging = false;
@@ -1497,7 +1493,7 @@ function destroyCustomControls(): void {
 
 // Triggers and animates the seek overlay indicator (YouTube-style)
 function triggerSeekIndicator(direction: 'left' | 'right'): void {
-  if (!theaterElement || !theaterElement.parentElement) return;
+  if (!theaterElement) return;
 
   // If an overlay already exists in that direction, remove it to reset the animation
   const existing = document.querySelector(`.theater-everywhere-seek-overlay.${direction}`) as HTMLElement | null;
@@ -1535,7 +1531,7 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
     overlay.appendChild(textSpan);
   }
 
-  theaterElement.parentElement.appendChild(overlay);
+  document.body.appendChild(overlay);
 
   // Automatically remove after animation completes
   setTimeout(() => {
