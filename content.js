@@ -5,23 +5,34 @@ let theaterElement = null;
 let ancestorsList = [];
 let isInitialized = false;
 
-// Prevent custom player containers from double-toggling play/pause
+// Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
 function preventDoubleToggle(e) {
   if (!theaterElement) return;
 
   const rect = theaterElement.getBoundingClientRect();
   const clickY = e.clientY - rect.top;
-  
-  console.log(`[Theater Everywhere] Intercepted click/mousedown event: "${e.type}" | Y-coord: ${clickY}px (height: ${rect.height}px)`);
 
-  // If click is in the top portion (main video surface), handle play/pause manually and block everything
+  // Block double clicks completely to avoid site-level fullscreen conflicts
+  if (e.type === 'dblclick') {
+    console.log(`[Theater Everywhere] Intercepted double-click event. Blocking propagation...`);
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    return;
+  }
+  
+  console.log(`[Theater Everywhere] Intercepted pointer/mouse event: "${e.type}" | Y-coord: ${clickY}px (height: ${rect.height}px)`);
+
+  // If event is in the top portion (main video surface), isolate completely
   if (clickY < rect.height - 60) {
-    console.log(`[Theater Everywhere] Click detected on video surface. Manually toggling playback state...`);
+    console.log(`[Theater Everywhere] Blocking propagation of event "${e.type}" on video surface...`);
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    if (theaterElement.tagName === 'VIDEO') {
+    // Only toggle play/pause on 'click' to guarantee it happens exactly once per mouse release
+    if (e.type === 'click' && theaterElement.tagName === 'VIDEO') {
+      console.log(`[Theater Everywhere] Click completed. Toggling playback state manually...`);
       if (theaterElement.paused) {
         theaterElement.play().catch(err => {
           console.error('[Theater Everywhere] Programmatic play failed:', err);
@@ -31,19 +42,9 @@ function preventDoubleToggle(e) {
       }
     }
   } else {
-    // Click is on the controls bar. Let the browser process natively, but stop bubbling to parent wrappers
-    console.log(`[Theater Everywhere] Click detected on native controls bar. Letting native code process it and blocking bubble-up...`);
+    // Event is on the controls bar. Let native controls process it, block bubbling only
+    console.log(`[Theater Everywhere] Passing event "${e.type}" to native controls bar and blocking bubble-up...`);
     e.stopPropagation();
-  }
-}
-
-// Block double clicks in capturing phase to avoid site wrappers entering fullscreen/acting on dblclick
-function preventDoubleDblClick(e) {
-  if (theaterElement) {
-    console.log(`[Theater Everywhere] Intercepted dblclick event. Blocking propagation...`);
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
   }
 }
 
@@ -265,9 +266,11 @@ function enterTheaterMode(element) {
       theaterElement.setAttribute('controls', 'true');
     }
 
-    // Isolate clicks to native controls and block propagation to page custom controls
-    theaterElement.addEventListener('click', preventDoubleToggle, true); // Capturing phase
-    theaterElement.addEventListener('dblclick', preventDoubleDblClick, true); // Capturing phase
+    // Isolate pointer and mouse events to block double-toggles in custom players
+    const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
+    eventTypes.forEach(type => {
+      theaterElement.addEventListener(type, preventDoubleToggle, true);
+    });
   }
 
   // Traverse ancestors and apply override class
@@ -301,9 +304,11 @@ function exitTheaterMode() {
     }
     delete theaterElement.dataset.originalControls;
 
-    // Clean up event isolation click blockers
-    theaterElement.removeEventListener('click', preventDoubleToggle, true);
-    theaterElement.removeEventListener('dblclick', preventDoubleDblClick, true);
+    // Clean up event isolation blockers
+    const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
+    eventTypes.forEach(type => {
+      theaterElement.removeEventListener(type, preventDoubleToggle, true);
+    });
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
