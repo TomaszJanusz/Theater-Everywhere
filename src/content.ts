@@ -704,6 +704,30 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateVolumeSliderFill();
 
+  const volumeTooltip = document.createElement('div');
+  volumeTooltip.className = 'theater-volume-tooltip';
+  volumeContainer.appendChild(volumeTooltip);
+
+  const updateVolumeTooltip = () => {
+    const val = video.muted ? 0 : video.volume;
+    const pct = val * 100;
+    volumeTooltip.textContent = `${Math.round(pct)}%`;
+    volumeTooltip.style.left = `${36 + (pct / 100) * 60}px`;
+  };
+
+  const showVolumeTooltip = () => {
+    volumeTooltip.classList.add('visible');
+    updateVolumeTooltip();
+  };
+  const hideVolumeTooltip = () => {
+    volumeTooltip.classList.remove('visible');
+  };
+
+  volumeContainer.addEventListener('mouseenter', showVolumeTooltip);
+  volumeContainer.addEventListener('mouseleave', hideVolumeTooltip);
+  volumeSlider.addEventListener('focus', showVolumeTooltip);
+  volumeSlider.addEventListener('blur', hideVolumeTooltip);
+
   volumeBtn.addEventListener('click', () => {
     video.muted = !video.muted;
   });
@@ -715,6 +739,7 @@ function createCustomControls(video: HTMLVideoElement): void {
       video.muted = false;
     }
     updateVolumeSliderFill();
+    updateVolumeTooltip();
   });
 
   volumeContainer.appendChild(volumeBtn);
@@ -766,26 +791,113 @@ function createCustomControls(video: HTMLVideoElement): void {
   const rightSec = document.createElement('div');
   rightSec.className = 'theater-controls-right';
 
-  // Speed Cycle Button
-  const speeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.5];
+  // Playback Speed Controls
+  const speedContainer = document.createElement('div');
+  speedContainer.className = 'theater-speed-container';
+
   const speedBtn = document.createElement('button');
   speedBtn.className = 'theater-control-btn speed-btn';
   speedBtn.title = 'Playback Speed';
 
   const speedLabel = document.createElement('span');
   speedLabel.className = 'speed-label';
+  speedBtn.appendChild(speedLabel);
+
+  const speedLevels = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+  const getSpeedIndex = (rate: number): number => {
+    let closestIdx = 3; // default to 1.0
+    let minDiff = Infinity;
+    for (let i = 0; i < speedLevels.length; i++) {
+      const diff = Math.abs(speedLevels[i] - rate);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
+    }
+    return closestIdx;
+  };
+
   const updateSpeedLabelText = () => {
     speedLabel.textContent = video.playbackRate.toFixed(2).replace(/\.00$|\.0$/, '') + 'x';
   };
   updateSpeedLabelText();
-  speedBtn.appendChild(speedLabel);
+
+  const speedSliderWrapper = document.createElement('div');
+  speedSliderWrapper.className = 'theater-speed-slider-wrapper';
+
+  const speedSlider = document.createElement('input');
+  speedSlider.type = 'range';
+  speedSlider.className = 'theater-speed-slider';
+  speedSlider.min = '0';
+  speedSlider.max = String(speedLevels.length - 1);
+  speedSlider.step = '1';
+  speedSlider.value = String(getSpeedIndex(video.playbackRate));
+
+  const speedTick1x = document.createElement('div');
+  speedTick1x.className = 'speed-tick-1x';
+  speedTick1x.title = 'Normal speed (1x)';
+
+  speedSliderWrapper.appendChild(speedSlider);
+  speedSliderWrapper.appendChild(speedTick1x);
+
+  const speedTooltip = document.createElement('div');
+  speedTooltip.className = 'theater-speed-tooltip';
+
+  speedContainer.appendChild(speedBtn);
+  speedContainer.appendChild(speedSliderWrapper);
+  speedContainer.appendChild(speedTooltip);
+
+  let lastNonNormalSpeed = 1.5;
+
+  const updateSpeedSliderFill = () => {
+    const idx = getSpeedIndex(video.playbackRate);
+    const pct = (idx / (speedLevels.length - 1)) * 100;
+    const accentColor = 'var(--accent-color, #6366f1)';
+    const grad = `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${pct}%, rgba(255, 255, 255, 0.2) ${pct}%, rgba(255, 255, 255, 0.2) 100%)`;
+    speedSlider.style.setProperty('background', grad, 'important');
+  };
+  updateSpeedSliderFill();
+
+  const updateSpeedTooltip = () => {
+    speedTooltip.textContent = `${video.playbackRate.toFixed(2).replace(/\.00$|\.0$/, '')}x`;
+    const idx = getSpeedIndex(video.playbackRate);
+    const pct = (idx / (speedLevels.length - 1)) * 100;
+    speedTooltip.style.left = `${36 + (pct / 100) * 60}px`;
+  };
 
   speedBtn.addEventListener('click', () => {
-    let currentIdx = speeds.indexOf(video.playbackRate);
-    if (currentIdx === -1) currentIdx = 0;
-    const nextIdx = (currentIdx + 1) % speeds.length;
-    video.playbackRate = speeds[nextIdx];
+    if (video.playbackRate !== 1.0) {
+      lastNonNormalSpeed = video.playbackRate;
+      video.playbackRate = 1.0;
+    } else {
+      video.playbackRate = lastNonNormalSpeed;
+    }
   });
+
+  speedSlider.addEventListener('input', (e) => {
+    const idx = parseInt((e.target as HTMLInputElement).value, 10);
+    const rate = speedLevels[idx];
+    video.playbackRate = rate;
+    if (rate !== 1.0) {
+      lastNonNormalSpeed = rate;
+    }
+    updateSpeedSliderFill();
+    updateSpeedTooltip();
+  });
+
+  const showSpeedTooltip = () => {
+    speedTooltip.classList.add('visible');
+    updateSpeedTooltip();
+  };
+  const hideSpeedTooltip = () => {
+    speedTooltip.classList.remove('visible');
+  };
+
+  speedContainer.addEventListener('mouseenter', showSpeedTooltip);
+  speedContainer.addEventListener('mouseleave', hideSpeedTooltip);
+  speedSlider.addEventListener('focus', showSpeedTooltip);
+  speedSlider.addEventListener('blur', hideSpeedTooltip);
+  speedSlider.addEventListener('input', updateSpeedTooltip);
 
   // PiP Button
   const pipBtn = document.createElement('button');
@@ -1018,7 +1130,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   window.addEventListener('blur', onWindowBlur);
 
   rightSec.appendChild(ccBtn);
-  rightSec.appendChild(speedBtn);
+  rightSec.appendChild(speedContainer);
   rightSec.appendChild(pipBtn);
   rightSec.appendChild(fullscreenBtn);
   rightSec.appendChild(closeBtn);
@@ -1299,7 +1411,11 @@ function createCustomControls(video: HTMLVideoElement): void {
     updateVolumeIcon();
     updateVolumeSliderFill();
   };
-  const onRateChange = () => { updateSpeedLabelText(); };
+  const onRateChange = () => {
+    updateSpeedLabelText();
+    speedSlider.value = String(getSpeedIndex(video.playbackRate));
+    updateSpeedSliderFill();
+  };
   
   const onWaiting = () => { setBuffering(true); };
   const onSeeking = () => { setBuffering(true); };
