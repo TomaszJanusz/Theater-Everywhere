@@ -760,6 +760,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   let isDragging = false;
   let lastSeekTime = 0;
   let seekTimeout: number | null = null;
+  let lastLoggedBufPct = -1;
 
   const throttledSeek = (time: number) => {
     const now = Date.now();
@@ -783,6 +784,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     const dur = video.duration || 0;
     const cur = video.currentTime || 0;
     
+    let bufPct = 0;
     // Update buffering progress
     if (dur > 0 && video.buffered && video.buffered.length > 0) {
       let bufferedEnd = cur;
@@ -794,10 +796,16 @@ function createCustomControls(video: HTMLVideoElement): void {
           break;
         }
       }
-      const bufPct = (bufferedEnd / dur) * 100;
+      bufPct = (bufferedEnd / dur) * 100;
       scrubberBuffer.style.width = `${bufPct}%`;
     } else {
       scrubberBuffer.style.width = '0%';
+    }
+
+    const roundedBufPct = Math.round(bufPct);
+    if (roundedBufPct !== lastLoggedBufPct) {
+      lastLoggedBufPct = roundedBufPct;
+      console.log(`[Theater Everywhere] Scrubber buffer updated: ${lastLoggedBufPct}%, currentTime: ${cur.toFixed(2)}s, duration: ${dur.toFixed(2)}s, readyState: ${video.readyState}, buffered ranges: ${video.buffered ? video.buffered.length : 0}`);
     }
 
     if (isDragging || video.seeking) return;
