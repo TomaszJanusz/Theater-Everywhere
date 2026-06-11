@@ -41,6 +41,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     toggleEl.disabled = true;
   }
 
+  // Load shortcuts and update keycap label
+  try {
+    const data = await chrome.storage.sync.get({ shortcuts: { toggle: 'T' } });
+    const toggleShortcut = (data.shortcuts?.toggle || 'T') as string;
+    const keyCapEl = document.querySelector('.key-cap') as HTMLElement | null;
+    if (keyCapEl) {
+      keyCapEl.textContent = toggleShortcut;
+    }
+  } catch (err) {
+    console.error('Error loading shortcuts in popup:', err);
+  }
+
   // 2. Open options page
   optionsBtn.addEventListener('click', () => {
     chrome.runtime.openOptionsPage();

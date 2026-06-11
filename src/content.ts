@@ -1,10 +1,50 @@
 import './content.css';
 
+interface Shortcuts {
+  toggle: string;
+  exit: string;
+  seekBack: string;
+  seekForward: string;
+}
+
+const defaultShortcuts: Shortcuts = {
+  toggle: 'T',
+  exit: 'Escape',
+  seekBack: 'ArrowLeft',
+  seekForward: 'ArrowRight'
+};
+
+let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
+
 let activeVideo: HTMLVideoElement | null = null;
 let theaterElement: HTMLElement | null = null;
 let ancestorsList: HTMLElement[] = [];
 let isInitialized = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
+
+function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
+  if (!shortcutStr) return false;
+  
+  const parts = shortcutStr.split('+');
+  const mainKey = parts[parts.length - 1];
+  
+  // Check main key (case insensitive comparison for single characters)
+  const eventKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  if (eventKey !== mainKey) return false;
+  
+  // Check modifiers
+  const hasCtrl = parts.includes('Ctrl');
+  const hasAlt = parts.includes('Alt');
+  const hasShift = parts.includes('Shift');
+  const hasMeta = parts.includes('Meta');
+  
+  if (e.ctrlKey !== hasCtrl) return false;
+  if (e.altKey !== hasAlt) return false;
+  if (e.shiftKey !== hasShift) return false;
+  if (e.metaKey !== hasMeta) return false;
+  
+  return true;
+}
 
 // Show/hide floating quick actions toolbar based on mouse activity
 function showToolbar(): void {
@@ -88,8 +128,9 @@ async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
   
   try {
-    const data = await chrome.storage.sync.get({ blacklist: [] });
+    const data = await chrome.storage.sync.get({ blacklist: [], shortcuts: defaultShortcuts });
     const blacklist = (data.blacklist || []) as string[];
+    configuredShortcuts = (data.shortcuts || { ...defaultShortcuts }) as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
       return currentHostname === domain || currentHostname.endsWith('.' + domain);
@@ -129,10 +170,12 @@ function initialize(): void {
     );
     if (isEditable) return;
 
-    if (event.key.toLowerCase() === 't') {
+    const shortcuts = configuredShortcuts || defaultShortcuts;
+
+    if (matchesShortcut(event, shortcuts.toggle)) {
       event.preventDefault();
       toggleTheaterMode();
-    } else if (event.key === 'Escape') {
+    } else if (matchesShortcut(event, shortcuts.exit)) {
       if (theaterElement) {
         event.preventDefault();
         exitTheaterMode();
@@ -140,11 +183,11 @@ function initialize(): void {
     } else if (theaterElement && theaterElement.tagName === 'VIDEO') {
       const video = theaterElement as HTMLVideoElement;
       // Seek keys (ArrowLeft / ArrowRight) in theater mode
-      if (event.key === 'ArrowLeft') {
+      if (matchesShortcut(event, shortcuts.seekBack)) {
         event.preventDefault();
         video.currentTime = Math.max(0, video.currentTime - 5);
         triggerSeekIndicator('left');
-      } else if (event.key === 'ArrowRight') {
+      } else if (matchesShortcut(event, shortcuts.seekForward)) {
         event.preventDefault();
         video.currentTime = Math.min(video.duration, video.currentTime + 5);
         triggerSeekIndicator('right');

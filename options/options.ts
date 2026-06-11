@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load and render blacklist on startup
   await loadAndRenderBlacklist();
 
+  // Load and bind keyboard shortcuts on startup
+  await loadAndRenderShortcuts();
+  setupShortcutListeners();
+
   // Handle Form Submit
   form.addEventListener('submit', async (e: Event) => {
     e.preventDefault();
@@ -172,5 +176,98 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error('Error notifying tabs:', err);
     }
+  }
+
+  interface Shortcuts {
+    toggle: string;
+    exit: string;
+    seekBack: string;
+    seekForward: string;
+  }
+
+  const defaultShortcuts: Shortcuts = {
+    toggle: 'T',
+    exit: 'Escape',
+    seekBack: 'ArrowLeft',
+    seekForward: 'ArrowRight'
+  };
+
+  async function loadAndRenderShortcuts() {
+    try {
+      const data = await chrome.storage.sync.get({ shortcuts: defaultShortcuts });
+      const shortcuts = (data.shortcuts || defaultShortcuts) as Shortcuts;
+      
+      const toggleInput = document.getElementById('shortcut-toggle') as HTMLInputElement;
+      const exitInput = document.getElementById('shortcut-exit') as HTMLInputElement;
+      const seekBackInput = document.getElementById('shortcut-seek-back') as HTMLInputElement;
+      const seekForwardInput = document.getElementById('shortcut-seek-forward') as HTMLInputElement;
+
+      if (toggleInput) toggleInput.value = shortcuts.toggle;
+      if (exitInput) exitInput.value = shortcuts.exit;
+      if (seekBackInput) seekBackInput.value = shortcuts.seekBack;
+      if (seekForwardInput) seekForwardInput.value = shortcuts.seekForward;
+    } catch (err) {
+      console.error('Error loading shortcuts:', err);
+    }
+  }
+
+  function getShortcutString(e: KeyboardEvent): string {
+    const parts: string[] = [];
+    if (e.ctrlKey && e.key !== 'Control') parts.push('Ctrl');
+    if (e.altKey && e.key !== 'Alt') parts.push('Alt');
+    if (e.shiftKey && e.key !== 'Shift') parts.push('Shift');
+    if (e.metaKey && e.key !== 'Meta') parts.push('Meta');
+    
+    // Add the main key
+    if (e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Shift' && e.key !== 'Meta') {
+      const keyName = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      parts.push(keyName);
+    }
+    
+    return parts.join('+');
+  }
+
+  function setupShortcutListeners() {
+    const inputs = document.querySelectorAll('.shortcut-input') as NodeListOf<HTMLInputElement>;
+    inputs.forEach(input => {
+      input.addEventListener('keydown', async (e: KeyboardEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const isModifierOnly = ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key);
+        if (isModifierOnly) {
+          const tempParts: string[] = [];
+          if (e.ctrlKey) tempParts.push('Ctrl');
+          if (e.altKey) tempParts.push('Alt');
+          if (e.shiftKey) tempParts.push('Shift');
+          if (e.metaKey) tempParts.push('Meta');
+          tempParts.push('...');
+          input.value = tempParts.join('+');
+          return;
+        }
+
+        const shortcutStr = getShortcutString(e);
+        if (!shortcutStr) return;
+
+        input.value = shortcutStr;
+
+        // Save to storage
+        try {
+          const data = await chrome.storage.sync.get({ shortcuts: defaultShortcuts });
+          const shortcuts = (data.shortcuts || { ...defaultShortcuts }) as Shortcuts;
+
+          const shortcutId = input.id;
+          if (shortcutId === 'shortcut-toggle') shortcuts.toggle = shortcutStr;
+          else if (shortcutId === 'shortcut-exit') shortcuts.exit = shortcutStr;
+          else if (shortcutId === 'shortcut-seek-back') shortcuts.seekBack = shortcutStr;
+          else if (shortcutId === 'shortcut-seek-forward') shortcuts.seekForward = shortcutStr;
+
+          await chrome.storage.sync.set({ shortcuts });
+          await notifyAllTabs();
+        } catch (err) {
+          console.error('Error saving shortcut:', err);
+        }
+      });
+    });
   }
 });
