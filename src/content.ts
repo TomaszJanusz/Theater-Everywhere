@@ -375,14 +375,82 @@ function destroy(): void {
   console.log('[Theater Everywhere] Deinitialized from', window.location.hostname);
 }
 
+function isElementInDOMDeep(el: Node | null): boolean {
+  let parent = el;
+  while (parent) {
+    if (parent === document.body) return true;
+    if (parent instanceof ShadowRoot) {
+      parent = parent.host;
+    } else {
+      parent = parent.parentNode;
+    }
+  }
+  return false;
+}
+
+function findAllVideosDeep(root: Document | ShadowRoot = document): HTMLVideoElement[] {
+  const videos: HTMLVideoElement[] = [];
+  videos.push(...Array.from(root.querySelectorAll('video')));
+  const hosts = Array.from(root.querySelectorAll('*')).filter(el => el.shadowRoot);
+  for (const host of hosts) {
+    if (host.shadowRoot) {
+      videos.push(...findAllVideosDeep(host.shadowRoot));
+    }
+  }
+  return videos;
+}
+
+function injectStylesIntoShadowRoot(shadowRoot: ShadowRoot): void {
+  if (shadowRoot.getElementById('theater-everywhere-shadow-styles')) return;
+
+  const styleEl = document.createElement('style');
+  styleEl.id = 'theater-everywhere-shadow-styles';
+  styleEl.textContent = `
+    .theater-everywhere-video-active {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      min-width: 100vw !important;
+      min-height: 100vh !important;
+      z-index: 2147483647 !important;
+      background-color: #000000 !important;
+      object-fit: contain !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      transform: none !important;
+      transition: none !important;
+    }
+    .theater-everywhere-parent-active {
+      position: relative !important;
+      overflow: visible !important;
+      transform: none !important;
+      filter: none !important;
+      perspective: none !important;
+      contain: none !important;
+      backdrop-filter: none !important;
+      clip: auto !important;
+      clip-path: none !important;
+      mask: none !important;
+      will-change: auto !important;
+      z-index: 2147483647 !important;
+    }
+  `;
+  shadowRoot.appendChild(styleEl);
+}
+
 // Smart video selection algorithm
 function findBestVideo(): HTMLVideoElement | null {
   // If the currently tracked active video is still in the DOM and visible
-  if (activeVideo && document.body.contains(activeVideo) && activeVideo.offsetWidth > 0) {
+  if (activeVideo && isElementInDOMDeep(activeVideo) && activeVideo.offsetWidth > 0) {
     return activeVideo;
   }
 
-  const videos = Array.from(document.querySelectorAll('video'));
+  const videos = findAllVideosDeep(document);
   if (videos.length === 0) return null;
   if (videos.length === 1) return videos[0];
 
@@ -459,13 +527,20 @@ function enterTheaterMode(element: HTMLElement): void {
     createCustomControls(video);
   }
 
-  // Traverse ancestors and apply override class
+  // Traverse ancestors and apply override class (crossing shadow boundaries)
   ancestorsList = [];
-  let parent = theaterElement.parentElement;
+  let parent: Node | null = theaterElement.parentNode;
   while (parent && parent !== document.documentElement) {
-    parent.classList.add('theater-everywhere-parent-active');
-    ancestorsList.push(parent);
-    parent = parent.parentElement;
+    if (parent instanceof ShadowRoot) {
+      injectStylesIntoShadowRoot(parent);
+      parent = parent.host;
+    } else {
+      if (parent instanceof HTMLElement) {
+        parent.classList.add('theater-everywhere-parent-active');
+        ancestorsList.push(parent);
+      }
+      parent = parent.parentNode;
+    }
   }
 
   // Lock scrollbars on body/html
