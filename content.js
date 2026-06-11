@@ -7,7 +7,41 @@ let isInitialized = false;
 
 // Prevent custom player containers from double-toggling play/pause
 function preventDoubleToggle(e) {
+  if (!theaterElement) return;
+
+  const rect = theaterElement.getBoundingClientRect();
+  const clickY = e.clientY - rect.top;
+  
+  console.log(`[Theater Everywhere] Intercepted click/mousedown event: "${e.type}" | Y-coord: ${clickY}px (height: ${rect.height}px)`);
+
+  // If click is in the top portion (main video surface), handle play/pause manually and block everything
+  if (clickY < rect.height - 60) {
+    console.log(`[Theater Everywhere] Click detected on video surface. Manually toggling playback state...`);
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    if (theaterElement.tagName === 'VIDEO') {
+      if (theaterElement.paused) {
+        theaterElement.play().catch(err => {
+          console.error('[Theater Everywhere] Programmatic play failed:', err);
+        });
+      } else {
+        theaterElement.pause();
+      }
+    }
+  } else {
+    // Click is on the controls bar. Let the browser process natively, but stop bubbling to parent wrappers
+    console.log(`[Theater Everywhere] Click detected on native controls bar. Letting native code process it and blocking bubble-up...`);
+    e.stopPropagation();
+  }
+}
+
+// Block double clicks in capturing phase to avoid site wrappers entering fullscreen/acting on dblclick
+function preventDoubleDblClick(e) {
   if (theaterElement) {
+    console.log(`[Theater Everywhere] Intercepted dblclick event. Blocking propagation...`);
+    e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
   }
@@ -18,6 +52,7 @@ const listeners = {
   keydown: null,
   mousemove: null,
   play: null,
+  pause: null,
   message: null
 };
 
@@ -93,13 +128,21 @@ function initialize() {
   };
   document.addEventListener('mousemove', listeners.mousemove, { passive: true });
 
-  // 3. Play event listener (Track playing video)
+  // 3. Play/Pause event tracking
   listeners.play = (event) => {
     if (event.target && event.target.tagName === 'VIDEO') {
       activeVideo = event.target;
+      console.log(`[Theater Everywhere] Media event "play" detected on:`, event.target, `| paused:`, event.target.paused);
     }
   };
   document.addEventListener('play', listeners.play, true); // Use capture phase since 'play' does not bubble
+
+  listeners.pause = (event) => {
+    if (event.target && event.target.tagName === 'VIDEO') {
+      console.log(`[Theater Everywhere] Media event "pause" detected on:`, event.target, `| paused:`, event.target.paused);
+    }
+  };
+  document.addEventListener('pause', listeners.pause, true); // Use capture phase since 'pause' does not bubble
 
   // 4. Cross-iframe postMessage listener
   listeners.message = (event) => {
@@ -149,6 +192,7 @@ function destroy() {
   if (listeners.keydown) document.removeEventListener('keydown', listeners.keydown, true);
   if (listeners.mousemove) document.removeEventListener('mousemove', listeners.mousemove);
   if (listeners.play) document.removeEventListener('play', listeners.play, true);
+  if (listeners.pause) document.removeEventListener('pause', listeners.pause, true);
   if (listeners.message) window.removeEventListener('message', listeners.message);
 
   isInitialized = false;
@@ -222,8 +266,8 @@ function enterTheaterMode(element) {
     }
 
     // Isolate clicks to native controls and block propagation to page custom controls
-    theaterElement.addEventListener('click', preventDoubleToggle, false);
-    theaterElement.addEventListener('dblclick', preventDoubleToggle, false);
+    theaterElement.addEventListener('click', preventDoubleToggle, true); // Capturing phase
+    theaterElement.addEventListener('dblclick', preventDoubleDblClick, true); // Capturing phase
   }
 
   // Traverse ancestors and apply override class
@@ -258,8 +302,8 @@ function exitTheaterMode() {
     delete theaterElement.dataset.originalControls;
 
     // Clean up event isolation click blockers
-    theaterElement.removeEventListener('click', preventDoubleToggle, false);
-    theaterElement.removeEventListener('dblclick', preventDoubleToggle, false);
+    theaterElement.removeEventListener('click', preventDoubleToggle, true);
+    theaterElement.removeEventListener('dblclick', preventDoubleDblClick, true);
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
