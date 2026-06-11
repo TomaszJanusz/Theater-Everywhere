@@ -49,32 +49,6 @@ body {
   gap: 8px;
 }
 
-.logo-area {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-icon-svg {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(99, 102, 241, 0.1);
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.header h1 {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.header h1 .accent {
-  color: var(--accent-color);
-}
-
 .subtitle {
   color: var(--text-secondary);
   font-size: 14px;
