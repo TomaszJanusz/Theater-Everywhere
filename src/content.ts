@@ -68,7 +68,7 @@ function showToolbar(): void {
       // Also hide subtitles menu if open
       const ccMenu = controls.querySelector('.theater-cc-menu') as HTMLElement | null;
       if (ccMenu) {
-        ccMenu.style.display = 'none';
+        ccMenu.classList.remove('visible');
       }
       document.body.style.cursor = 'none';
     }
@@ -845,7 +845,6 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const ccMenu = document.createElement('div');
   ccMenu.className = 'theater-cc-menu';
-  ccMenu.style.display = 'none';
   wrapper.appendChild(ccMenu);
 
   const checkCCActive = () => {
@@ -910,7 +909,7 @@ function createCustomControls(video: HTMLVideoElement): void {
       }
       updateCCMenu();
       checkCCActive();
-      ccMenu.style.display = 'none';
+      ccMenu.classList.remove('visible');
     });
     ccMenu.appendChild(offItem);
     
@@ -937,7 +936,7 @@ function createCustomControls(video: HTMLVideoElement): void {
         }
         updateCCMenu();
         checkCCActive();
-        ccMenu.style.display = 'none';
+        ccMenu.classList.remove('visible');
       });
       ccMenu.appendChild(item);
     }
@@ -945,9 +944,9 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   ccBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (ccMenu.style.display === 'none') {
+    if (!ccMenu.classList.contains('visible')) {
       updateCCMenu();
-      ccMenu.style.display = 'flex';
+      ccMenu.classList.add('visible');
       
       // Position menu relative to the CC button
       const rect = ccBtn.getBoundingClientRect();
@@ -955,19 +954,19 @@ function createCustomControls(video: HTMLVideoElement): void {
       ccMenu.style.right = `${wrapperRect.right - rect.right}px`;
       ccMenu.style.bottom = `${rect.height + 10}px`;
     } else {
-      ccMenu.style.display = 'none';
+      ccMenu.classList.remove('visible');
     }
   });
 
   const onDocumentClick = (e: MouseEvent) => {
-    if (ccMenu.style.display !== 'none' && !ccMenu.contains(e.target as Node) && !ccBtn.contains(e.target as Node)) {
-      ccMenu.style.display = 'none';
+    if (ccMenu.classList.contains('visible') && !ccMenu.contains(e.target as Node) && !ccBtn.contains(e.target as Node)) {
+      ccMenu.classList.remove('visible');
     }
   };
   window.addEventListener('click', onDocumentClick, true);
 
   const onWindowBlur = () => {
-    ccMenu.style.display = 'none';
+    ccMenu.classList.remove('visible');
   };
   window.addEventListener('blur', onWindowBlur);
 
