@@ -55,6 +55,7 @@
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
+  background-color: rgba(9, 9, 11, 0.85) !important;
   background-color: color-mix(in srgb, var(--bg-color, #09090b) 85%, transparent) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
@@ -171,13 +172,16 @@
 }
 
 .theater-control-btn:hover {
+  background-color: rgba(99, 102, 241, 0.15) !important;
   background-color: color-mix(in srgb, var(--accent-color, #6366f1) 15%, transparent) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
   border-color: color-mix(in srgb, var(--accent-color, #6366f1) 30%, transparent) !important;
   color: var(--accent-color, #ffffff) !important;
 }
 
 .theater-control-btn:active {
   transform: scale(0.92) !important;
+  background-color: rgba(99, 102, 241, 0.25) !important;
   background-color: color-mix(in srgb, var(--accent-color, #6366f1) 25%, transparent) !important;
 }
 
@@ -459,13 +463,13 @@
 
 @keyframes theater-pulse {
   0% {
-    box-shadow: 0 0 0 0px color-mix(in srgb, var(--accent-color, #6366f1) 40%, transparent), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   }
   70% {
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent-color, #6366f1) 0%, transparent), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   }
   100% {
-    box-shadow: 0 0 0 0px color-mix(in srgb, var(--accent-color, #6366f1) 0%, transparent), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 0 0 0px rgba(99, 102, 241, 0), 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   }
 }
 
@@ -546,13 +550,12 @@
 }
 
 /* Custom styling for native video subtitles/captions */
+/* Note: text-shadow and font-family are not supported on ::cue in injected stylesheets */
 video::cue {
   background-color: rgba(20, 20, 20, 0.8) !important;
   color: #ffffff !important;
   font-size: 16px !important;
   font-weight: 500 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   line-height: 1.35 !important;
 }
 

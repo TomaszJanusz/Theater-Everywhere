@@ -20,6 +20,7 @@ let activeVideo: HTMLVideoElement | null = null;
 let theaterElement: HTMLElement | null = null;
 let ancestorsList: HTMLElement[] = [];
 let isInitialized = false;
+let isTransitioning = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
 
 function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
@@ -81,14 +82,11 @@ function preventDoubleToggle(e: Event): void {
 
   // Block double clicks completely to avoid site-level fullscreen conflicts
   if (e.type === 'dblclick') {
-    console.log(`[Theater Everywhere] Intercepted double-click event. Blocking propagation...`);
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     return;
   }
-  
-  console.log(`[Theater Everywhere] Intercepted pointer/mouse event: "${e.type}" on video surface.`);
 
   // Isolate completely
   e.preventDefault();
@@ -98,7 +96,6 @@ function preventDoubleToggle(e: Event): void {
   // Only toggle play/pause on 'click' to guarantee it happens exactly once per mouse release
   if (e.type === 'click' && theaterElement.tagName === 'VIDEO') {
     const video = theaterElement as HTMLVideoElement;
-    console.log(`[Theater Everywhere] Click completed. Toggling playback state manually...`);
     if (video.paused) {
       video.play().catch(err => {
         console.error('[Theater Everywhere] Programmatic play failed:', err);
@@ -115,6 +112,7 @@ interface Listeners {
   play: ((event: Event) => void) | null;
   pause: ((event: Event) => void) | null;
   message: ((event: MessageEvent) => void) | null;
+  navigate: (() => void) | null;
 }
 
 // Event listener references for clean removal
@@ -123,8 +121,27 @@ const listeners: Listeners = {
   mousemove: null,
   play: null,
   pause: null,
-  message: null
+  message: null,
+  navigate: null
 };
+
+function getIframeOrigin(iframe: HTMLIFrameElement): string {
+  try {
+    if (iframe.src) return new URL(iframe.src, window.location.href).origin;
+  } catch (_) {}
+  return '*';
+}
+
+function getParentOrigin(): string {
+  try {
+    if (document.referrer) return new URL(document.referrer).origin;
+  } catch (_) {}
+  return '*';
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // Check blacklist and initialize or destroy listeners
 async function checkBlacklistAndInit(): Promise<void> {
@@ -179,7 +196,6 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    console.log('[Theater Everywhere] Spacebar detected inside theater mode. Toggling playback.');
     if (video.paused) {
       video.play().catch(err => {
         console.error('[Theater Everywhere] Play failed:', err);
@@ -191,26 +207,32 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.currentTime = Math.max(0, video.currentTime - 5);
-    triggerSeekIndicator('left');
+    if (isFinite(video.duration)) {
+      video.currentTime = Math.max(0, video.currentTime - 5);
+      triggerSeekIndicator('left');
+    }
   } else if (matchesShortcut(e, shortcuts.seekForward)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.currentTime = Math.min(video.duration, video.currentTime + 5);
-    triggerSeekIndicator('right');
+    if (isFinite(video.duration)) {
+      video.currentTime = Math.min(video.duration, video.currentTime + 5);
+      triggerSeekIndicator('right');
+    }
   } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'N') {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.currentTime = Math.max(0, video.currentTime - 0.04);
-    console.log('[Theater Everywhere] N key detected. Stepping 1 frame backward.');
+    if (isFinite(video.duration)) {
+      video.currentTime = Math.max(0, video.currentTime - 0.04);
+    }
   } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'M') {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
-    console.log('[Theater Everywhere] M key detected. Stepping 1 frame forward.');
+    if (isFinite(video.duration)) {
+      video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
+    }
   }
 }
 
@@ -259,7 +281,7 @@ function initialize(): void {
             altKey: event.altKey,
             shiftKey: event.shiftKey,
             metaKey: event.metaKey
-          }, '*');
+          }, getIframeOrigin(iframe));
           const keyUpper = event.key.toUpperCase();
           const isFrameStep = !event.ctrlKey && !event.altKey && !event.metaKey && (keyUpper === 'N' || keyUpper === 'M');
           if (event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space' ||
@@ -319,17 +341,12 @@ function initialize(): void {
     const video = path[0];
     if (video && video instanceof HTMLVideoElement) {
       activeVideo = video;
-      console.log(`[Theater Everywhere] Media event "play" detected on:`, video, `| paused:`, video.paused);
     }
   };
   document.addEventListener('play', listeners.play, true); // Use capture phase since 'play' does not bubble
 
-  listeners.pause = (event: Event) => {
-    const path = event.composedPath();
-    const video = path[0];
-    if (video && video instanceof HTMLVideoElement) {
-      console.log(`[Theater Everywhere] Media event "pause" detected on:`, video, `| paused:`, video.paused);
-    }
+  listeners.pause = (_event: Event) => {
+    // Track pause events to keep activeVideo reference fresh if needed
   };
   document.addEventListener('pause', listeners.pause, true); // Use capture phase since 'pause' does not bubble
 
@@ -337,6 +354,14 @@ function initialize(): void {
   listeners.message = (event: MessageEvent) => {
     const data = event.data;
     if (!data || typeof data !== 'object') return;
+    if (!data.type || !String(data.type).startsWith('theater-everywhere-')) return;
+
+    // Only accept messages from our parent frame or one of our child iframes
+    const isFromParent = window !== window.top && event.source === window.parent;
+    const isFromChild = Array.from(document.querySelectorAll('iframe')).some(
+      iframe => iframe.contentWindow === event.source
+    );
+    if (!isFromParent && !isFromChild) return;
 
     if (data.type === 'theater-everywhere-toggle') {
       // Toggle requested by parent
@@ -379,8 +404,16 @@ function initialize(): void {
   };
   window.addEventListener('message', listeners.message);
 
+  // 5. SPA navigation listener — auto-exit theater mode when page navigates away
+  listeners.navigate = () => {
+    if (theaterElement && !isElementInDOMDeep(theaterElement)) {
+      exitTheaterMode();
+    }
+    activeVideo = null;
+  };
+  window.addEventListener('popstate', listeners.navigate);
+
   isInitialized = true;
-  console.log('[Theater Everywhere] Initialized on', window.location.hostname);
 }
 
 // Cleanup and remove listeners
@@ -391,14 +424,19 @@ function destroy(): void {
     exitTheaterMode();
   }
 
+  if (toolbarTimer) {
+    clearTimeout(toolbarTimer);
+    toolbarTimer = null;
+  }
+
   if (listeners.keydown) window.removeEventListener('keydown', listeners.keydown, true);
   if (listeners.mousemove) document.removeEventListener('mousemove', listeners.mousemove);
   if (listeners.play) document.removeEventListener('play', listeners.play, true);
   if (listeners.pause) document.removeEventListener('pause', listeners.pause, true);
   if (listeners.message) window.removeEventListener('message', listeners.message);
+  if (listeners.navigate) window.removeEventListener('popstate', listeners.navigate);
 
   isInitialized = false;
-  console.log('[Theater Everywhere] Deinitialized from', window.location.hostname);
 }
 
 function isElementInDOMDeep(el: Node | null): boolean {
@@ -415,10 +453,8 @@ function isElementInDOMDeep(el: Node | null): boolean {
 }
 
 function findAllVideosDeep(root: Document | ShadowRoot = document): HTMLVideoElement[] {
-  const videos: HTMLVideoElement[] = [];
-  videos.push(...Array.from(root.querySelectorAll('video')));
-  const hosts = Array.from(root.querySelectorAll('*')).filter(el => el.shadowRoot);
-  for (const host of hosts) {
+  const videos: HTMLVideoElement[] = Array.from(root.querySelectorAll('video'));
+  for (const host of root.querySelectorAll('*')) {
     if (host.shadowRoot) {
       videos.push(...findAllVideosDeep(host.shadowRoot));
     }
@@ -483,12 +519,16 @@ function findBestVideo(): HTMLVideoElement | null {
   // 1. Try to find the playing video
   const playingVideos = videos.filter(v => !v.paused && !v.ended && v.readyState > 2);
   if (playingVideos.length > 0) {
-    // Return largest playing video
-    return playingVideos.reduce((largest, current) => {
-      const areaL = largest.offsetWidth * largest.offsetHeight;
-      const areaC = current.offsetWidth * current.offsetHeight;
-      return areaC > areaL ? current : largest;
-    }, playingVideos[0]);
+    // Prefer longer-duration videos to avoid selecting short ad videos (e.g. YouTube pre-roll)
+    const byArea = (a: HTMLVideoElement, b: HTMLVideoElement) =>
+      (a.offsetWidth * a.offsetHeight) >= (b.offsetWidth * b.offsetHeight) ? a : b;
+    if (playingVideos.length > 1) {
+      const longVideos = playingVideos.filter(v => !isFinite(v.duration) || v.duration > 60);
+      if (longVideos.length > 0) {
+        return longVideos.reduce(byArea);
+      }
+    }
+    return playingVideos.reduce(byArea);
   }
 
   // 2. Return the largest video in the DOM
@@ -501,6 +541,10 @@ function findBestVideo(): HTMLVideoElement | null {
 
 // Toggle theater mode on or off
 function toggleTheaterMode(): void {
+  if (isTransitioning) return;
+  isTransitioning = true;
+  setTimeout(() => { isTransitioning = false; }, 200);
+
   if (theaterElement) {
     exitTheaterMode();
   } else {
@@ -512,7 +556,7 @@ function toggleTheaterMode(): void {
       const iframes = document.querySelectorAll('iframe');
       iframes.forEach(iframe => {
         if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'theater-everywhere-toggle' }, '*');
+          iframe.contentWindow.postMessage({ type: 'theater-everywhere-toggle' }, getIframeOrigin(iframe));
         }
       });
     }
@@ -545,7 +589,6 @@ function enterTheaterMode(element: HTMLElement): void {
 
     // Force loading of paused/unloaded videos to display the initial frame instead of a gray/black screen
     if (video.readyState === 0) {
-      console.log('[Theater Everywhere] Video has readyState = 0. Force setting preload="auto" and calling load().');
       video.preload = 'auto';
       video.load();
     }
@@ -582,7 +625,7 @@ function enterTheaterMode(element: HTMLElement): void {
 
   // If we are in an iframe, notify the parent document to expand the iframe itself
   if (window !== window.top) {
-    window.parent.postMessage({ type: 'theater-everywhere-enter' }, '*');
+    window.parent.postMessage({ type: 'theater-everywhere-enter' }, getParentOrigin());
   }
 }
 
@@ -631,7 +674,7 @@ function exitTheaterMode(): void {
     const iframe = theaterElement as HTMLIFrameElement;
     try {
       if (iframe.contentWindow) {
-        iframe.contentWindow.postMessage({ type: 'theater-everywhere-exit-down' }, '*');
+        iframe.contentWindow.postMessage({ type: 'theater-everywhere-exit-down' }, getIframeOrigin(iframe));
       }
     } catch (e) {
       // Ignore cross-origin exceptions
@@ -640,7 +683,7 @@ function exitTheaterMode(): void {
 
   // If we are in an iframe, notify parent to restore iframe size
   if (window !== window.top) {
-    window.parent.postMessage({ type: 'theater-everywhere-exit' }, '*');
+    window.parent.postMessage({ type: 'theater-everywhere-exit' }, getParentOrigin());
   }
 
   theaterElement = null;
@@ -679,7 +722,13 @@ function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => stri
       document.body.appendChild(tooltipState.element);
     }
     
-    tooltipState.element.innerHTML = getTooltipText();
+    const rawText = getTooltipText();
+    tooltipState.element.innerHTML = rawText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      // Allow only <kbd> tags (whitelist)
+      .replace(/&lt;kbd&gt;(.*?)&lt;\/kbd&gt;/g, '<kbd>$1</kbd>');
     tooltipState.element.classList.add('visible');
     
     // Position
@@ -1051,7 +1100,10 @@ function createCustomControls(video: HTMLVideoElement): void {
   // PiP Button
   const pipBtn = document.createElement('button');
   pipBtn.className = 'theater-control-btn pip-btn';
-  
+  if (!document.pictureInPictureEnabled) {
+    pipBtn.style.display = 'none';
+  }
+
   bindCustomTooltip(pipBtn, () => 'Picture-in-Picture');
 
   pipBtn.innerHTML = `
@@ -1114,8 +1166,8 @@ function createCustomControls(video: HTMLVideoElement): void {
   closeBtn.className = 'theater-control-btn close-btn';
   
   bindCustomTooltip(closeBtn, () => {
-    const toggleKey = (configuredShortcuts.toggle || 'T').toUpperCase();
-    const exitKey = configuredShortcuts.exit === 'Escape' ? 'Esc' : (configuredShortcuts.exit || 'Esc');
+    const toggleKey = escapeHtml((configuredShortcuts.toggle || 'T').toUpperCase());
+    const exitKey = escapeHtml(configuredShortcuts.exit === 'Escape' ? 'Esc' : (configuredShortcuts.exit || 'Esc'));
     return `Exit Theater Mode <kbd>${toggleKey}</kbd> or <kbd>${exitKey}</kbd>`;
   });
 
@@ -1315,7 +1367,6 @@ function createCustomControls(video: HTMLVideoElement): void {
   let isDragging = false;
   let lastSeekTime = 0;
   let seekTimeout: number | null = null;
-  let lastLoggedBufPct = -1;
 
   const throttledSeek = (time: number) => {
     const now = Date.now();
@@ -1355,12 +1406,6 @@ function createCustomControls(video: HTMLVideoElement): void {
       scrubberBuffer.style.width = `${bufPct}%`;
     } else {
       scrubberBuffer.style.width = '0%';
-    }
-
-    const roundedBufPct = Math.round(bufPct);
-    if (roundedBufPct !== lastLoggedBufPct) {
-      lastLoggedBufPct = roundedBufPct;
-      console.log(`[Theater Everywhere] Scrubber buffer updated: ${lastLoggedBufPct}%, currentTime: ${cur.toFixed(2)}s, duration: ${dur.toFixed(2)}s, readyState: ${video.readyState}, buffered ranges: ${video.buffered ? video.buffered.length : 0}`);
     }
 
     if (isDragging || video.seeking) return;

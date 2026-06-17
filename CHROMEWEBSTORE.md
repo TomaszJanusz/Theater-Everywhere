@@ -1,26 +1,26 @@
-# Chrome Web Store Listing — Theater Everywhere
+# Chrome Web Store Listing — Theater Mode Everywhere
 
 > Last Updated: 2026-06-11
 
 ## Store Listing
 
 **Extension Name**
-Theater Everywhere
+Theater Mode Everywhere
 
 **Short Description**
 Maximize any HTML5 video player to fill the browser viewport with a single keypress [T].
 
 **Detailed Description**
-Theater Everywhere maximizes any HTML5 video player to fill your entire browser window with a single keypress, giving you a clean, distraction-free cinematic experience.
+Theater Mode Everywhere maximizes any HTML5 video player to fill your entire browser window with a single keypress, giving you a clean, distraction-free cinematic experience.
 
-Hello, video lovers! Theater Everywhere is built for anyone who wants to enjoy web videos without the clutter of headers, sidebars, comments, or recommendations. Whether you are watching tutorials, streams, or short clips, you can turn any video page into a cozy theater with a single keystroke.
+Hello, video lovers! Theater Mode Everywhere is built for anyone who wants to enjoy web videos without the clutter of headers, sidebars, comments, or recommendations. Whether you are watching tutorials, streams, or short clips, you can turn any video page into a cozy theater with a single keystroke.
 
 KEY FEATURES
 • One-Key Immersive Mode — Press [T] to instantly expand the active video to fit the browser viewport. Press it again or [Escape] to return to normal.
 • Sleek Custom Player Controls — We overlay a clean control bar featuring play/pause, volume scrubbing with visual tooltips, and time indicators (both elapsed and remaining).
 • Playback Speed Adjustments — Speed up or slow down videos dynamically to suit your pacing.
 • Custom Shortcuts — Don't like [T]? Configure your own keys for toggling, exiting, seeking, and frame-stepping in the extension options page.
-• Blacklist Toggle — Use the simple browser extension popup to disable Theater Everywhere on specific domains where it might conflict with native page layouts.
+• Blacklist Toggle — Use the simple browser extension popup to disable Theater Mode Everywhere on specific domains where it might conflict with native page layouts.
 
 WHAT IS SUPPORTED
 • Universal HTML5 Video — Works on standard HTML5 <video> elements across the web.
@@ -28,7 +28,7 @@ WHAT IS SUPPORTED
 • Multi-Device Syncing — Your custom shortcut keys and blacklist settings are synced securely across all your devices using your Chrome account.
 
 WHAT IS NOT SUPPORTED (AND KNOWN LIMITATIONS)
-We want to be fully transparent about what Theater Everywhere cannot do:
+We want to be fully transparent about what Theater Mode Everywhere cannot do:
 • Non-Standard Subtitles: We support standard HTML5 subtitles (<track> tags). However, if a website renders subtitles using custom overlays, proprietary Javascript libraries, or sideloaded divs (like YouTube's custom CC renderer), these subtitles might not display within our custom overlay.
 • DRM-Protected Services: Some streaming platforms (like Netflix or Prime Video) use DRM (Digital Rights Management) technologies that restrict video DOM manipulation, which may block the extension from scaling the video correctly.
 • Legacy Players: We only support modern HTML5 web video players. Legacy plugins (like Flash or Silverlight) are not supported.
@@ -105,7 +105,7 @@ https://github.com/TomaszJanusz/Theater-Everywhere/blob/main/PRIVACY.md (Recomme
 Tomasz Janusz
 
 **Contact Email**
-tomasz.janusz@example.com
+tomasz.janusz@gmail.com
 
 **Support URL / Email**
 https://github.com/TomaszJanusz/Theater-Everywhere/issues

@@ -2,7 +2,7 @@ declare const browser: any;
 
 const isFirefox = typeof browser !== 'undefined' && typeof browser.theme !== 'undefined';
 
-chrome.runtime.onMessage.addListener((message: any, sender: any, sendResponse: any) => {
+chrome.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) => {
   if (message && message.action === 'getBrowserTheme') {
     if (isFirefox) {
       browser.theme.getCurrent()
@@ -35,7 +35,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             seekForward: 'ArrowRight'
           }
         });
-        console.log('[Theater Everywhere] Initialized default shortcuts in storage.');
       }
     } catch (err) {
       console.error('[Theater Everywhere] Error initializing default shortcuts:', err);

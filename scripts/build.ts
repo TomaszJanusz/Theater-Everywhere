@@ -109,7 +109,7 @@ async function run() {
     firefoxManifest.browser_specific_settings = {
       gecko: {
         id: 'theater-everywhere@tomaszjanusz.com',
-        strict_min_version: '109.0'
+        strict_min_version: '128.0'
       }
     };
     if (!firefoxManifest.permissions) {
