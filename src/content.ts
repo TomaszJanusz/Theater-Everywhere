@@ -143,6 +143,28 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function setIcon(el: HTMLElement, svgStr: string): void {
+  el.textContent = '';
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgStr.trim(), 'image/svg+xml');
+  el.appendChild(doc.documentElement);
+}
+
+function setTooltipContent(el: HTMLElement, rawText: string): void {
+  el.textContent = '';
+  const kbdRe = /<kbd>(.*?)<\/kbd>/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = kbdRe.exec(rawText)) !== null) {
+    if (m.index > last) el.appendChild(document.createTextNode(rawText.slice(last, m.index)));
+    const kbd = document.createElement('kbd');
+    kbd.textContent = m[1];
+    el.appendChild(kbd);
+    last = m.index + m[0].length;
+  }
+  if (last < rawText.length) el.appendChild(document.createTextNode(rawText.slice(last)));
+}
+
 // Check blacklist and initialize or destroy listeners
 async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
@@ -723,12 +745,7 @@ function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => stri
     }
     
     const rawText = getTooltipText();
-    tooltipState.element.innerHTML = rawText
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      // Allow only <kbd> tags (whitelist)
-      .replace(/&lt;kbd&gt;(.*?)&lt;\/kbd&gt;/g, '<kbd>$1</kbd>');
+    setTooltipContent(tooltipState.element, rawText);
     tooltipState.element.classList.add('visible');
     
     // Position
@@ -835,7 +852,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     </svg>
   `;
 
-  playPauseBtn.innerHTML = video.paused ? playIcon : pauseIcon;
+  setIcon(playPauseBtn, video.paused ? playIcon : pauseIcon);
   playPauseBtn.addEventListener('click', () => {
     if (video.paused) {
       video.play().catch(console.error);
@@ -885,11 +902,11 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const updateVolumeIcon = () => {
     if (video.muted || video.volume === 0) {
-      volumeBtn.innerHTML = volMutedIcon;
+      setIcon(volumeBtn, volMutedIcon);
     } else if (video.volume < 0.5) {
-      volumeBtn.innerHTML = volLowIcon;
+      setIcon(volumeBtn, volLowIcon);
     } else {
-      volumeBtn.innerHTML = volHighIcon;
+      setIcon(volumeBtn, volHighIcon);
     }
   };
   updateVolumeIcon();
@@ -1106,12 +1123,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   bindCustomTooltip(pipBtn, () => 'Picture-in-Picture');
 
-  pipBtn.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
-      <rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect>
-    </svg>
-  `;
+  setIcon(pipBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect></svg>`);
   pipBtn.addEventListener('click', () => {
     if (document.pictureInPictureElement) {
       document.exitPictureInPicture().catch(console.error);
@@ -1139,7 +1151,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     </svg>
   `;
 
-  fullscreenBtn.innerHTML = document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon;
+  setIcon(fullscreenBtn, document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon);
 
   const toggleFullscreen = () => {
     if (document.fullscreenElement) {
@@ -1157,7 +1169,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   });
 
   const onFullscreenChange = () => {
-    fullscreenBtn.innerHTML = document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon;
+    setIcon(fullscreenBtn, document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon);
   };
   document.addEventListener('fullscreenchange', onFullscreenChange);
 
@@ -1171,12 +1183,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     return `Exit Theater Mode <kbd>${toggleKey}</kbd> or <kbd>${exitKey}</kbd>`;
   });
 
-  closeBtn.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  `;
+  setIcon(closeBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`);
   closeBtn.addEventListener('click', () => {
     exitTheaterMode();
   });
@@ -1195,12 +1202,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     return isCCActive ? 'Disable Subtitles' : 'Enable Subtitles';
   });
 
-  ccBtn.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-      <path d="M7 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0M14 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0"></path>
-    </svg>
-  `;
+  setIcon(ccBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0M14 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0"></path></svg>`);
 
   const ccMenu = document.createElement('div');
   ccMenu.className = 'theater-cc-menu';
@@ -1277,7 +1279,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (!isAnyShowing) {
       offItem.classList.add('active');
       const checkIcon = document.createElement('span');
-      checkIcon.innerHTML = '✓';
+      checkIcon.textContent = '✓';
       checkIcon.style.marginLeft = '8px';
       offItem.appendChild(checkIcon);
     }
@@ -1304,7 +1306,7 @@ function createCustomControls(video: HTMLVideoElement): void {
       if (track.mode === 'showing') {
         item.classList.add('active');
         const checkIcon = document.createElement('span');
-        checkIcon.innerHTML = '✓';
+        checkIcon.textContent = '✓';
         checkIcon.style.marginLeft = '8px';
         item.appendChild(checkIcon);
       }
@@ -1603,11 +1605,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
 
   // Event hookups
-  const onPlay = () => { 
-    playPauseBtn.innerHTML = pauseIcon; 
+  const onPlay = () => {
+    setIcon(playPauseBtn, pauseIcon);
     setBuffering(false);
   };
-  const onPause = () => { playPauseBtn.innerHTML = playIcon; };
+  const onPause = () => { setIcon(playPauseBtn, playIcon); };
   const onTimeUpdate = () => { 
     updateScrubber(); 
     updateTimeDisplay(); 
@@ -1728,28 +1730,24 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
   iconWrapper.className = 'seek-icon-wrapper';
 
   if (direction === 'left') {
-    iconWrapper.innerHTML = `
-      <div class="seek-arrow left left-3"></div>
-      <div class="seek-arrow left left-2"></div>
-      <div class="seek-arrow left left-1"></div>
-    `;
+    ['left-3', 'left-2', 'left-1'].forEach(cls => {
+      const arrow = document.createElement('div');
+      arrow.className = `seek-arrow left ${cls}`;
+      iconWrapper.appendChild(arrow);
+    });
     overlay.appendChild(iconWrapper);
-
-    const textSpan = document.createElement('span');
-    textSpan.textContent = '5 seconds';
-    overlay.appendChild(textSpan);
   } else {
-    iconWrapper.innerHTML = `
-      <div class="seek-arrow right right-1"></div>
-      <div class="seek-arrow right right-2"></div>
-      <div class="seek-arrow right right-3"></div>
-    `;
+    ['right-1', 'right-2', 'right-3'].forEach(cls => {
+      const arrow = document.createElement('div');
+      arrow.className = `seek-arrow right ${cls}`;
+      iconWrapper.appendChild(arrow);
+    });
     overlay.appendChild(iconWrapper);
-
-    const textSpan = document.createElement('span');
-    textSpan.textContent = '5 seconds';
-    overlay.appendChild(textSpan);
   }
+
+  const textSpan = document.createElement('span');
+  textSpan.textContent = '5 seconds';
+  overlay.appendChild(textSpan);
 
   document.body.appendChild(overlay);
 

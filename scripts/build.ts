@@ -109,9 +109,17 @@ async function run() {
     firefoxManifest.browser_specific_settings = {
       gecko: {
         id: 'theater-everywhere@tomaszjanusz.com',
-        strict_min_version: '128.0'
+        strict_min_version: '128.0',
+        data_collection_permissions: {
+          required: [],
+          optional: []
+        }
       }
     };
+    // Firefox requires scripts[] as a fallback alongside service_worker
+    if (firefoxManifest.background && firefoxManifest.background.service_worker) {
+      firefoxManifest.background.scripts = [firefoxManifest.background.service_worker];
+    }
     if (!firefoxManifest.permissions) {
       firefoxManifest.permissions = [];
     }
