@@ -109,16 +109,20 @@ async function run() {
     firefoxManifest.browser_specific_settings = {
       gecko: {
         id: 'theater-everywhere@tomaszjanusz.com',
-        strict_min_version: '128.0',
+        strict_min_version: '140.0',
         data_collection_permissions: {
-          required: [],
+          required: ['none'],
           optional: []
         }
+      },
+      gecko_android: {
+        strict_min_version: '142.0'
       }
     };
-    // Firefox requires scripts[] as a fallback alongside service_worker
-    if (firefoxManifest.background && firefoxManifest.background.service_worker) {
-      firefoxManifest.background.scripts = [firefoxManifest.background.service_worker];
+    // Replace service_worker with scripts[] for Firefox (service_worker is unsupported)
+    if (firefoxManifest.background) {
+      const sw = firefoxManifest.background.service_worker;
+      firefoxManifest.background = { scripts: [sw] };
     }
     if (!firefoxManifest.permissions) {
       firefoxManifest.permissions = [];
