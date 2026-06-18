@@ -9,6 +9,7 @@
   },
   "author": "Tomasz Janusz",
   "license": "ISC",
+  "packageManager": "pnpm@11.5.1",
   "devDependencies": {
     "@types/chrome": "^0.0.268",
     "@types/node": "^20.12.7",
