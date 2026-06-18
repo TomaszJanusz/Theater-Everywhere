@@ -108,7 +108,7 @@ async function run() {
     const firefoxManifest = JSON.parse(fs.readFileSync(firefoxManifestPath, 'utf8'));
     firefoxManifest.browser_specific_settings = {
       gecko: {
-        id: 'theater-everywhere@tomaszjanusz.com',
+        id: 'theater-everywhere@tomaszjanusz.dev',
         strict_min_version: '140.0',
         data_collection_permissions: {
           required: ['none'],
