@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Completely redesigned controls experience — volume and speed now live in vertical pop-up panels that appear on hover, the in-player help overlay groups shortcuts just like the settings page, and a new volume HUD gives instant visual feedback when adjusting volume with keyboard shortcuts. On pages with multiple videos, the extension automatically picks the best candidate based on visibility, playback state, and size — and you can cycle between them with a single shortcut. The extension also works on more sites thanks to Shadow DOM support, and the overall look has been refined with glassmorphic tooltips and seek overlays.
+Completely redesigned controls experience — volume and speed now live in vertical pop-up panels that appear on hover, the in-player help overlay groups shortcuts just like the settings page, and a new volume/playback HUD gives instant visual feedback when adjusting volume or toggling play/pause with keyboard shortcuts. On pages with multiple videos, the extension automatically picks the best candidate based on visibility, playback state, and size — and you can cycle between them with a single shortcut. Fullscreen transitions now automatically resume playback if the site's scripts pause the video during transition. The extension also works on more sites thanks to Shadow DOM support, and the overall look has been refined with glassmorphic tooltips and seek overlays.
 
 ### Added
 - Shadow DOM traversal to discover video players inside shadow roots.
@@ -16,6 +16,7 @@ Completely redesigned controls experience — volume and speed now live in verti
 - Vertical pop-up sliders for volume and speed controls replacing the inline horizontal sliders.
 - Customizable keyboard shortcuts: Volume Up (`ArrowUp`), Volume Down (`ArrowDown`), Toggle PiP (`P`), Show/Hide Help (`H`).
 - macOS/iOS-style volume HUD overlay with dynamic speaker icons and directional zoom-in/zoom-out text animations.
+- Play and Pause HUD overlay notifications when using keyboard shortcuts to toggle playback.
 - Unified glassmorphic seek overlays matching the volume HUD visual style.
 - Help overlay now organized into the same shortcut groups as the settings page.
 
@@ -32,6 +33,7 @@ Completely redesigned controls experience — volume and speed now live in verti
 - Player controls, slider styling, www-domain matching, and CI versioning.
 - Content script shortcut initialization mapping for new shortcuts.
 - CSS `!important` removed from `@keyframes` declarations (browsers ignore it per spec).
+- Playback pausing when entering/exiting fullscreen on pages containing multiple video elements.
 
 ## [1.0.0] - 2026-06-29
 

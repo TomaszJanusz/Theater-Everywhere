@@ -262,8 +262,10 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
       video.play().catch(err => {
         console.error('[Theater Everywhere] Play failed:', err);
       });
+      triggerPlaybackIndicator('play');
     } else {
       video.pause();
+      triggerPlaybackIndicator('pause');
     }
   } else if (matchesShortcut(e, shortcuts.seekBack)) {
     e.preventDefault();
@@ -1561,14 +1563,36 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   setIcon(fullscreenBtn, document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon);
 
+  let wasPlayingBeforeFullscreen = false;
+
   const toggleFullscreen = () => {
+    wasPlayingBeforeFullscreen = !video.paused;
+    
+    const resumeIfPaused = () => {
+      if (wasPlayingBeforeFullscreen && video.paused) {
+        video.play().catch(console.error);
+      }
+    };
+
     if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error);
+      document.exitFullscreen()
+        .then(() => {
+          setTimeout(resumeIfPaused, 150);
+        })
+        .catch(console.error);
     } else {
       const target = theaterElement ? document.documentElement : (video.parentElement || video);
-      target.requestFullscreen().catch(() => {
-        video.requestFullscreen().catch(console.error);
-      });
+      target.requestFullscreen()
+        .then(() => {
+          setTimeout(resumeIfPaused, 150);
+        })
+        .catch(() => {
+          video.requestFullscreen()
+            .then(() => {
+              setTimeout(resumeIfPaused, 150);
+            })
+            .catch(console.error);
+        });
     }
   };
   currentToggleFullscreen = toggleFullscreen;
@@ -1579,6 +1603,13 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const onFullscreenChange = () => {
     setIcon(fullscreenBtn, document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon);
+    if (wasPlayingBeforeFullscreen && video.paused) {
+      setTimeout(() => {
+        if (video.paused) {
+          video.play().catch(console.error);
+        }
+      }, 50);
+    }
   };
   document.addEventListener('fullscreenchange', onFullscreenChange);
 
@@ -2329,6 +2360,48 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
     <div class="volume-hud-content">
       <div class="volume-hud-icon">${icon}</div>
       <span class="volume-hud-text ${action === 'up' ? 'zoom-in' : 'zoom-out'}">${pct}%</span>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+      overlay.remove();
+    }, 200);
+  }, 800);
+}
+
+function triggerPlaybackIndicator(action: 'play' | 'pause'): void {
+  if (!theaterElement) return;
+
+  const existing = document.querySelector('.theater-everywhere-volume-overlay') as HTMLElement | null;
+  if (existing) {
+    existing.remove();
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'theater-everywhere-volume-overlay';
+
+  let icon = '';
+  if (action === 'play') {
+    icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>`;
+  } else {
+    icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="4" width="4" height="16"></rect>
+      <rect x="14" y="4" width="4" height="16"></rect>
+    </svg>`;
+  }
+
+  const text = action === 'play' ? 'Play' : 'Pause';
+
+  overlay.innerHTML = `
+    <div class="volume-hud-content">
+      <div class="volume-hud-icon">${icon}</div>
+      <span class="volume-hud-text ${action === 'play' ? 'zoom-in' : 'zoom-out'}">${text}</span>
     </div>
   `;
 
