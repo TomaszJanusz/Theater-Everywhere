@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Completely redesigned controls experience — volume and speed now live in vertical pop-up panels that appear on hover, the in-player help overlay groups shortcuts just like the settings page, and a new volume HUD gives instant visual feedback when adjusting volume with keyboard shortcuts. The extension also works on more sites thanks to Shadow DOM support, and the overall look has been refined with glassmorphic tooltips and seek overlays.
+
 ### Added
 - Shadow DOM traversal to discover video players inside shadow roots.
 - Custom glassmorphic tooltips with keyboard shortcut hints on control buttons.
@@ -15,12 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customizable keyboard shortcuts: Volume Up (`ArrowUp`), Volume Down (`ArrowDown`), Toggle PiP (`P`), Show/Hide Help (`H`).
 - macOS/iOS-style volume HUD overlay with dynamic speaker icons and directional zoom-in/zoom-out text animations.
 - Unified glassmorphic seek overlays matching the volume HUD visual style.
+- Help overlay now organized into the same shortcut groups as the settings page.
 
 ### Changed
 - Website exclusions redesigned from tag/badge cloud to a compact vertical domain list.
 - Default frame step shortcuts changed from `N`/`M` to `<`/`>`.
 - Migrated from npm to pnpm.
 - UI overlay and loading indicator appended to `document.body` for layout isolation.
+- `Escape` key now closes the help overlay first instead of exiting theater mode when help is open.
 
 ### Fixed
 - Mozilla Addons (AMO) validator errors and warnings resolved.

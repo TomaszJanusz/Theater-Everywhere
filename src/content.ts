@@ -375,7 +375,13 @@ function initialize(): void {
       event.stopImmediatePropagation();
       toggleTheaterMode();
     } else if (matchesShortcut(event, shortcuts.exit) || event.key === 'Escape' || event.key === 'Esc') {
-      if (theaterElement) {
+      // If help overlay is open, close it instead of exiting theater mode
+      if (helpOverlayElement) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        hideHelpOverlay();
+      } else if (theaterElement) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
@@ -764,46 +770,73 @@ function showHelpOverlay(): void {
   const grid = document.createElement('div');
   grid.className = 'theater-help-grid';
 
-  const items = [
-    { label: 'Toggle Theater Mode', key: shortcuts.toggle },
-    { label: 'Exit Theater Mode', key: shortcuts.exit },
-    { label: 'Cycle / Switch Video', key: shortcuts.cycle },
-    { label: 'Play / Pause', key: shortcuts.playPause },
-    { label: 'Seek Backward (5s)', key: shortcuts.seekBack },
-    { label: 'Seek Forward (5s)', key: shortcuts.seekForward },
-    { label: 'Frame Step Backward', key: shortcuts.frameBack },
-    { label: 'Frame Step Forward', key: shortcuts.frameForward },
-    { label: 'Volume Up (5%)', key: shortcuts.volumeUp },
-    { label: 'Volume Down (5%)', key: shortcuts.volumeDown },
-    { label: 'Toggle Picture-in-Picture', key: shortcuts.togglePiP },
-    { label: 'Show/Hide Help', key: shortcuts.showHelp },
-    { label: 'Toggle Fullscreen', key: shortcuts.toggleFullscreen }
+  const groups = [
+    {
+      title: 'General Controls',
+      items: [
+        { label: 'Toggle Theater Mode', key: shortcuts.toggle },
+        { label: 'Exit Theater Mode', key: shortcuts.exit },
+        { label: 'Cycle / Switch Video', key: shortcuts.cycle },
+        { label: 'Show/Hide Help', key: shortcuts.showHelp }
+      ]
+    },
+    {
+      title: 'Playback & Volume Controls',
+      items: [
+        { label: 'Play / Pause', key: shortcuts.playPause },
+        { label: 'Seek Backward (5s)', key: shortcuts.seekBack },
+        { label: 'Seek Forward (5s)', key: shortcuts.seekForward },
+        { label: 'Volume Up (5%)', key: shortcuts.volumeUp },
+        { label: 'Volume Down (5%)', key: shortcuts.volumeDown }
+      ]
+    },
+    {
+      title: 'Frame, Fullscreen & PiP',
+      items: [
+        { label: 'Frame Step Backward', key: shortcuts.frameBack },
+        { label: 'Frame Step Forward', key: shortcuts.frameForward },
+        { label: 'Toggle Fullscreen', key: shortcuts.toggleFullscreen },
+        { label: 'Toggle Picture-in-Picture', key: shortcuts.togglePiP }
+      ]
+    }
   ];
 
-  items.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'theater-help-row';
+  groups.forEach(group => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'theater-help-group';
 
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'theater-help-label';
-    labelSpan.textContent = item.label;
+    const groupTitle = document.createElement('div');
+    groupTitle.className = 'theater-help-group-title';
+    groupTitle.textContent = group.title;
+    groupEl.appendChild(groupTitle);
 
-    const keyWrapper = document.createElement('div');
-    keyWrapper.className = 'theater-help-key-wrapper';
+    group.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'theater-help-row';
 
-    const keys = item.key.split('+');
-    keys.forEach((k, idx) => {
-      if (idx > 0) {
-        keyWrapper.appendChild(document.createTextNode(' + '));
-      }
-      const kbd = document.createElement('kbd');
-      kbd.textContent = k;
-      keyWrapper.appendChild(kbd);
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'theater-help-label';
+      labelSpan.textContent = item.label;
+
+      const keyWrapper = document.createElement('div');
+      keyWrapper.className = 'theater-help-key-wrapper';
+
+      const keys = item.key.split('+');
+      keys.forEach((k, idx) => {
+        if (idx > 0) {
+          keyWrapper.appendChild(document.createTextNode(' + '));
+        }
+        const kbd = document.createElement('kbd');
+        kbd.textContent = k;
+        keyWrapper.appendChild(kbd);
+      });
+
+      row.appendChild(labelSpan);
+      row.appendChild(keyWrapper);
+      groupEl.appendChild(row);
     });
 
-    row.appendChild(labelSpan);
-    row.appendChild(keyWrapper);
-    grid.appendChild(row);
+    grid.appendChild(groupEl);
   });
 
   card.appendChild(grid);
@@ -811,28 +844,10 @@ function showHelpOverlay(): void {
   document.body.appendChild(overlay);
 
   helpOverlayElement = overlay;
-
-  const onHelpKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' || e.key === 'Esc') {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      hideHelpOverlay();
-    }
-  };
-  
-  window.addEventListener('keydown', onHelpKeydown, true);
-
-  (overlay as any)._keydownCleanup = () => {
-    window.removeEventListener('keydown', onHelpKeydown, true);
-  };
 }
 
 function hideHelpOverlay(): void {
   if (!helpOverlayElement) return;
-  if ((helpOverlayElement as any)._keydownCleanup) {
-    (helpOverlayElement as any)._keydownCleanup();
-  }
   helpOverlayElement.remove();
   helpOverlayElement = null;
 }
