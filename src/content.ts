@@ -2311,9 +2311,9 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
   }
 
   overlay.innerHTML = `
-    <div class="volume-hud-content ${action === 'up' ? 'zoom-in' : 'zoom-out'}">
+    <div class="volume-hud-content">
       <div class="volume-hud-icon">${icon}</div>
-      <span class="volume-hud-text">${pct}%</span>
+      <span class="volume-hud-text ${action === 'up' ? 'zoom-in' : 'zoom-out'}">${pct}%</span>
     </div>
   `;
 

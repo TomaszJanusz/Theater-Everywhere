@@ -257,15 +257,14 @@
   -webkit-appearance: none !important;
   appearance: none !important;
   box-sizing: border-box !important;
+  padding: 0 !important;
   margin: 0 !important;
   border: none !important;
   min-height: 0 !important;
   max-height: none !important;
   box-shadow: none !important;
   width: 80px !important; /* vertical height of slider */
-  height: 24px !important;
-  padding: 10px 0 !important;
-  background-clip: content-box !important;
+  height: 4px !important;
   background: rgba(255, 255, 255, 0.2) !important;
   border-radius: 2px !important;
   outline: none !important;
@@ -806,11 +805,11 @@ video::-webkit-media-text-track-display {
   gap: 10px !important;
 }
 
-.volume-hud-content.zoom-in {
+.volume-hud-text.zoom-in {
   animation: volume-hud-zoom-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 }
 
-.volume-hud-content.zoom-out {
+.volume-hud-text.zoom-out {
   animation: volume-hud-zoom-out 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 }
 
