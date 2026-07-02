@@ -4,7 +4,61 @@ import { fetchAndApplyTheme } from '../src/themeHelper';
 // Apply browser theme colors immediately
 fetchAndApplyTheme();
 
-document.addEventListener('DOMContentLoaded', async () => {
+interface Shortcuts {
+  toggle: string;
+  exit: string;
+  seekBack: string;
+  seekForward: string;
+  cycle: string;
+  playPause: string;
+  frameBack: string;
+  frameForward: string;
+  toggleFullscreen: string;
+}
+
+const defaultShortcuts: Shortcuts = {
+  toggle: 'T',
+  exit: 'Escape',
+  seekBack: 'ArrowLeft',
+  seekForward: 'ArrowRight',
+  cycle: 'Shift+T',
+  playPause: 'Space',
+  frameBack: '<',
+  frameForward: '>',
+  toggleFullscreen: 'F'
+};
+
+function safeGetStorage(keys: string | string[]): Promise<any> {
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      console.warn('[Theater Everywhere] Storage request timed out, using fallback.');
+      resolve({});
+    }, 800);
+
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(keys, (result) => {
+          clearTimeout(timeout);
+          if (chrome.runtime.lastError) {
+            console.warn('[Theater Everywhere] chrome.runtime.lastError inside safeGetStorage:', chrome.runtime.lastError);
+            resolve({});
+          } else {
+            resolve(result || {});
+          }
+        });
+      } else {
+        clearTimeout(timeout);
+        resolve({});
+      }
+    } catch (e) {
+      clearTimeout(timeout);
+      console.error('[Theater Everywhere] Exception in safeGetStorage:', e);
+      resolve({});
+    }
+  });
+}
+
+async function init() {
   const form = document.getElementById('add-domain-form') as HTMLFormElement;
   const input = document.getElementById('domain-input') as HTMLInputElement;
   const validationMsg = document.getElementById('validation-msg') as HTMLElement;
@@ -32,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const data = await chrome.storage.sync.get({ blacklist: [] });
+      const data = await safeGetStorage('blacklist');
       const blacklist = (data.blacklist || []) as string[];
 
       if (blacklist.includes(domain)) {
@@ -55,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load and render domains list
   async function loadAndRenderBlacklist() {
     try {
-      const data = await chrome.storage.sync.get({ blacklist: [] });
+      const data = await safeGetStorage('blacklist');
       let blacklist = (data.blacklist || []) as string[];
       
       // Normalize blacklist: strip www. and remove duplicates
@@ -96,42 +150,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Render items
+      // Render items as a list of compact rows
       blacklist.forEach(domain => {
-        const row = document.createElement('div');
-        row.className = 'blacklist-item';
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'item-info';
+        const item = document.createElement('div');
+        item.className = 'exclusion-list-item';
 
         const domainSpan = document.createElement('span');
-        domainSpan.className = 'domain-text';
+        domainSpan.className = 'domain-name';
         domainSpan.textContent = domain;
 
-        const badgeSpan = document.createElement('span');
-        badgeSpan.className = 'status-badge';
-        badgeSpan.textContent = 'Excluded';
-
-        infoDiv.appendChild(domainSpan);
-        infoDiv.appendChild(badgeSpan);
-
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
+        deleteBtn.className = 'delete-list-btn';
         deleteBtn.title = 'Remove exclusion';
         deleteBtn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
           </svg>
         `;
-
         deleteBtn.addEventListener('click', () => removeDomain(domain));
 
-        row.appendChild(infoDiv);
-        row.appendChild(deleteBtn);
-        container.appendChild(row);
+        item.appendChild(domainSpan);
+        item.appendChild(deleteBtn);
+        container.appendChild(item);
       });
 
     } catch (err) {
@@ -143,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Remove domain from storage
   async function removeDomain(domain: string) {
     try {
-      const data = await chrome.storage.sync.get({ blacklist: [] });
+      const data = await safeGetStorage('blacklist');
       let blacklist = (data.blacklist || []) as string[];
       
       blacklist = blacklist.filter(d => d !== domain);
@@ -201,43 +242,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  interface Shortcuts {
-    toggle: string;
-    exit: string;
-    seekBack: string;
-    seekForward: string;
-  }
+  // Removed internal declarations (moved to top of file)
 
-  const defaultShortcuts: Shortcuts = {
-    toggle: 'T',
-    exit: 'Escape',
-    seekBack: 'ArrowLeft',
-    seekForward: 'ArrowRight'
-  };
+  function renderShortcuts(shortcuts: Shortcuts) {
+    const toggleInput = document.getElementById('shortcut-toggle') as HTMLInputElement;
+    const exitInput = document.getElementById('shortcut-exit') as HTMLInputElement;
+    const seekBackInput = document.getElementById('shortcut-seek-back') as HTMLInputElement;
+    const seekForwardInput = document.getElementById('shortcut-seek-forward') as HTMLInputElement;
+    const cycleInput = document.getElementById('shortcut-cycle') as HTMLInputElement;
+    const playPauseInput = document.getElementById('shortcut-play-pause') as HTMLInputElement;
+    const frameBackInput = document.getElementById('shortcut-frame-back') as HTMLInputElement;
+    const frameForwardInput = document.getElementById('shortcut-frame-forward') as HTMLInputElement;
+    const toggleFullscreenInput = document.getElementById('shortcut-toggle-fullscreen') as HTMLInputElement;
+
+    if (toggleInput) toggleInput.value = shortcuts.toggle || defaultShortcuts.toggle;
+    if (exitInput) exitInput.value = shortcuts.exit || defaultShortcuts.exit;
+    if (seekBackInput) seekBackInput.value = shortcuts.seekBack || defaultShortcuts.seekBack;
+    if (seekForwardInput) seekForwardInput.value = shortcuts.seekForward || defaultShortcuts.seekForward;
+    if (cycleInput) cycleInput.value = shortcuts.cycle || defaultShortcuts.cycle;
+    if (playPauseInput) playPauseInput.value = shortcuts.playPause || defaultShortcuts.playPause;
+    if (frameBackInput) frameBackInput.value = shortcuts.frameBack || defaultShortcuts.frameBack;
+    if (frameForwardInput) frameForwardInput.value = shortcuts.frameForward || defaultShortcuts.frameForward;
+    if (toggleFullscreenInput) toggleFullscreenInput.value = shortcuts.toggleFullscreen || defaultShortcuts.toggleFullscreen;
+  }
 
   async function loadAndRenderShortcuts() {
     try {
-      const data = await chrome.storage.sync.get('shortcuts');
+      const data = await safeGetStorage('shortcuts');
       const saved = data.shortcuts || {};
       
       const shortcuts = {
         toggle: saved.toggle || defaultShortcuts.toggle,
         exit: saved.exit || defaultShortcuts.exit,
         seekBack: saved.seekBack || defaultShortcuts.seekBack,
-        seekForward: saved.seekForward || defaultShortcuts.seekForward
+        seekForward: saved.seekForward || defaultShortcuts.seekForward,
+        cycle: saved.cycle || defaultShortcuts.cycle,
+        playPause: saved.playPause || defaultShortcuts.playPause,
+        frameBack: saved.frameBack || defaultShortcuts.frameBack,
+        frameForward: saved.frameForward || defaultShortcuts.frameForward,
+        toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
       } as Shortcuts;
       
-      const toggleInput = document.getElementById('shortcut-toggle') as HTMLInputElement;
-      const exitInput = document.getElementById('shortcut-exit') as HTMLInputElement;
-      const seekBackInput = document.getElementById('shortcut-seek-back') as HTMLInputElement;
-      const seekForwardInput = document.getElementById('shortcut-seek-forward') as HTMLInputElement;
-
-      if (toggleInput) toggleInput.value = shortcuts.toggle;
-      if (exitInput) exitInput.value = shortcuts.exit;
-      if (seekBackInput) seekBackInput.value = shortcuts.seekBack;
-      if (seekForwardInput) seekForwardInput.value = shortcuts.seekForward;
+      renderShortcuts(shortcuts);
     } catch (err) {
-      console.error('Error loading shortcuts:', err);
+      console.error('Error loading shortcuts, using defaults:', err);
+      renderShortcuts(defaultShortcuts);
     }
   }
 
@@ -250,7 +299,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Add the main key
     if (e.key !== 'Control' && e.key !== 'Alt' && e.key !== 'Shift' && e.key !== 'Meta') {
-      const keyName = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      let keyName = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+      if (keyName === ' ') {
+        keyName = 'Space';
+      }
       parts.push(keyName);
     }
     
@@ -284,13 +336,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Save to storage
         try {
-          const data = await chrome.storage.sync.get('shortcuts');
+          const data = await safeGetStorage('shortcuts');
           const saved = data.shortcuts || {};
           const shortcuts = {
             toggle: saved.toggle || defaultShortcuts.toggle,
             exit: saved.exit || defaultShortcuts.exit,
             seekBack: saved.seekBack || defaultShortcuts.seekBack,
-            seekForward: saved.seekForward || defaultShortcuts.seekForward
+            seekForward: saved.seekForward || defaultShortcuts.seekForward,
+            cycle: saved.cycle || defaultShortcuts.cycle,
+            playPause: saved.playPause || defaultShortcuts.playPause,
+            frameBack: saved.frameBack || defaultShortcuts.frameBack,
+            frameForward: saved.frameForward || defaultShortcuts.frameForward,
+            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
           } as Shortcuts;
 
           const shortcutId = input.id;
@@ -298,6 +355,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           else if (shortcutId === 'shortcut-exit') shortcuts.exit = shortcutStr;
           else if (shortcutId === 'shortcut-seek-back') shortcuts.seekBack = shortcutStr;
           else if (shortcutId === 'shortcut-seek-forward') shortcuts.seekForward = shortcutStr;
+          else if (shortcutId === 'shortcut-cycle') shortcuts.cycle = shortcutStr;
+          else if (shortcutId === 'shortcut-play-pause') shortcuts.playPause = shortcutStr;
+          else if (shortcutId === 'shortcut-frame-back') shortcuts.frameBack = shortcutStr;
+          else if (shortcutId === 'shortcut-frame-forward') shortcuts.frameForward = shortcutStr;
+          else if (shortcutId === 'shortcut-toggle-fullscreen') shortcuts.toggleFullscreen = shortcutStr;
 
           await chrome.storage.sync.set({ shortcuts });
           await notifyAllTabs();
@@ -315,13 +377,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!shortcutKey || !defaultShortcuts[shortcutKey]) return;
 
         try {
-          const data = await chrome.storage.sync.get('shortcuts');
+          const data = await safeGetStorage('shortcuts');
           const saved = data.shortcuts || {};
           const shortcuts = {
             toggle: saved.toggle || defaultShortcuts.toggle,
             exit: saved.exit || defaultShortcuts.exit,
             seekBack: saved.seekBack || defaultShortcuts.seekBack,
-            seekForward: saved.seekForward || defaultShortcuts.seekForward
+            seekForward: saved.seekForward || defaultShortcuts.seekForward,
+            cycle: saved.cycle || defaultShortcuts.cycle,
+            playPause: saved.playPause || defaultShortcuts.playPause,
+            frameBack: saved.frameBack || defaultShortcuts.frameBack,
+            frameForward: saved.frameForward || defaultShortcuts.frameForward,
+            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
           } as Shortcuts;
 
           shortcuts[shortcutKey] = defaultShortcuts[shortcutKey];
@@ -349,4 +416,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
