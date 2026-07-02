@@ -32,6 +32,7 @@ const defaultShortcuts: Shortcuts = {
   showHelp: 'H'
 };
 
+let volumeBoostEnabled = false;
 let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
 
 interface BoostedVideoElement extends HTMLVideoElement {
@@ -47,16 +48,21 @@ function applyVolumeAndBoost(video: HTMLVideoElement, sliderValue: number): void
     video.classList.add('theater-everywhere-video-active');
   }
 
-  if (sliderValue <= 1.0) {
-    video.volume = sliderValue;
-    video.dataset.theaterBoost = '1.0';
-    window.dispatchEvent(new CustomEvent('theater-everywhere-boost-event'));
+  if (!volumeBoostEnabled || sliderValue <= 1.0) {
+    video.volume = Math.min(1.0, sliderValue);
+    // Only dispatch boost event if Web Audio was previously activated (to reset gain to 1.0).
+    // Avoid dispatching for normal volume to prevent premature AudioContext creation.
+    if (video.dataset.theaterBoostActive === 'true') {
+      video.dataset.theaterBoost = '1.0';
+      window.dispatchEvent(new CustomEvent('theater-everywhere-boost-event'));
+    }
   } else {
     video.volume = 1.0; // Lock native volume at max
 
     // 1.0 to 1.5 in slider maps to 1.0 to 3.0 volume boost multiplier
     const multiplier = 1.0 + (sliderValue - 1.0) * 4.0;
     video.dataset.theaterBoost = multiplier.toFixed(4);
+    video.dataset.theaterBoostActive = 'true';
     window.dispatchEvent(new CustomEvent('theater-everywhere-boost-event'));
   }
 }
@@ -227,9 +233,10 @@ async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
   
   try {
-    const data = await chrome.storage.sync.get(['blacklist', 'shortcuts']);
+    const data = await chrome.storage.sync.get(['blacklist', 'shortcuts', 'volumeBoostEnabled']);
     const blacklist = (data.blacklist || []) as string[];
     const saved = data.shortcuts || {};
+    volumeBoostEnabled = data.volumeBoostEnabled !== undefined ? data.volumeBoostEnabled : false;
     
     configuredShortcuts = {
       toggle: saved.toggle || defaultShortcuts.toggle,
@@ -333,7 +340,8 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     if (boostedVideo._logicalVolume === undefined) {
       boostedVideo._logicalVolume = video.muted ? 0 : video.volume;
     }
-    boostedVideo._logicalVolume = Math.min(1.5, boostedVideo._logicalVolume + 0.05);
+    const maxVol = volumeBoostEnabled ? 1.5 : 1.0;
+    boostedVideo._logicalVolume = Math.min(maxVol, boostedVideo._logicalVolume + 0.05);
     if (video.muted) {
       video.muted = false;
     }
@@ -1070,6 +1078,42 @@ function enterTheaterMode(element: HTMLElement): void {
       video.load();
     }
 
+    // Preemptively enable CORS on the video so Web Audio (Volume Boost) can
+    // access decoded audio later without a visible reload at boost time.
+    // The theater mode visual transition masks any brief re-fetch.
+    if (volumeBoostEnabled && !video.crossOrigin) {
+      video.crossOrigin = 'anonymous';
+      const savedTime = video.currentTime;
+      const wasPlaying = !video.paused;
+      const src = video.currentSrc || video.src;
+      if (src) {
+        video.src = src;
+        video.load();
+        const onReady = () => {
+          video.removeEventListener('canplay', onReady);
+          video.currentTime = savedTime;
+          if (wasPlaying) {
+            video.play().catch(() => {});
+          }
+        };
+        video.addEventListener('canplay', onReady, { once: true });
+        // If CORS fails (server doesn't support it), remove the attribute
+        // so the video can reload without CORS. Mark as boost-unavailable.
+        const onError = () => {
+          video.removeEventListener('error', onError);
+          video.removeEventListener('canplay', onReady);
+          video.crossOrigin = null as any;
+          video.src = src;
+          video.load();
+          video.currentTime = savedTime;
+          if (wasPlaying) {
+            video.play().catch(() => {});
+          }
+        };
+        video.addEventListener('error', onError, { once: true });
+      }
+    }
+
     // Isolate pointer and mouse events to block double-toggles in custom players
     const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
     eventTypes.forEach(type => {
@@ -1356,7 +1400,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   volumeSlider.type = 'range';
   volumeSlider.className = 'theater-volume-slider theater-vertical-slider';
   volumeSlider.min = '0';
-  volumeSlider.max = '1.5';
+  volumeSlider.max = volumeBoostEnabled ? '1.5' : '1.0';
   volumeSlider.step = '0.05';
   
   const boostedVideo = video as BoostedVideoElement;
@@ -1365,6 +1409,9 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const volumeTick100 = document.createElement('div');
   volumeTick100.className = 'volume-tick-100-vertical';
+  if (!volumeBoostEnabled) {
+    volumeTick100.style.display = 'none';
+  }
 
   volumeSliderWrapper.appendChild(volumeSlider);
   volumeSliderWrapper.appendChild(volumeTick100);
@@ -1412,7 +1459,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const updateVolumeSliderFill = () => {
     const logicalVol = video.muted ? 0 : (boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : video.volume);
-    const fillPct = (logicalVol / 1.5) * 100;
+    const fillPct = (logicalVol / (volumeBoostEnabled ? 1.5 : 1.0)) * 100;
     const isBoosted = logicalVol > 1.0;
     const activeColor = isBoosted ? '#f59e0b' : 'var(--accent-color, #6366f1)';
     const grad = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${fillPct}%, rgba(255, 255, 255, 0.2) ${fillPct}%, rgba(255, 255, 255, 0.2) 100%)`;

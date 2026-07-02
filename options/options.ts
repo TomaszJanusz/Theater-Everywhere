@@ -80,6 +80,10 @@ async function init() {
   await loadAndRenderShortcuts();
   setupShortcutListeners();
 
+  // Load and bind features toggles
+  await loadAndRenderFeatures();
+  setupFeatureListeners();
+
   // Handle Form Submit
   form.addEventListener('submit', async (e: Event) => {
     e.preventDefault();
@@ -444,6 +448,32 @@ async function init() {
           await notifyAllTabs();
         } catch (err) {
           console.error('Error resetting shortcuts:', err);
+        }
+      });
+    }
+  }
+
+  // --- Features (Volume Boost) ---
+  async function loadAndRenderFeatures() {
+    try {
+      const data = await safeGetStorage('volumeBoostEnabled');
+      const enabled = data.volumeBoostEnabled !== undefined ? data.volumeBoostEnabled : false;
+      const toggle = document.getElementById('volume-boost-toggle') as HTMLInputElement | null;
+      if (toggle) toggle.checked = enabled;
+    } catch (err) {
+      console.error('Error loading feature settings:', err);
+    }
+  }
+
+  function setupFeatureListeners() {
+    const toggle = document.getElementById('volume-boost-toggle') as HTMLInputElement | null;
+    if (toggle) {
+      toggle.addEventListener('change', async () => {
+        try {
+          await chrome.storage.sync.set({ volumeBoostEnabled: toggle.checked });
+          await notifyAllTabs();
+        } catch (err) {
+          console.error('Error saving volume boost setting:', err);
         }
       });
     }
