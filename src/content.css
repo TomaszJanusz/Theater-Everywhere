@@ -196,55 +196,63 @@
 .theater-speed-container {
   display: flex !important;
   align-items: center !important;
-  gap: 4px !important;
   position: relative !important;
 }
 
-.theater-volume-slider {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  box-sizing: border-box !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  box-shadow: none !important;
-  width: 0px !important;
+.theater-volume-panel,
+.theater-speed-panel {
+  position: absolute !important;
+  bottom: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(0px) scale(0.95) !important;
+  background: rgba(15, 15, 15, 0.92) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 8px 6px 12px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
   opacity: 0 !important;
-  height: 4px !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 2px !important;
-  outline: none !important;
-  cursor: pointer !important;
-  transition: width 0.2s ease, opacity 0.2s ease !important;
+  pointer-events: none !important;
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  z-index: 1000 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Expand Volume slider on hover */
-.theater-volume-container:hover .theater-volume-slider,
-.theater-volume-slider:focus {
-  width: 60px !important;
+.theater-volume-panel::after,
+.theater-speed-panel::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 16px !important;
+  background: transparent !important;
+  pointer-events: auto !important;
+}
+
+.theater-volume-container:hover .theater-volume-panel,
+.theater-speed-container:hover .theater-speed-panel,
+.theater-volume-container:focus-within .theater-volume-panel,
+.theater-speed-container:focus-within .theater-speed-panel {
   opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateX(-50%) translateY(-8px) scale(1) !important;
 }
 
-/* Speed Slider Wrapper */
-.theater-speed-slider-wrapper {
-  position: relative !important;
+.theater-vertical-slider-wrapper {
+  height: 90px !important;
+  width: 24px !important;
   display: flex !important;
   align-items: center !important;
-  height: 32px !important;
-  width: 0px !important;
-  opacity: 0 !important;
-  transition: width 0.2s ease, opacity 0.2s ease !important;
+  justify-content: center !important;
+  position: relative !important;
 }
 
-.theater-speed-container:hover .theater-speed-slider-wrapper,
-.theater-speed-slider-wrapper:focus-within {
-  width: 60px !important;
-  opacity: 1 !important;
-}
-
-.theater-speed-slider {
+.theater-vertical-slider {
   -webkit-appearance: none !important;
   appearance: none !important;
   box-sizing: border-box !important;
@@ -254,27 +262,38 @@
   min-height: 0 !important;
   max-height: none !important;
   box-shadow: none !important;
-  width: 100% !important;
+  width: 80px !important; /* vertical height of slider */
   height: 4px !important;
   background: rgba(255, 255, 255, 0.2) !important;
   border-radius: 2px !important;
   outline: none !important;
   cursor: pointer !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: center !important;
 }
 
-/* Speed Slider 1x Tick */
-.speed-tick-1x {
+.theater-volume-tooltip-vertical,
+.theater-speed-tooltip-vertical {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #f8fafc !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  min-width: 28px !important;
+  text-align: center !important;
+  user-select: none !important;
+}
+
+.speed-tick-1x-vertical {
   position: absolute !important;
-  top: calc(50% + 6px) !important;
-  left: calc(5px + 0.42857 * (100% - 10px)) !important;
-  transform: translate(-50%, -50%) !important;
+  left: 50% !important;
+  bottom: calc(5px + 0.42857 * (100% - 10px)) !important;
+  transform: translate(-50%, 50%) !important;
   width: 3px !important;
   height: 3px !important;
   border-radius: 50% !important;
   background: rgba(255, 255, 255, 0.6) !important;
   pointer-events: none !important;
   z-index: 1 !important;
-  box-shadow: none !important;
 }
 
 /* Range slider track overrides to prevent website styles from causing tall sliders */
@@ -326,33 +345,7 @@
   padding: 0 !important;
 }
 
-/* Tooltips */
-.theater-volume-tooltip,
-.theater-speed-tooltip {
-  position: absolute !important;
-  bottom: 38px !important;
-  background: rgba(20, 20, 20, 0.85) !important;
-  backdrop-filter: blur(12px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(140%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  color: #f8fafc !important;
-  padding: 3px 6px !important;
-  border-radius: 4px !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  white-space: nowrap !important;
-  pointer-events: none !important;
-  opacity: 0 !important;
-  transform: translateX(-50%) !important;
-  transition: opacity 0.15s ease !important;
-  z-index: 2000000010 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-}
-
-.theater-volume-tooltip.visible,
-.theater-speed-tooltip.visible {
-  opacity: 1 !important;
-}
+/* Removed old tooltips (migrated to vertical panel content) */
 
 /* Time display label */
 .theater-time-display {
@@ -651,4 +644,121 @@ video::-webkit-media-text-track-display {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2) !important;
   line-height: 1 !important;
   text-transform: uppercase !important;
+}
+
+/* Shortcuts Help Overlay Modal */
+.theater-help-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2147483647 !important;
+  opacity: 1 !important;
+  animation: theaterFadeIn 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+.theater-help-card {
+  background-color: #18181b !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  width: 90% !important;
+  max-width: 480px !important;
+  padding: 24px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+  animation: theaterScaleIn 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
+}
+
+.theater-help-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 20px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-bottom: 12px !important;
+}
+
+.theater-help-header h3 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #f4f4f5 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.theater-help-close-btn {
+  background: none !important;
+  border: none !important;
+  color: #a1a1aa !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.theater-help-close-btn:hover {
+  color: #f4f4f5 !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.theater-help-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.theater-help-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.theater-help-label {
+  font-size: 13px !important;
+  color: #d4d4d8 !important;
+  font-weight: 500 !important;
+}
+
+.theater-help-key-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  color: #71717a !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.theater-help-key-wrapper kbd {
+  background-color: #27272a !important;
+  border: 1px solid #3f3f46 !important;
+  border-bottom: 2px solid #3f3f46 !important;
+  border-radius: 4px !important;
+  color: #f4f4f5 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2) !important;
+  font-family: inherit !important;
+  line-height: 1 !important;
+  text-transform: uppercase !important;
+}
+
+@keyframes theaterFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes theaterScaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }

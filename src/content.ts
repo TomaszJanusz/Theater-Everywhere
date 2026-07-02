@@ -5,13 +5,23 @@ interface Shortcuts {
   exit: string;
   seekBack: string;
   seekForward: string;
+  cycle: string;
+  playPause: string;
+  frameBack: string;
+  frameForward: string;
+  toggleFullscreen: string;
 }
 
 const defaultShortcuts: Shortcuts = {
   toggle: 'T',
   exit: 'Escape',
   seekBack: 'ArrowLeft',
-  seekForward: 'ArrowRight'
+  seekForward: 'ArrowRight',
+  cycle: 'Shift+T',
+  playPause: 'Space',
+  frameBack: '<',
+  frameForward: '>',
+  toggleFullscreen: 'F'
 };
 
 let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
@@ -30,9 +40,16 @@ function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   const parts = shortcutStr.split('+');
   const mainKey = parts[parts.length - 1];
   
-  // Check main key (case insensitive comparison for single characters)
-  const eventKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
-  if (eventKey !== mainKey) return false;
+  // Check main key
+  let eventKey = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  if (eventKey === ' ' || eventKey === 'SPACEBAR') {
+    eventKey = 'SPACE';
+  } else {
+    eventKey = eventKey.toUpperCase();
+  }
+  
+  const targetKey = mainKey.toUpperCase();
+  if (eventKey !== targetKey && e.code.toUpperCase() !== targetKey) return false;
   
   // Check modifiers
   const hasCtrl = parts.includes('Ctrl');
@@ -42,8 +59,11 @@ function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   
   if (e.ctrlKey !== hasCtrl) return false;
   if (e.altKey !== hasAlt) return false;
-  if (e.shiftKey !== hasShift) return false;
   if (e.metaKey !== hasMeta) return false;
+  
+  // Ignore Shift check if target key is a shifted character itself
+  const isShiftedChar = ['<', '>', '?', ':', '"', '{', '}', '|', '_', '+', '~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')'].includes(mainKey);
+  if (!isShiftedChar && e.shiftKey !== hasShift) return false;
   
   return true;
 }
@@ -179,7 +199,12 @@ async function checkBlacklistAndInit(): Promise<void> {
       toggle: saved.toggle || defaultShortcuts.toggle,
       exit: saved.exit || defaultShortcuts.exit,
       seekBack: saved.seekBack || defaultShortcuts.seekBack,
-      seekForward: saved.seekForward || defaultShortcuts.seekForward
+      seekForward: saved.seekForward || defaultShortcuts.seekForward,
+      cycle: saved.cycle || defaultShortcuts.cycle,
+      playPause: saved.playPause || defaultShortcuts.playPause,
+      frameBack: saved.frameBack || defaultShortcuts.frameBack,
+      frameForward: saved.frameForward || defaultShortcuts.frameForward,
+      toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
     } as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
@@ -217,7 +242,7 @@ function getActiveElementDeep(): Element | null {
 function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
   const shortcuts = configuredShortcuts || defaultShortcuts;
   
-  if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') {
+  if (matchesShortcut(e, shortcuts.playPause)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -244,21 +269,21 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
       video.currentTime = Math.min(video.duration, video.currentTime + 5);
       triggerSeekIndicator('right');
     }
-  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'N') {
+  } else if (matchesShortcut(e, shortcuts.frameBack)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     if (isFinite(video.duration)) {
       video.currentTime = Math.max(0, video.currentTime - 0.04);
     }
-  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'M') {
+  } else if (matchesShortcut(e, shortcuts.frameForward)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     if (isFinite(video.duration)) {
       video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
     }
-  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'F') {
+  } else if (matchesShortcut(e, shortcuts.toggleFullscreen)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -285,6 +310,14 @@ function initialize(): void {
     if (isEditable) return;
 
     const shortcuts = configuredShortcuts || defaultShortcuts;
+
+    if (theaterElement && matchesShortcut(event, shortcuts.cycle)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      cycleTheaterVideo('next');
+      return;
+    }
 
     if (matchesShortcut(event, shortcuts.toggle)) {
       event.preventDefault();
@@ -314,12 +347,11 @@ function initialize(): void {
             shiftKey: event.shiftKey,
             metaKey: event.metaKey
           }, getIframeOrigin(iframe));
-          const keyUpper = event.key.toUpperCase();
-          const isFrameStep = !event.ctrlKey && !event.altKey && !event.metaKey && (keyUpper === 'N' || keyUpper === 'M');
-          if (event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space' ||
+          if (matchesShortcut(event, shortcuts.playPause) ||
               matchesShortcut(event, shortcuts.seekBack) ||
               matchesShortcut(event, shortcuts.seekForward) ||
-              isFrameStep) {
+              matchesShortcut(event, shortcuts.frameBack) ||
+              matchesShortcut(event, shortcuts.frameForward)) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -537,38 +569,327 @@ function injectStylesIntoShadowRoot(shadowRoot: ShadowRoot): void {
   shadowRoot.appendChild(styleEl);
 }
 
-// Smart video selection algorithm
-function findBestVideo(): HTMLVideoElement | null {
-  // If the currently tracked active video is still in the DOM and visible
-  if (activeVideo && isElementInDOMDeep(activeVideo) && activeVideo.offsetWidth > 0) {
-    return activeVideo;
+interface VideoMetrics {
+  inViewport: boolean;
+  isPlaying: boolean;
+  isHovered: boolean;
+  visibleRatio: number;
+  visibleArea: number;
+  distanceToCenter: number;
+}
+
+function getVideoMetrics(video: HTMLVideoElement): VideoMetrics {
+  const rect = video.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+  const intersectionLeft = Math.max(rect.left, 0);
+  const intersectionRight = Math.min(rect.right, viewportWidth);
+  const intersectionTop = Math.max(rect.top, 0);
+  const intersectionBottom = Math.min(rect.bottom, viewportHeight);
+
+  const visibleWidth = Math.max(0, intersectionRight - intersectionLeft);
+  const visibleHeight = Math.max(0, intersectionBottom - intersectionTop);
+  const visibleArea = visibleWidth * visibleHeight;
+  const totalArea = rect.width * rect.height;
+  const visibleRatio = totalArea > 0 ? visibleArea / totalArea : 0;
+  const inViewport = visibleArea > 0 && rect.width > 0 && rect.height > 0;
+
+  const visibleCenterX = intersectionLeft + visibleWidth / 2;
+  const visibleCenterY = intersectionTop + visibleHeight / 2;
+  const viewportCenterX = viewportWidth / 2;
+  const viewportCenterY = viewportHeight / 2;
+
+  const dx = visibleCenterX - viewportCenterX;
+  const dy = visibleCenterY - viewportCenterY;
+  const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+
+  const isPlaying = !video.paused && !video.ended && video.readyState > 2;
+  const isHovered = video === activeVideo;
+
+  return {
+    inViewport,
+    isPlaying,
+    isHovered,
+    visibleRatio,
+    visibleArea,
+    distanceToCenter
+  };
+}
+
+function compareVideos(a: HTMLVideoElement, b: HTMLVideoElement): number {
+  const aMetrics = getVideoMetrics(a);
+  const bMetrics = getVideoMetrics(b);
+
+  // 1. Viewport presence
+  if (aMetrics.inViewport !== bMetrics.inViewport) {
+    return aMetrics.inViewport ? -1 : 1;
   }
 
+  if (aMetrics.inViewport) {
+    // Both are in viewport
+    // 2. Playing state
+    if (aMetrics.isPlaying !== bMetrics.isPlaying) {
+      return aMetrics.isPlaying ? -1 : 1;
+    }
+    // 3. Hover state
+    if (aMetrics.isHovered !== bMetrics.isHovered) {
+      return aMetrics.isHovered ? -1 : 1;
+    }
+    // 4. Significant difference in visibility ratio (>20%)
+    if (Math.abs(aMetrics.visibleRatio - bMetrics.visibleRatio) > 0.2) {
+      return aMetrics.visibleRatio > bMetrics.visibleRatio ? -1 : 1;
+    }
+    // 5. Proximity to center (within 20px threshold to avoid jitter)
+    if (Math.abs(aMetrics.distanceToCenter - bMetrics.distanceToCenter) > 20) {
+      return aMetrics.distanceToCenter < bMetrics.distanceToCenter ? -1 : 1;
+    }
+    // 6. Visible area size
+    return bMetrics.visibleArea - aMetrics.visibleArea;
+  } else {
+    // Neither is in viewport
+    // 2. Playing state
+    if (aMetrics.isPlaying !== bMetrics.isPlaying) {
+      return aMetrics.isPlaying ? -1 : 1;
+    }
+    // 3. Hover state
+    if (aMetrics.isHovered !== bMetrics.isHovered) {
+      return aMetrics.isHovered ? -1 : 1;
+    }
+    // 4. Total Area size
+    const aArea = a.offsetWidth * a.offsetHeight;
+    const bArea = b.offsetWidth * b.offsetHeight;
+    return bArea - aArea;
+  }
+}
+
+let helpOverlayElement: HTMLElement | null = null;
+
+function showHelpOverlay(): void {
+  if (helpOverlayElement) return;
+
+  const shortcuts = configuredShortcuts || defaultShortcuts;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'theater-help-overlay';
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      hideHelpOverlay();
+    }
+  });
+
+  const card = document.createElement('div');
+  card.className = 'theater-help-card';
+
+  const header = document.createElement('div');
+  header.className = 'theater-help-header';
+  
+  const title = document.createElement('h3');
+  title.textContent = 'Keyboard Shortcuts';
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'theater-help-close-btn';
+  closeBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  `;
+  closeBtn.addEventListener('click', hideHelpOverlay);
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  card.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'theater-help-grid';
+
+  const items = [
+    { label: 'Toggle Theater Mode', key: shortcuts.toggle },
+    { label: 'Exit Theater Mode', key: shortcuts.exit },
+    { label: 'Cycle / Switch Video', key: shortcuts.cycle },
+    { label: 'Play / Pause', key: shortcuts.playPause },
+    { label: 'Seek Backward (5s)', key: shortcuts.seekBack },
+    { label: 'Seek Forward (5s)', key: shortcuts.seekForward },
+    { label: 'Frame Step Backward', key: shortcuts.frameBack },
+    { label: 'Frame Step Forward', key: shortcuts.frameForward },
+    { label: 'Toggle Fullscreen', key: shortcuts.toggleFullscreen }
+  ];
+
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'theater-help-row';
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'theater-help-label';
+    labelSpan.textContent = item.label;
+
+    const keyWrapper = document.createElement('div');
+    keyWrapper.className = 'theater-help-key-wrapper';
+
+    const keys = item.key.split('+');
+    keys.forEach((k, idx) => {
+      if (idx > 0) {
+        keyWrapper.appendChild(document.createTextNode(' + '));
+      }
+      const kbd = document.createElement('kbd');
+      kbd.textContent = k;
+      keyWrapper.appendChild(kbd);
+    });
+
+    row.appendChild(labelSpan);
+    row.appendChild(keyWrapper);
+    grid.appendChild(row);
+  });
+
+  card.appendChild(grid);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  helpOverlayElement = overlay;
+
+  const onHelpKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      hideHelpOverlay();
+    }
+  };
+  
+  window.addEventListener('keydown', onHelpKeydown, true);
+
+  (overlay as any)._keydownCleanup = () => {
+    window.removeEventListener('keydown', onHelpKeydown, true);
+  };
+}
+
+function hideHelpOverlay(): void {
+  if (!helpOverlayElement) return;
+  if ((helpOverlayElement as any)._keydownCleanup) {
+    (helpOverlayElement as any)._keydownCleanup();
+  }
+  helpOverlayElement.remove();
+  helpOverlayElement = null;
+}
+
+// Smart video selection algorithm (viewport-aware and priority ranking)
+function findBestVideo(): HTMLVideoElement | null {
   const videos = findAllVideosDeep(document);
   if (videos.length === 0) return null;
   if (videos.length === 1) return videos[0];
 
-  // 1. Try to find the playing video
-  const playingVideos = videos.filter(v => !v.paused && !v.ended && v.readyState > 2);
-  if (playingVideos.length > 0) {
-    // Prefer longer-duration videos to avoid selecting short ad videos (e.g. YouTube pre-roll)
-    const byArea = (a: HTMLVideoElement, b: HTMLVideoElement) =>
-      (a.offsetWidth * a.offsetHeight) >= (b.offsetWidth * b.offsetHeight) ? a : b;
-    if (playingVideos.length > 1) {
-      const longVideos = playingVideos.filter(v => !isFinite(v.duration) || v.duration > 60);
-      if (longVideos.length > 0) {
-        return longVideos.reduce(byArea);
-      }
+  videos.sort(compareVideos);
+  return videos[0];
+}
+
+function switchTheaterVideo(newVideo: HTMLVideoElement): void {
+  if (!theaterElement || theaterElement === newVideo) return;
+
+  // Save/Restore original controls state of the current video and clean up its listeners
+  if (theaterElement.tagName === 'VIDEO') {
+    const video = theaterElement as HTMLVideoElement;
+    video.pause(); // Pause the old video to stop overlapping audio
+    const originalControls = video.dataset.originalControls;
+    if (originalControls === 'true') {
+      video.setAttribute('controls', 'true');
+    } else {
+      video.removeAttribute('controls');
     }
-    return playingVideos.reduce(byArea);
+    delete video.dataset.originalControls;
+
+    const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
+    eventTypes.forEach(type => {
+      video.removeEventListener(type, preventDoubleToggle, true);
+    });
+
+    destroyCustomControls();
+    video.classList.remove('controls-visible');
+    video.classList.remove('theater-everywhere-video-active');
+  } else {
+    theaterElement.classList.remove('theater-everywhere-video-active');
   }
 
-  // 2. Return the largest video in the DOM
-  return videos.reduce((largest, current) => {
-    const areaL = largest.offsetWidth * largest.offsetHeight;
-    const areaC = current.offsetWidth * current.offsetHeight;
-    return areaC > areaL ? current : largest;
-  }, videos[0]);
+  // Set the new video as theaterElement
+  theaterElement = newVideo;
+
+  const rootNode = newVideo.getRootNode();
+  if (rootNode instanceof ShadowRoot) {
+    injectStylesIntoShadowRoot(rootNode);
+  }
+  newVideo.classList.add('theater-everywhere-video-active');
+
+  // Setup new video
+  const originalControls = newVideo.hasAttribute('controls');
+  newVideo.dataset.originalControls = originalControls ? 'true' : 'false';
+  newVideo.removeAttribute('controls');
+
+  if (newVideo.readyState === 0) {
+    newVideo.preload = 'auto';
+    newVideo.load();
+  }
+
+  newVideo.play().catch(err => {
+    console.error('[Theater Everywhere] Auto-play failed during switch:', err);
+  });
+
+  const eventTypes = ['click', 'dblclick', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'];
+  eventTypes.forEach(type => {
+    newVideo.addEventListener(type, preventDoubleToggle, true);
+  });
+
+  // Recreate custom controls for the new video
+  createCustomControls(newVideo);
+
+  // Traverse ancestors and update ancestorsList
+  ancestorsList.forEach(parent => {
+    if (parent && parent.classList) {
+      parent.classList.remove('theater-everywhere-parent-active');
+    }
+  });
+  ancestorsList = [];
+
+  let parent: Node | null = theaterElement.parentNode;
+  while (parent && parent !== document.documentElement) {
+    if (parent instanceof ShadowRoot) {
+      injectStylesIntoShadowRoot(parent);
+      parent = parent.host;
+    } else {
+      if (parent instanceof HTMLElement) {
+        parent.classList.add('theater-everywhere-parent-active');
+        ancestorsList.push(parent);
+      }
+      parent = parent.parentNode;
+    }
+  }
+
+  activeVideo = newVideo;
+}
+
+function cycleTheaterVideo(direction: 'next' | 'prev' = 'next'): void {
+  if (!theaterElement) return;
+
+  const videos = findAllVideosDeep(document);
+  if (videos.length <= 1) return;
+
+  if (theaterElement.tagName !== 'VIDEO') return;
+
+  const currentVideo = theaterElement as HTMLVideoElement;
+  const idx = videos.indexOf(currentVideo);
+  if (idx === -1) return;
+
+  let nextIdx;
+  if (direction === 'next') {
+    nextIdx = (idx + 1) % videos.length;
+  } else {
+    nextIdx = (idx - 1 + videos.length) % videos.length;
+  }
+
+  const nextVideo = videos[nextIdx];
+  if (nextVideo && nextVideo !== currentVideo) {
+    switchTheaterVideo(nextVideo);
+  }
 }
 
 // Toggle theater mode on or off
@@ -664,6 +985,8 @@ function enterTheaterMode(element: HTMLElement): void {
 // Exit theater mode
 function exitTheaterMode(): void {
   if (!theaterElement) return;
+
+  hideHelpOverlay();
 
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(console.error);
@@ -764,7 +1087,21 @@ function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => stri
     
     // Position
     const rect = button.getBoundingClientRect();
-    const tooltipX = rect.left + rect.width / 2;
+    const tooltipWidth = tooltipState.element.offsetWidth;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    
+    let tooltipX = rect.left + rect.width / 2;
+    const padding = 12;
+    const minX = tooltipWidth / 2 + padding;
+    const maxX = viewportWidth - (tooltipWidth / 2 + padding);
+    
+    // Clamp horizontal position to viewport bounds to prevent overflow
+    if (tooltipX < minX) {
+      tooltipX = minX;
+    } else if (tooltipX > maxX) {
+      tooltipX = maxX;
+    }
+    
     const tooltipY = rect.top - 8;
     
     tooltipState.element.style.left = `${tooltipX}px`;
@@ -851,7 +1188,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   
   bindCustomTooltip(playPauseBtn, () => {
     const action = video.paused ? 'Play' : 'Pause';
-    return `${action} <kbd>Space</kbd>`;
+    return `${action} <kbd>${configuredShortcuts.playPause}</kbd>`;
   });
 
   const playIcon = `
@@ -881,18 +1218,27 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const volumeBtn = document.createElement('button');
   volumeBtn.className = 'theater-control-btn volume-btn';
-  
-  bindCustomTooltip(volumeBtn, () => {
-    return video.muted || video.volume === 0 ? 'Unmute' : 'Mute';
-  });
+
+  const volumePanel = document.createElement('div');
+  volumePanel.className = 'theater-volume-panel';
+
+  const volumeTooltip = document.createElement('div');
+  volumeTooltip.className = 'theater-volume-tooltip-vertical';
+
+  const volumeSliderWrapper = document.createElement('div');
+  volumeSliderWrapper.className = 'theater-vertical-slider-wrapper';
 
   const volumeSlider = document.createElement('input');
   volumeSlider.type = 'range';
-  volumeSlider.className = 'theater-volume-slider';
+  volumeSlider.className = 'theater-volume-slider theater-vertical-slider';
   volumeSlider.min = '0';
   volumeSlider.max = '1';
   volumeSlider.step = '0.05';
   volumeSlider.value = video.muted ? '0' : String(video.volume);
+
+  volumeSliderWrapper.appendChild(volumeSlider);
+  volumePanel.appendChild(volumeTooltip);
+  volumePanel.appendChild(volumeSliderWrapper);
 
   const volHighIcon = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -934,29 +1280,12 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateVolumeSliderFill();
 
-  const volumeTooltip = document.createElement('div');
-  volumeTooltip.className = 'theater-volume-tooltip';
-  volumeContainer.appendChild(volumeTooltip);
-
   const updateVolumeTooltip = () => {
     const val = video.muted ? 0 : video.volume;
     const pct = val * 100;
     volumeTooltip.textContent = `${Math.round(pct)}%`;
-    volumeTooltip.style.left = `${36 + (pct / 100) * 60}px`;
   };
-
-  const showVolumeTooltip = () => {
-    volumeTooltip.classList.add('visible');
-    updateVolumeTooltip();
-  };
-  const hideVolumeTooltip = () => {
-    volumeTooltip.classList.remove('visible');
-  };
-
-  volumeContainer.addEventListener('mouseenter', showVolumeTooltip);
-  volumeContainer.addEventListener('mouseleave', hideVolumeTooltip);
-  volumeSlider.addEventListener('focus', showVolumeTooltip);
-  volumeSlider.addEventListener('blur', hideVolumeTooltip);
+  updateVolumeTooltip();
 
   volumeBtn.addEventListener('click', () => {
     video.muted = !video.muted;
@@ -973,7 +1302,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   });
 
   volumeContainer.appendChild(volumeBtn);
-  volumeContainer.appendChild(volumeSlider);
+  volumeContainer.appendChild(volumePanel);
 
   // Time label display
   const timeDisplay = document.createElement('span');
@@ -1027,7 +1356,6 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const speedBtn = document.createElement('button');
   speedBtn.className = 'theater-control-btn speed-btn';
-  bindCustomTooltip(speedBtn, () => 'Playback Speed');
 
   const speedLabel = document.createElement('span');
   speedLabel.className = 'speed-label';
@@ -1052,29 +1380,33 @@ function createCustomControls(video: HTMLVideoElement): void {
   };
   updateSpeedLabelText();
 
+  const speedPanel = document.createElement('div');
+  speedPanel.className = 'theater-speed-panel';
+
+  const speedTooltip = document.createElement('div');
+  speedTooltip.className = 'theater-speed-tooltip-vertical';
+
   const speedSliderWrapper = document.createElement('div');
-  speedSliderWrapper.className = 'theater-speed-slider-wrapper';
+  speedSliderWrapper.className = 'theater-vertical-slider-wrapper';
 
   const speedSlider = document.createElement('input');
   speedSlider.type = 'range';
-  speedSlider.className = 'theater-speed-slider';
+  speedSlider.className = 'theater-speed-slider theater-vertical-slider';
   speedSlider.min = '0';
   speedSlider.max = String(speedLevels.length - 1);
   speedSlider.step = '1';
   speedSlider.value = String(getSpeedIndex(video.playbackRate));
 
   const speedTick1x = document.createElement('div');
-  speedTick1x.className = 'speed-tick-1x';
+  speedTick1x.className = 'speed-tick-1x-vertical';
 
   speedSliderWrapper.appendChild(speedSlider);
   speedSliderWrapper.appendChild(speedTick1x);
-
-  const speedTooltip = document.createElement('div');
-  speedTooltip.className = 'theater-speed-tooltip';
+  speedPanel.appendChild(speedTooltip);
+  speedPanel.appendChild(speedSliderWrapper);
 
   speedContainer.appendChild(speedBtn);
-  speedContainer.appendChild(speedSliderWrapper);
-  speedContainer.appendChild(speedTooltip);
+  speedContainer.appendChild(speedPanel);
 
   let lastNonNormalSpeed = 1.5;
 
@@ -1089,10 +1421,8 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const updateSpeedTooltip = () => {
     speedTooltip.textContent = `${video.playbackRate.toFixed(2).replace(/\.00$|\.0$/, '')}x`;
-    const idx = getSpeedIndex(video.playbackRate);
-    const pct = (idx / (speedLevels.length - 1)) * 100;
-    speedTooltip.style.left = `${36 + (pct / 100) * 60}px`;
   };
+  updateSpeedTooltip();
 
   speedBtn.addEventListener('click', () => {
     if (video.playbackRate !== 1.0) {
@@ -1113,20 +1443,6 @@ function createCustomControls(video: HTMLVideoElement): void {
     updateSpeedSliderFill();
     updateSpeedTooltip();
   });
-
-  const showSpeedTooltip = () => {
-    speedTooltip.classList.add('visible');
-    updateSpeedTooltip();
-  };
-  const hideSpeedTooltip = () => {
-    speedTooltip.classList.remove('visible');
-  };
-
-  speedContainer.addEventListener('mouseenter', showSpeedTooltip);
-  speedContainer.addEventListener('mouseleave', hideSpeedTooltip);
-  speedSlider.addEventListener('focus', showSpeedTooltip);
-  speedSlider.addEventListener('blur', hideSpeedTooltip);
-  speedSlider.addEventListener('input', updateSpeedTooltip);
 
   // PiP Button
   const pipBtn = document.createElement('button');
@@ -1151,7 +1467,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   fullscreenBtn.className = 'theater-control-btn fullscreen-btn';
   
   bindCustomTooltip(fullscreenBtn, () => {
-    return document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+    return document.fullscreenElement ? 'Exit Fullscreen' : `Fullscreen <kbd>${configuredShortcuts.toggleFullscreen}</kbd>`;
   });
 
   const enterFullscreenIcon = `
@@ -1358,18 +1674,64 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (ccMenu.classList.contains('visible') && !ccMenu.contains(e.target as Node) && !ccBtn.contains(e.target as Node)) {
       ccMenu.classList.remove('visible');
     }
+    const target = e.target as HTMLElement;
+    if (target && !target.closest('.theater-volume-container')) {
+      volumeSlider.blur();
+    }
+    if (target && !target.closest('.theater-speed-container')) {
+      speedSlider.blur();
+    }
   };
   window.addEventListener('click', onDocumentClick, true);
 
   const onWindowBlur = () => {
     ccMenu.classList.remove('visible');
+    volumeSlider.blur();
+    speedSlider.blur();
   };
   window.addEventListener('blur', onWindowBlur);
 
   rightSec.appendChild(ccBtn);
   rightSec.appendChild(speedContainer);
+
+  // Switch Video Button (Only if there are multiple video players on the page)
+  const videosOnPage = findAllVideosDeep(document);
+  if (videosOnPage.length > 1) {
+    const switchVideoBtn = document.createElement('button');
+    switchVideoBtn.className = 'theater-control-btn switch-video-btn';
+    bindCustomTooltip(switchVideoBtn, () => `Switch Video <kbd>${configuredShortcuts.cycle}</kbd>`);
+    setIcon(switchVideoBtn, `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+      </svg>
+    `);
+    switchVideoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycleTheaterVideo('next');
+    });
+    rightSec.appendChild(switchVideoBtn);
+  }
+
   rightSec.appendChild(pipBtn);
   rightSec.appendChild(fullscreenBtn);
+
+  // Help Button (Keyboard shortcuts listing)
+  const helpBtn = document.createElement('button');
+  helpBtn.className = 'theater-control-btn help-btn';
+  bindCustomTooltip(helpBtn, () => 'Keyboard Shortcuts');
+  setIcon(helpBtn, `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+  `);
+  helpBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showHelpOverlay();
+  });
+  rightSec.appendChild(helpBtn);
+
   rightSec.appendChild(closeBtn);
 
   controlsRow.appendChild(leftSec);
@@ -1638,11 +2000,13 @@ function createCustomControls(video: HTMLVideoElement): void {
     volumeSlider.value = video.muted ? '0' : String(video.volume);
     updateVolumeIcon();
     updateVolumeSliderFill();
+    updateVolumeTooltip();
   };
   const onRateChange = () => {
     updateSpeedLabelText();
     speedSlider.value = String(getSpeedIndex(video.playbackRate));
     updateSpeedSliderFill();
+    updateSpeedTooltip();
   };
   
   const onWaiting = () => { setBuffering(true); };
