@@ -14,12 +14,12 @@
     return null;
   }
 
-  window.addEventListener('message', (e) => {
-    if (e.source !== window || !e.data || e.data.type !== 'theater-everywhere-boost-message') return;
-    const { multiplier } = e.data;
-
+  // Synchronous custom event listener to retain user gesture token
+  window.addEventListener('theater-everywhere-boost-event', () => {
     const video = findActiveVideo(document);
     if (!video) return;
+
+    const multiplier = parseFloat(video.dataset.theaterBoost || '1.0');
 
     const boostedVideo = video as any;
     let audioCtx = boostedVideo._theaterAudioCtx;
@@ -50,4 +50,17 @@
     }
     gainNode.gain.value = multiplier;
   });
+
+  // Fallback global event listeners to resume context on any user interaction
+  const resumeAll = () => {
+    const video = findActiveVideo(document);
+    if (video && (video as any)._theaterAudioCtx) {
+      const ctx = (video as any)._theaterAudioCtx;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(console.error);
+      }
+    }
+  };
+  window.addEventListener('click', resumeAll, { capture: true, passive: true });
+  window.addEventListener('keydown', resumeAll, { capture: true, passive: true });
 })();
