@@ -41,52 +41,88 @@ interface BoostedVideoElement extends HTMLVideoElement {
   _logicalVolume?: number;
 }
 
-function initVolumeBoost(video: BoostedVideoElement): GainNode | null {
-  if (video._gainNode) return video._gainNode;
+function injectMainWorldScript() {
+  const scriptId = 'theater-everywhere-main-world-script';
+  if (document.getElementById(scriptId)) return;
 
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return null;
+  const script = document.createElement('script');
+  script.id = scriptId;
+  script.textContent = `
+    (function() {
+      function findVideoByTheaterId(root) {
+        if (!root) return null;
+        const video = root.querySelector('video[data-theater-id]');
+        if (video) return video;
+        
+        const hosts = root.querySelectorAll('*');
+        for (const host of hosts) {
+          if (host.shadowRoot) {
+            const v = findVideoByTheaterId(host.shadowRoot);
+            if (v) return v;
+          }
+        }
+        return null;
+      }
 
-    const audioCtx = new AudioContextClass();
-    const sourceNode = audioCtx.createMediaElementSource(video);
-    const gainNode = audioCtx.createGain();
+      window.addEventListener('theater-everywhere-boost', (e) => {
+        const { multiplier } = e.detail;
+        const video = findVideoByTheaterId(document);
+        if (!video) return;
 
-    sourceNode.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+        let audioCtx = video._theaterAudioCtx;
+        let gainNode = video._theaterGainNode;
 
-    video._audioCtx = audioCtx;
-    video._sourceNode = sourceNode;
-    video._gainNode = gainNode;
+        if (!gainNode) {
+          try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
 
-    return gainNode;
-  } catch (err) {
-    console.error('[Theater Everywhere] Failed to initialize volume boost Web Audio API:', err);
-    return null;
-  }
+            audioCtx = new AudioContextClass();
+            const sourceNode = audioCtx.createMediaElementSource(video);
+            gainNode = audioCtx.createGain();
+
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            video._theaterAudioCtx = audioCtx;
+            video._theaterGainNode = gainNode;
+          } catch (err) {
+            console.error('[Theater Everywhere Main World] Web Audio setup failed:', err);
+            return;
+          }
+        }
+
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(console.error);
+        }
+        gainNode.gain.value = multiplier;
+      });
+    })();
+  `;
+  (document.head || document.documentElement).appendChild(script);
 }
 
 function applyVolumeAndBoost(video: HTMLVideoElement, sliderValue: number): void {
-  const boostedVideo = video as BoostedVideoElement;
+  // Ensure main world script is injected
+  injectMainWorldScript();
+
+  // Set the identifier on the video element so the main world script can find it
+  video.dataset.theaterId = 'active-video';
 
   if (sliderValue <= 1.0) {
     video.volume = sliderValue;
-    if (boostedVideo._gainNode) {
-      boostedVideo._gainNode.gain.value = 1.0;
-    }
+    window.dispatchEvent(new CustomEvent('theater-everywhere-boost', {
+      detail: { multiplier: 1.0 }
+    }));
   } else {
     video.volume = 1.0; // Lock native volume at max
 
     // 1.0 to 1.5 in slider maps to 1.0 to 3.0 volume boost multiplier
     const multiplier = 1.0 + (sliderValue - 1.0) * 4.0;
 
-    const gainNode = initVolumeBoost(boostedVideo);
-    if (gainNode) {
-      if (boostedVideo._audioCtx && boostedVideo._audioCtx.state === 'suspended') {
-        boostedVideo._audioCtx.resume().catch(console.error);
-      }
-      gainNode.gain.value = multiplier;
-    }
+    window.dispatchEvent(new CustomEvent('theater-everywhere-boost', {
+      detail: { multiplier: multiplier }
+    }));
   }
 }
 
@@ -1472,7 +1508,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   });
 
   volumeSlider.addEventListener('input', (e) => {
-    const val = parseFloat((e.target as HTMLInputElement).value);
+    let val = parseFloat((e.target as HTMLInputElement).value);
+    if (Math.abs(val - 1.0) <= 0.05) {
+      val = 1.0;
+      volumeSlider.value = '1.0';
+    }
     boostedVideo._logicalVolume = val;
     if (val > 0 && video.muted) {
       video.muted = false;
