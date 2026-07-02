@@ -10,6 +10,10 @@ interface Shortcuts {
   frameBack: string;
   frameForward: string;
   toggleFullscreen: string;
+  volumeUp: string;
+  volumeDown: string;
+  togglePiP: string;
+  showHelp: string;
 }
 
 const defaultShortcuts: Shortcuts = {
@@ -21,7 +25,11 @@ const defaultShortcuts: Shortcuts = {
   playPause: 'Space',
   frameBack: '<',
   frameForward: '>',
-  toggleFullscreen: 'F'
+  toggleFullscreen: 'F',
+  volumeUp: 'ArrowUp',
+  volumeDown: 'ArrowDown',
+  togglePiP: 'P',
+  showHelp: 'H'
 };
 
 let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
@@ -283,6 +291,36 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     if (isFinite(video.duration)) {
       video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
     }
+  } else if (matchesShortcut(e, shortcuts.volumeUp)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.volume = Math.min(1.0, video.volume + 0.05);
+    if (video.muted) {
+      video.muted = false;
+    }
+    triggerVolumeIndicator(video.volume, video.muted);
+  } else if (matchesShortcut(e, shortcuts.volumeDown)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    video.volume = Math.max(0.0, video.volume - 0.05);
+    triggerVolumeIndicator(video.volume, video.muted);
+  } else if (matchesShortcut(e, shortcuts.togglePiP)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if (document.pictureInPictureEnabled) {
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(err => {
+          console.error('[Theater Everywhere] Exit PiP failed:', err);
+        });
+      } else {
+        video.requestPictureInPicture().catch(err => {
+          console.error('[Theater Everywhere] Request PiP failed:', err);
+        });
+      }
+    }
   } else if (matchesShortcut(e, shortcuts.toggleFullscreen)) {
     e.preventDefault();
     e.stopPropagation();
@@ -316,6 +354,14 @@ function initialize(): void {
       event.stopPropagation();
       event.stopImmediatePropagation();
       cycleTheaterVideo('next');
+      return;
+    }
+
+    if (theaterElement && matchesShortcut(event, shortcuts.showHelp)) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      toggleHelpOverlay();
       return;
     }
 
@@ -663,6 +709,15 @@ function compareVideos(a: HTMLVideoElement, b: HTMLVideoElement): number {
   }
 }
 
+function toggleHelpOverlay(): void {
+  const overlay = document.querySelector('.theater-help-overlay') as HTMLElement | null;
+  if (overlay) {
+    hideHelpOverlay();
+  } else {
+    showHelpOverlay();
+  }
+}
+
 let helpOverlayElement: HTMLElement | null = null;
 
 function showHelpOverlay(): void {
@@ -714,6 +769,10 @@ function showHelpOverlay(): void {
     { label: 'Seek Forward (5s)', key: shortcuts.seekForward },
     { label: 'Frame Step Backward', key: shortcuts.frameBack },
     { label: 'Frame Step Forward', key: shortcuts.frameForward },
+    { label: 'Volume Up (5%)', key: shortcuts.volumeUp },
+    { label: 'Volume Down (5%)', key: shortcuts.volumeDown },
+    { label: 'Toggle Picture-in-Picture', key: shortcuts.togglePiP },
+    { label: 'Show/Hide Help', key: shortcuts.showHelp },
     { label: 'Toggle Fullscreen', key: shortcuts.toggleFullscreen }
   ];
 
@@ -2213,4 +2272,52 @@ function applyAccentFallback() {
 
 function applyFallbackTheme() {
   applyAccentFallback();
+}
+
+// Spawns macOS/iOS-style centered volume HUD indicator
+function triggerVolumeIndicator(volume: number, muted: boolean): void {
+  if (!theaterElement) return;
+
+  const existing = document.querySelector('.theater-everywhere-volume-overlay') as HTMLElement | null;
+  if (existing) {
+    existing.remove();
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'theater-everywhere-volume-overlay';
+
+  const pct = muted ? 0 : Math.round(volume * 100);
+
+  let icon = '';
+  if (muted || pct === 0) {
+    icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <line x1="23" y1="9" x2="17" y2="15"></line>
+      <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>`;
+  } else if (pct < 50) {
+    icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>`;
+  } else {
+    icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+    </svg>`;
+  }
+
+  overlay.innerHTML = `
+    <div class="volume-hud-icon">${icon}</div>
+    <span class="volume-hud-text">${pct}%</span>
+  `;
+
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+      overlay.remove();
+    }, 200);
+  }, 800);
 }

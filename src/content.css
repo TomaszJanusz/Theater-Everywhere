@@ -762,3 +762,57 @@ video::-webkit-media-text-track-display {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* Volume level overlay HUD */
+.theater-everywhere-volume-overlay {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  background: rgba(15, 15, 15, 0.85) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  padding: 16px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #ffffff !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  animation: volume-hud-bounce 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+.theater-everywhere-volume-overlay.fade-out {
+  opacity: 0 !important;
+  transform: translate(-50%, -50%) scale(0.9) !important;
+}
+
+@keyframes volume-hud-bounce {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85) !important;
+    opacity: 0 !important;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) !important;
+    opacity: 1 !important;
+  }
+}
+
+.volume-hud-icon {
+  color: var(--accent-color, #6366f1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.volume-hud-text {
+  user-select: none !important;
+}

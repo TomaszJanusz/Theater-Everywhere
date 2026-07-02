@@ -14,6 +14,10 @@ interface Shortcuts {
   frameBack: string;
   frameForward: string;
   toggleFullscreen: string;
+  volumeUp: string;
+  volumeDown: string;
+  togglePiP: string;
+  showHelp: string;
 }
 
 const defaultShortcuts: Shortcuts = {
@@ -25,7 +29,11 @@ const defaultShortcuts: Shortcuts = {
   playPause: 'Space',
   frameBack: '<',
   frameForward: '>',
-  toggleFullscreen: 'F'
+  toggleFullscreen: 'F',
+  volumeUp: 'ArrowUp',
+  volumeDown: 'ArrowDown',
+  togglePiP: 'P',
+  showHelp: 'H'
 };
 
 function safeGetStorage(keys: string | string[]): Promise<any> {
@@ -254,6 +262,10 @@ async function init() {
     const frameBackInput = document.getElementById('shortcut-frame-back') as HTMLInputElement;
     const frameForwardInput = document.getElementById('shortcut-frame-forward') as HTMLInputElement;
     const toggleFullscreenInput = document.getElementById('shortcut-toggle-fullscreen') as HTMLInputElement;
+    const volumeUpInput = document.getElementById('shortcut-volume-up') as HTMLInputElement;
+    const volumeDownInput = document.getElementById('shortcut-volume-down') as HTMLInputElement;
+    const togglePiPInput = document.getElementById('shortcut-toggle-pip') as HTMLInputElement;
+    const showHelpInput = document.getElementById('shortcut-show-help') as HTMLInputElement;
 
     if (toggleInput) toggleInput.value = shortcuts.toggle || defaultShortcuts.toggle;
     if (exitInput) exitInput.value = shortcuts.exit || defaultShortcuts.exit;
@@ -264,6 +276,10 @@ async function init() {
     if (frameBackInput) frameBackInput.value = shortcuts.frameBack || defaultShortcuts.frameBack;
     if (frameForwardInput) frameForwardInput.value = shortcuts.frameForward || defaultShortcuts.frameForward;
     if (toggleFullscreenInput) toggleFullscreenInput.value = shortcuts.toggleFullscreen || defaultShortcuts.toggleFullscreen;
+    if (volumeUpInput) volumeUpInput.value = shortcuts.volumeUp || defaultShortcuts.volumeUp;
+    if (volumeDownInput) volumeDownInput.value = shortcuts.volumeDown || defaultShortcuts.volumeDown;
+    if (togglePiPInput) togglePiPInput.value = shortcuts.togglePiP || defaultShortcuts.togglePiP;
+    if (showHelpInput) showHelpInput.value = shortcuts.showHelp || defaultShortcuts.showHelp;
   }
 
   async function loadAndRenderShortcuts() {
@@ -280,7 +296,11 @@ async function init() {
         playPause: saved.playPause || defaultShortcuts.playPause,
         frameBack: saved.frameBack || defaultShortcuts.frameBack,
         frameForward: saved.frameForward || defaultShortcuts.frameForward,
-        toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
+        toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen,
+        volumeUp: saved.volumeUp || defaultShortcuts.volumeUp,
+        volumeDown: saved.volumeDown || defaultShortcuts.volumeDown,
+        togglePiP: saved.togglePiP || defaultShortcuts.togglePiP,
+        showHelp: saved.showHelp || defaultShortcuts.showHelp
       } as Shortcuts;
       
       renderShortcuts(shortcuts);
@@ -347,7 +367,11 @@ async function init() {
             playPause: saved.playPause || defaultShortcuts.playPause,
             frameBack: saved.frameBack || defaultShortcuts.frameBack,
             frameForward: saved.frameForward || defaultShortcuts.frameForward,
-            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
+            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen,
+            volumeUp: saved.volumeUp || defaultShortcuts.volumeUp,
+            volumeDown: saved.volumeDown || defaultShortcuts.volumeDown,
+            togglePiP: saved.togglePiP || defaultShortcuts.togglePiP,
+            showHelp: saved.showHelp || defaultShortcuts.showHelp
           } as Shortcuts;
 
           const shortcutId = input.id;
@@ -360,6 +384,10 @@ async function init() {
           else if (shortcutId === 'shortcut-frame-back') shortcuts.frameBack = shortcutStr;
           else if (shortcutId === 'shortcut-frame-forward') shortcuts.frameForward = shortcutStr;
           else if (shortcutId === 'shortcut-toggle-fullscreen') shortcuts.toggleFullscreen = shortcutStr;
+          else if (shortcutId === 'shortcut-volume-up') shortcuts.volumeUp = shortcutStr;
+          else if (shortcutId === 'shortcut-volume-down') shortcuts.volumeDown = shortcutStr;
+          else if (shortcutId === 'shortcut-toggle-pip') shortcuts.togglePiP = shortcutStr;
+          else if (shortcutId === 'shortcut-show-help') shortcuts.showHelp = shortcutStr;
 
           await chrome.storage.sync.set({ shortcuts });
           await notifyAllTabs();
@@ -388,7 +416,11 @@ async function init() {
             playPause: saved.playPause || defaultShortcuts.playPause,
             frameBack: saved.frameBack || defaultShortcuts.frameBack,
             frameForward: saved.frameForward || defaultShortcuts.frameForward,
-            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
+            toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen,
+            volumeUp: saved.volumeUp || defaultShortcuts.volumeUp,
+            volumeDown: saved.volumeDown || defaultShortcuts.volumeDown,
+            togglePiP: saved.togglePiP || defaultShortcuts.togglePiP,
+            showHelp: saved.showHelp || defaultShortcuts.showHelp
           } as Shortcuts;
 
           shortcuts[shortcutKey] = defaultShortcuts[shortcutKey];
