@@ -30,6 +30,17 @@ jobs:
             echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
       - name: Create, Bump version and Push Tag (Manual Run)
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -46,8 +57,13 @@ jobs:
             VERSION_NUMBER=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
             echo "Bumping version in package.json and manifest.json to $VERSION_NUMBER..."
             
-            # Bump version in package.json & package-lock.json
-            npm version "$VERSION_NUMBER" --no-git-tag-version
+            # Bump version in package.json
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              pkg.version = '$VERSION_NUMBER';
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+            "
             
             # Bump version in manifest.json
             node -e "
@@ -57,8 +73,11 @@ jobs:
               fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n', 'utf8');
             "
             
+            # Update pnpm-lock.yaml to match new package version
+            pnpm install --no-frozen-lockfile
+            
             # Commit changes
-            git add package.json package-lock.json manifest.json
+            git add package.json pnpm-lock.yaml manifest.json
             git commit -m "chore(release): bump version to $VERSION_NUMBER"
             
             # Push changes back to the triggering branch
@@ -70,22 +89,16 @@ jobs:
             git push origin "${{ env.RELEASE_TAG }}"
           fi
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build Extension
-        run: npm run build
+        run: pnpm run build
 
       - name: Extract Release Notes
         run: |
           VERSION_NUMBER=$(echo "${{ env.RELEASE_TAG }}" | sed 's/^v//')
-          npx tsx scripts/extract-changelog.ts "$VERSION_NUMBER"
+          pnpm tsx scripts/extract-changelog.ts "$VERSION_NUMBER"
 
       - name: Create GitHub Release
         env:
