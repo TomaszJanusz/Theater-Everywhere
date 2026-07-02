@@ -71,12 +71,24 @@ jobs:
               fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n', 'utf8');
             "
             
+            # Update CHANGELOG.md — rename [Unreleased] to the new version with today's date
+            node -e "
+              const fs = require('fs');
+              const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+              const today = new Date().toISOString().split('T')[0];
+              const replaced = changelog.replace(
+                /##\\s*\\[?Unreleased\\]?/i,
+                '## [Unreleased]\\n\\n## [' + '$VERSION_NUMBER' + '] - ' + today
+              );
+              fs.writeFileSync('CHANGELOG.md', replaced, 'utf8');
+            "
+            
             # Update pnpm-lock.yaml to match new package version
             pnpm install --no-frozen-lockfile
             
             # Commit changes
-            git add package.json pnpm-lock.yaml manifest.json
-            git commit -m "chore(release): bump version to $VERSION_NUMBER"
+            git add package.json pnpm-lock.yaml manifest.json CHANGELOG.md
+            git commit -m "chore(release): bump version to $VERSION_NUMBER and update changelog"
             
             # Push changes back to the triggering branch
             git push origin HEAD:${{ github.ref_name }}
