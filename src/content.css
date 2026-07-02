@@ -373,8 +373,10 @@
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  background-color: rgba(0, 0, 0, 0.55) !important;
-  color: #ffffff !important;
+  background: rgba(15, 15, 15, 0.5) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 50% !important;
   width: 100px !important;
   height: 100px !important;
@@ -385,7 +387,8 @@
   font-size: 11px !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
 .theater-everywhere-seek-overlay.left {
@@ -804,8 +807,11 @@ video::-webkit-media-text-track-display {
 
 @keyframes volume-hud-zoom-in {
   0% {
-    transform: translate(-50%, 0) scale(0.8) !important;
+    transform: translate(-50%, 0) scale(0.6) !important;
     opacity: 0 !important;
+  }
+  50% {
+    transform: translate(-50%, 0) scale(1.15) !important;
   }
   100% {
     transform: translate(-50%, 0) scale(1) !important;
@@ -815,8 +821,11 @@ video::-webkit-media-text-track-display {
 
 @keyframes volume-hud-zoom-out {
   0% {
-    transform: translate(-50%, 0) scale(1.2) !important;
+    transform: translate(-50%, 0) scale(1.4) !important;
     opacity: 0 !important;
+  }
+  50% {
+    transform: translate(-50%, 0) scale(0.85) !important;
   }
   100% {
     transform: translate(-50%, 0) scale(1) !important;
