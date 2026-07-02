@@ -212,7 +212,11 @@ async function checkBlacklistAndInit(): Promise<void> {
       playPause: saved.playPause || defaultShortcuts.playPause,
       frameBack: saved.frameBack || defaultShortcuts.frameBack,
       frameForward: saved.frameForward || defaultShortcuts.frameForward,
-      toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen
+      toggleFullscreen: saved.toggleFullscreen || defaultShortcuts.toggleFullscreen,
+      volumeUp: saved.volumeUp || defaultShortcuts.volumeUp,
+      volumeDown: saved.volumeDown || defaultShortcuts.volumeDown,
+      togglePiP: saved.togglePiP || defaultShortcuts.togglePiP,
+      showHelp: saved.showHelp || defaultShortcuts.showHelp
     } as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
@@ -1510,7 +1514,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     pipBtn.style.display = 'none';
   }
 
-  bindCustomTooltip(pipBtn, () => 'Picture-in-Picture');
+  bindCustomTooltip(pipBtn, () => `Picture-in-Picture <kbd>${configuredShortcuts.togglePiP}</kbd>`);
 
   setIcon(pipBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect></svg>`);
   pipBtn.addEventListener('click', () => {
@@ -1777,7 +1781,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Help Button (Keyboard shortcuts listing)
   const helpBtn = document.createElement('button');
   helpBtn.className = 'theater-control-btn help-btn';
-  bindCustomTooltip(helpBtn, () => 'Keyboard Shortcuts');
+  bindCustomTooltip(helpBtn, () => `Keyboard Shortcuts <kbd>${configuredShortcuts.showHelp}</kbd>`);
   setIcon(helpBtn, `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"></circle>
