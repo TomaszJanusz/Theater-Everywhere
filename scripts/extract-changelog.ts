@@ -10,21 +10,27 @@ function main() {
 
   const changelogPath = path.resolve(__dirname, '../CHANGELOG.md');
   if (!fs.existsSync(changelogPath)) {
-    console.log('No CHANGELOG.md found. Falling back to auto-generated notes.');
-    process.exit(0);
+    console.error('Error: CHANGELOG.md not found. Release notes must be extracted from the changelog.');
+    process.exit(1);
   }
 
   const content = fs.readFileSync(changelogPath, 'utf8');
   
-  // Match ## [1.0.1] or ## 1.0.1 or ## [v1.0.1] etc., optionally followed by date
+  // Try to find the section matching the specific version (e.g. ## [1.0.1] or ## 1.0.1)
   const escapedVersion = version.replace(/\./g, '\\.');
-  const regex = new RegExp(`##\\s*\\[?v?${escapedVersion}\\]?(?:\\s*-\\s*\\d{4}-\\d{2}-\\d{2})?\\r?\\n([\\s\\S]*?)(?=\\r?\\n##\\s|$)`);
-  const match = content.match(regex);
+  const versionRegex = new RegExp(`##\\s*\\[?v?${escapedVersion}\\]?(?:\\s*-\\s*\\d{4}-\\d{2}-\\d{2})?\\r?\\n([\\s\\S]*?)(?=\\r?\\n##\\s|$)`);
+  let match = content.match(versionRegex);
+
+  // Fallback: If not found, try to extract the [Unreleased] section
+  if (!match) {
+    console.log(`Section for version ${version} not found. Attempting to extract [Unreleased] section...`);
+    const unreleasedRegex = /##\s*\[?Unreleased\]?\r?\n([\s\S]*?)(?=\r?\n##\s|$)/i;
+    match = content.match(unreleasedRegex);
+  }
 
   if (match && match[1]) {
     const notes = match[1].trim();
     if (notes) {
-      // Ensure output directory exists
       const outputDir = path.resolve(__dirname, '../dist');
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
@@ -35,7 +41,8 @@ function main() {
     }
   }
 
-  console.log(`Version ${version} section not found in CHANGELOG.md. Falling back to auto-generated notes.`);
+  console.error(`Error: Could not find section for version ${version} or [Unreleased] in CHANGELOG.md.`);
+  process.exit(1);
 }
 
 main();

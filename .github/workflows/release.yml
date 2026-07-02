@@ -102,16 +102,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -f dist/release_notes.md ]; then
-            gh release create "${{ env.RELEASE_TAG }}" \
-              dist/theater-everywhere-chrome.zip \
-              dist/theater-everywhere-firefox.zip \
-              --title "Release ${{ env.RELEASE_TAG }}" \
-              --notes-file dist/release_notes.md
-          else
-            gh release create "${{ env.RELEASE_TAG }}" \
-              dist/theater-everywhere-chrome.zip \
-              dist/theater-everywhere-firefox.zip \
-              --title "Release ${{ env.RELEASE_TAG }}" \
-              --generate-notes
-          fi
+          gh release create "${{ env.RELEASE_TAG }}" \
+            dist/theater-everywhere-chrome.zip \
+            dist/theater-everywhere-firefox.zip \
+            --title "Release ${{ env.RELEASE_TAG }}" \
+            --notes-file dist/release_notes.md
