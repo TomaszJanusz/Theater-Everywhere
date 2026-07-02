@@ -64,8 +64,10 @@ function injectMainWorldScript() {
         return null;
       }
 
-      window.addEventListener('theater-everywhere-boost', (e) => {
-        const { multiplier } = e.detail;
+      window.addEventListener('message', (e) => {
+        if (e.source !== window || !e.data || e.data.type !== 'theater-everywhere-boost-message') return;
+        const { multiplier } = e.data;
+        
         const video = findVideoByTheaterId(document);
         if (!video) return;
 
@@ -111,18 +113,20 @@ function applyVolumeAndBoost(video: HTMLVideoElement, sliderValue: number): void
 
   if (sliderValue <= 1.0) {
     video.volume = sliderValue;
-    window.dispatchEvent(new CustomEvent('theater-everywhere-boost', {
-      detail: { multiplier: 1.0 }
-    }));
+    window.postMessage({
+      type: 'theater-everywhere-boost-message',
+      multiplier: 1.0
+    }, '*');
   } else {
     video.volume = 1.0; // Lock native volume at max
 
     // 1.0 to 1.5 in slider maps to 1.0 to 3.0 volume boost multiplier
     const multiplier = 1.0 + (sliderValue - 1.0) * 4.0;
 
-    window.dispatchEvent(new CustomEvent('theater-everywhere-boost', {
-      detail: { multiplier: multiplier }
-    }));
+    window.postMessage({
+      type: 'theater-everywhere-boost-message',
+      multiplier: multiplier
+    }, '*');
   }
 }
 

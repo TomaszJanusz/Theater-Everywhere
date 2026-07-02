@@ -245,7 +245,7 @@
 }
 
 .theater-vertical-slider-wrapper {
-  height: 130px !important;
+  height: 140px !important;
   width: 24px !important;
   display: flex !important;
   align-items: center !important;
@@ -263,7 +263,7 @@
   min-height: 0 !important;
   max-height: none !important;
   box-shadow: none !important;
-  width: 120px !important; /* vertical height of slider */
+  width: 130px !important; /* vertical height of slider */
   height: 6px !important;
   background: rgba(255, 255, 255, 0.2) !important;
   border-radius: 3px !important;
