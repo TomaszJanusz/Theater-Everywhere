@@ -41,75 +41,11 @@ interface BoostedVideoElement extends HTMLVideoElement {
   _logicalVolume?: number;
 }
 
-function injectMainWorldScript() {
-  const scriptId = 'theater-everywhere-main-world-script';
-  if (document.getElementById(scriptId)) return;
-
-  const script = document.createElement('script');
-  script.id = scriptId;
-  script.textContent = `
-    (function() {
-      function findVideoByTheaterId(root) {
-        if (!root) return null;
-        const video = root.querySelector('video[data-theater-id]');
-        if (video) return video;
-        
-        const hosts = root.querySelectorAll('*');
-        for (const host of hosts) {
-          if (host.shadowRoot) {
-            const v = findVideoByTheaterId(host.shadowRoot);
-            if (v) return v;
-          }
-        }
-        return null;
-      }
-
-      window.addEventListener('message', (e) => {
-        if (e.source !== window || !e.data || e.data.type !== 'theater-everywhere-boost-message') return;
-        const { multiplier } = e.data;
-        
-        const video = findVideoByTheaterId(document);
-        if (!video) return;
-
-        let audioCtx = video._theaterAudioCtx;
-        let gainNode = video._theaterGainNode;
-
-        if (!gainNode) {
-          try {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextClass) return;
-
-            audioCtx = new AudioContextClass();
-            const sourceNode = audioCtx.createMediaElementSource(video);
-            gainNode = audioCtx.createGain();
-
-            sourceNode.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            video._theaterAudioCtx = audioCtx;
-            video._theaterGainNode = gainNode;
-          } catch (err) {
-            console.error('[Theater Everywhere Main World] Web Audio setup failed:', err);
-            return;
-          }
-        }
-
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(console.error);
-        }
-        gainNode.gain.value = multiplier;
-      });
-    })();
-  `;
-  (document.head || document.documentElement).appendChild(script);
-}
-
 function applyVolumeAndBoost(video: HTMLVideoElement, sliderValue: number): void {
-  // Ensure main world script is injected
-  injectMainWorldScript();
-
-  // Set the identifier on the video element so the main world script can find it
-  video.dataset.theaterId = 'active-video';
+  // Ensure the active video has the active class so the main world script can locate it
+  if (!video.classList.contains('theater-everywhere-video-active')) {
+    video.classList.add('theater-everywhere-video-active');
+  }
 
   if (sliderValue <= 1.0) {
     video.volume = sliderValue;

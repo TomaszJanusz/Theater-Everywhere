@@ -12,6 +12,7 @@ export default defineConfig({
         options: resolve(__dirname, 'options/options.html'),
         content: resolve(__dirname, 'src/content.ts'),
         background: resolve(__dirname, 'src/background.ts'),
+        mainWorld: resolve(__dirname, 'src/mainWorld.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
@@ -20,6 +21,9 @@ export default defineConfig({
           }
           if (chunkInfo.name === 'background') {
             return 'background.js';
+          }
+          if (chunkInfo.name === 'mainWorld') {
+            return 'mainWorld.js';
           }
           return 'assets/[name]-[hash].js';
         },
