@@ -97,6 +97,7 @@ let isInitialized = false;
 let isTransitioning = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
 let currentToggleFullscreen: (() => void) | null = null;
+let onVolumeAdjustedCallback: (() => void) | null = null;
 
 function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   if (!shortcutStr) return false;
@@ -367,6 +368,9 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     }
     applyVolumeAndBoost(boostedVideo, boostedVideo._logicalVolume);
     triggerVolumeIndicator(boostedVideo._logicalVolume, video.muted, 'up');
+    if (onVolumeAdjustedCallback) {
+      onVolumeAdjustedCallback();
+    }
   } else if (matchesShortcut(e, shortcuts.volumeDown)) {
     e.preventDefault();
     e.stopPropagation();
@@ -378,6 +382,9 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     boostedVideo._logicalVolume = Math.max(0.0, boostedVideo._logicalVolume - 0.05);
     applyVolumeAndBoost(boostedVideo, boostedVideo._logicalVolume);
     triggerVolumeIndicator(boostedVideo._logicalVolume, video.muted, 'down');
+    if (onVolumeAdjustedCallback) {
+      onVolumeAdjustedCallback();
+    }
   } else if (matchesShortcut(e, shortcuts.togglePiP)) {
     e.preventDefault();
     e.stopPropagation();
@@ -1385,7 +1392,11 @@ function createCustomControls(video: HTMLVideoElement): void {
   const initialLogical = boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : (video.muted ? 0 : video.volume);
   volumeSlider.value = String(initialLogical);
 
+  const volumeTick100 = document.createElement('div');
+  volumeTick100.className = 'volume-tick-100-vertical';
+
   volumeSliderWrapper.appendChild(volumeSlider);
+  volumeSliderWrapper.appendChild(volumeTick100);
   volumePanel.appendChild(volumeTooltip);
   volumePanel.appendChild(volumeSliderWrapper);
 
@@ -2212,6 +2223,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     updateVolumeSliderFill();
     updateVolumeTooltip();
   };
+  onVolumeAdjustedCallback = onVolumeChange;
   const onRateChange = () => {
     updateSpeedLabelText();
     speedSlider.value = String(getSpeedIndex(video.playbackRate));
@@ -2249,6 +2261,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   video.addEventListener('stalled', onStalled);
 
   wrapper._videoListenersCleanup = () => {
+    onVolumeAdjustedCallback = null;
     video.removeEventListener('play', onPlay);
     video.removeEventListener('pause', onPause);
     video.removeEventListener('timeupdate', onTimeUpdate);
