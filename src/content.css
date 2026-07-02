@@ -346,6 +346,14 @@
   padding: 0 !important;
 }
 
+.theater-volume-slider.boosted::-webkit-slider-thumb {
+  background: #f59e0b !important;
+}
+
+.theater-volume-slider.boosted::-moz-range-thumb {
+  background: #f59e0b !important;
+}
+
 /* Removed old tooltips (migrated to vertical panel content) */
 
 /* Time display label */
@@ -812,6 +820,14 @@ video::-webkit-media-text-track-display {
   pointer-events: none !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
   transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.theater-everywhere-volume-overlay.boosted {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+.theater-everywhere-volume-overlay.boosted .volume-hud-text {
+  color: #f59e0b !important;
 }
 
 .theater-everywhere-volume-overlay.fade-out {

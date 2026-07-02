@@ -34,6 +34,62 @@ const defaultShortcuts: Shortcuts = {
 
 let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
 
+interface BoostedVideoElement extends HTMLVideoElement {
+  _audioCtx?: AudioContext;
+  _gainNode?: GainNode;
+  _sourceNode?: MediaElementAudioSourceNode;
+  _logicalVolume?: number;
+}
+
+function initVolumeBoost(video: BoostedVideoElement): GainNode | null {
+  if (video._gainNode) return video._gainNode;
+
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    const audioCtx = new AudioContextClass();
+    const sourceNode = audioCtx.createMediaElementSource(video);
+    const gainNode = audioCtx.createGain();
+
+    sourceNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    video._audioCtx = audioCtx;
+    video._sourceNode = sourceNode;
+    video._gainNode = gainNode;
+
+    return gainNode;
+  } catch (err) {
+    console.error('[Theater Everywhere] Failed to initialize volume boost Web Audio API:', err);
+    return null;
+  }
+}
+
+function applyVolumeAndBoost(video: HTMLVideoElement, sliderValue: number): void {
+  const boostedVideo = video as BoostedVideoElement;
+
+  if (sliderValue <= 1.0) {
+    video.volume = sliderValue;
+    if (boostedVideo._gainNode) {
+      boostedVideo._gainNode.gain.value = 1.0;
+    }
+  } else {
+    video.volume = 1.0; // Lock native volume at max
+
+    // 1.0 to 1.5 in slider maps to 1.0 to 3.0 volume boost multiplier
+    const multiplier = 1.0 + (sliderValue - 1.0) * 4.0;
+
+    const gainNode = initVolumeBoost(boostedVideo);
+    if (gainNode) {
+      if (boostedVideo._audioCtx && boostedVideo._audioCtx.state === 'suspended') {
+        boostedVideo._audioCtx.resume().catch(console.error);
+      }
+      gainNode.gain.value = multiplier;
+    }
+  }
+}
+
 let activeVideo: HTMLVideoElement | null = null;
 let theaterElement: HTMLElement | null = null;
 let ancestorsList: HTMLElement[] = [];
@@ -301,17 +357,27 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.volume = Math.min(1.0, video.volume + 0.05);
+    const boostedVideo = video as BoostedVideoElement;
+    if (boostedVideo._logicalVolume === undefined) {
+      boostedVideo._logicalVolume = video.muted ? 0 : video.volume;
+    }
+    boostedVideo._logicalVolume = Math.min(1.5, boostedVideo._logicalVolume + 0.05);
     if (video.muted) {
       video.muted = false;
     }
-    triggerVolumeIndicator(video.volume, video.muted, 'up');
+    applyVolumeAndBoost(boostedVideo, boostedVideo._logicalVolume);
+    triggerVolumeIndicator(boostedVideo._logicalVolume, video.muted, 'up');
   } else if (matchesShortcut(e, shortcuts.volumeDown)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    video.volume = Math.max(0.0, video.volume - 0.05);
-    triggerVolumeIndicator(video.volume, video.muted, 'down');
+    const boostedVideo = video as BoostedVideoElement;
+    if (boostedVideo._logicalVolume === undefined) {
+      boostedVideo._logicalVolume = video.muted ? 0 : video.volume;
+    }
+    boostedVideo._logicalVolume = Math.max(0.0, boostedVideo._logicalVolume - 0.05);
+    applyVolumeAndBoost(boostedVideo, boostedVideo._logicalVolume);
+    triggerVolumeIndicator(boostedVideo._logicalVolume, video.muted, 'down');
   } else if (matchesShortcut(e, shortcuts.togglePiP)) {
     e.preventDefault();
     e.stopPropagation();
@@ -1312,9 +1378,12 @@ function createCustomControls(video: HTMLVideoElement): void {
   volumeSlider.type = 'range';
   volumeSlider.className = 'theater-volume-slider theater-vertical-slider';
   volumeSlider.min = '0';
-  volumeSlider.max = '1';
+  volumeSlider.max = '1.5';
   volumeSlider.step = '0.05';
-  volumeSlider.value = video.muted ? '0' : String(video.volume);
+  
+  const boostedVideo = video as BoostedVideoElement;
+  const initialLogical = boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : (video.muted ? 0 : video.volume);
+  volumeSlider.value = String(initialLogical);
 
   volumeSliderWrapper.appendChild(volumeSlider);
   volumePanel.appendChild(volumeTooltip);
@@ -1341,29 +1410,49 @@ function createCustomControls(video: HTMLVideoElement): void {
   `;
 
   const updateVolumeIcon = () => {
-    if (video.muted || video.volume === 0) {
+    const logicalVol = video.muted ? 0 : (boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : video.volume);
+    if (video.muted || logicalVol === 0) {
       setIcon(volumeBtn, volMutedIcon);
-    } else if (video.volume < 0.5) {
+      volumeBtn.style.color = '';
+    } else if (logicalVol < 0.5) {
       setIcon(volumeBtn, volLowIcon);
+      volumeBtn.style.color = '';
     } else {
       setIcon(volumeBtn, volHighIcon);
+      if (logicalVol > 1.0) {
+        volumeBtn.style.color = '#f59e0b';
+      } else {
+        volumeBtn.style.color = '';
+      }
     }
   };
   updateVolumeIcon();
 
   const updateVolumeSliderFill = () => {
-    const val = video.muted ? 0 : video.volume;
-    const pct = val * 100;
-    const accentColor = 'var(--accent-color, #6366f1)';
-    const grad = `linear-gradient(to right, ${accentColor} 0%, ${accentColor} ${pct}%, rgba(255, 255, 255, 0.2) ${pct}%, rgba(255, 255, 255, 0.2) 100%)`;
+    const logicalVol = video.muted ? 0 : (boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : video.volume);
+    const fillPct = (logicalVol / 1.5) * 100;
+    const isBoosted = logicalVol > 1.0;
+    const activeColor = isBoosted ? '#f59e0b' : 'var(--accent-color, #6366f1)';
+    const grad = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${fillPct}%, rgba(255, 255, 255, 0.2) ${fillPct}%, rgba(255, 255, 255, 0.2) 100%)`;
     volumeSlider.style.setProperty('background', grad, 'important');
+    if (isBoosted) {
+      volumeSlider.classList.add('boosted');
+    } else {
+      volumeSlider.classList.remove('boosted');
+    }
   };
   updateVolumeSliderFill();
 
   const updateVolumeTooltip = () => {
-    const val = video.muted ? 0 : video.volume;
-    const pct = val * 100;
-    volumeTooltip.textContent = `${Math.round(pct)}%`;
+    const logicalVol = video.muted ? 0 : (boostedVideo._logicalVolume !== undefined ? boostedVideo._logicalVolume : video.volume);
+    if (logicalVol <= 1.0) {
+      volumeTooltip.textContent = `${Math.round(logicalVol * 100)}%`;
+      volumeTooltip.style.color = '#f8fafc';
+    } else {
+      const pct = Math.round(100 + (logicalVol - 1.0) * 400);
+      volumeTooltip.textContent = `${pct}%`;
+      volumeTooltip.style.color = '#f59e0b';
+    }
   };
   updateVolumeTooltip();
 
@@ -1373,10 +1462,11 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   volumeSlider.addEventListener('input', (e) => {
     const val = parseFloat((e.target as HTMLInputElement).value);
-    video.volume = val;
+    boostedVideo._logicalVolume = val;
     if (val > 0 && video.muted) {
       video.muted = false;
     }
+    applyVolumeAndBoost(boostedVideo, val);
     updateVolumeSliderFill();
     updateVolumeTooltip();
   });
@@ -2106,7 +2196,18 @@ function createCustomControls(video: HTMLVideoElement): void {
   const onProgress = () => { updateScrubber(); };
   const onDurationChange = () => { updateScrubber(); updateTimeDisplay(); };
   const onVolumeChange = () => {
-    volumeSlider.value = video.muted ? '0' : String(video.volume);
+    const boostedVideo = video as BoostedVideoElement;
+    if (video.muted) {
+      volumeSlider.value = '0';
+    } else {
+      if (boostedVideo._logicalVolume !== undefined && boostedVideo._logicalVolume > 1.0 && video.volume === 1.0) {
+        // Keep the slider at the logical volume if currently boosted
+        volumeSlider.value = String(boostedVideo._logicalVolume);
+      } else {
+        boostedVideo._logicalVolume = video.volume;
+        volumeSlider.value = String(video.volume);
+      }
+    }
     updateVolumeIcon();
     updateVolumeSliderFill();
     updateVolumeTooltip();
@@ -2324,7 +2425,7 @@ function applyFallbackTheme() {
   applyAccentFallback();
 }
 
-function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | 'down'): void {
+function triggerVolumeIndicator(logicalVolume: number, muted: boolean, action: 'up' | 'down'): void {
   if (!theaterElement) return;
 
   const existing = document.querySelector('.theater-everywhere-volume-overlay') as HTMLElement | null;
@@ -2333,9 +2434,10 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
   }
 
   const overlay = document.createElement('div');
-  overlay.className = 'theater-everywhere-volume-overlay';
+  const isBoosted = !muted && logicalVolume > 1.0;
+  overlay.className = 'theater-everywhere-volume-overlay' + (isBoosted ? ' boosted' : '');
 
-  const pct = muted ? 0 : Math.round(volume * 100);
+  const pct = muted ? 0 : (logicalVolume <= 1.0 ? Math.round(logicalVolume * 100) : Math.round(100 + (logicalVolume - 1.0) * 400));
 
   let icon = '';
   if (muted || pct === 0) {
@@ -2358,7 +2460,7 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
 
   overlay.innerHTML = `
     <div class="volume-hud-content">
-      <div class="volume-hud-icon">${icon}</div>
+      <div class="volume-hud-icon" style="${isBoosted ? 'color: #f59e0b;' : ''}">${icon}</div>
       <span class="volume-hud-text ${action === 'up' ? 'zoom-in' : 'zoom-out'}">${pct}%</span>
     </div>
   `;
