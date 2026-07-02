@@ -303,13 +303,13 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     if (video.muted) {
       video.muted = false;
     }
-    triggerVolumeIndicator(video.volume, video.muted);
+    triggerVolumeIndicator(video.volume, video.muted, 'up');
   } else if (matchesShortcut(e, shortcuts.volumeDown)) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     video.volume = Math.max(0.0, video.volume - 0.05);
-    triggerVolumeIndicator(video.volume, video.muted);
+    triggerVolumeIndicator(video.volume, video.muted, 'down');
   } else if (matchesShortcut(e, shortcuts.togglePiP)) {
     e.preventDefault();
     e.stopPropagation();
@@ -2279,7 +2279,7 @@ function applyFallbackTheme() {
 }
 
 // Spawns macOS/iOS-style centered volume HUD indicator
-function triggerVolumeIndicator(volume: number, muted: boolean): void {
+function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | 'down'): void {
   if (!theaterElement) return;
 
   const existing = document.querySelector('.theater-everywhere-volume-overlay') as HTMLElement | null;
@@ -2288,7 +2288,7 @@ function triggerVolumeIndicator(volume: number, muted: boolean): void {
   }
 
   const overlay = document.createElement('div');
-  overlay.className = 'theater-everywhere-volume-overlay';
+  overlay.className = 'theater-everywhere-volume-overlay ' + (action === 'up' ? 'zoom-in' : 'zoom-out');
 
   const pct = muted ? 0 : Math.round(volume * 100);
 
