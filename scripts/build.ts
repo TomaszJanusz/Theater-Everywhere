@@ -100,7 +100,14 @@ async function run() {
       version = `0.${yy}.${mm}${dd}.${hh}${min}`;
       console.log(`Local build detected. Generating date-based version: ${version}`);
     } else {
-      console.log(`CI build detected. Using version from package.json: ${version}`);
+      const envTag = process.env.RELEASE_TAG || process.env.GITHUB_REF_NAME || '';
+      const tagVersion = envTag.replace(/^v/, '');
+      if (/^\d+\.\d+\.\d+/.test(tagVersion)) {
+        version = tagVersion;
+        console.log(`CI build detected. Overriding version with tag-derived version: ${version}`);
+      } else {
+        console.log(`CI build detected. Using version from package.json: ${version}`);
+      }
     }
 
     const manifestPath = path.resolve(__dirname, '../manifest.json');
