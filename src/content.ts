@@ -2278,7 +2278,6 @@ function applyFallbackTheme() {
   applyAccentFallback();
 }
 
-// Spawns macOS/iOS-style centered volume HUD indicator
 function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | 'down'): void {
   if (!theaterElement) return;
 
@@ -2288,7 +2287,7 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
   }
 
   const overlay = document.createElement('div');
-  overlay.className = 'theater-everywhere-volume-overlay ' + (action === 'up' ? 'zoom-in' : 'zoom-out');
+  overlay.className = 'theater-everywhere-volume-overlay';
 
   const pct = muted ? 0 : Math.round(volume * 100);
 
@@ -2312,8 +2311,10 @@ function triggerVolumeIndicator(volume: number, muted: boolean, action: 'up' | '
   }
 
   overlay.innerHTML = `
-    <div class="volume-hud-icon">${icon}</div>
-    <span class="volume-hud-text">${pct}%</span>
+    <div class="volume-hud-content ${action === 'up' ? 'zoom-in' : 'zoom-out'}">
+      <div class="volume-hud-icon">${icon}</div>
+      <span class="volume-hud-text">${pct}%</span>
+    </div>
   `;
 
   document.body.appendChild(overlay);
