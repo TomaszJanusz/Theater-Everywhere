@@ -56,8 +56,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadAndRenderBlacklist() {
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
-      const blacklist = (data.blacklist || []) as string[];
+      let blacklist = (data.blacklist || []) as string[];
       
+      // Normalize blacklist: strip www. and remove duplicates
+      let normalized = false;
+      const cleanedBlacklist = Array.from(new Set(blacklist.map(d => {
+        const cleaned = d.toLowerCase().trim();
+        if (cleaned.startsWith('www.')) {
+          normalized = true;
+          return cleaned.substring(4);
+        }
+        return cleaned;
+      })));
+
+      if (normalized || cleanedBlacklist.length !== blacklist.length) {
+        await chrome.storage.sync.set({ blacklist: cleanedBlacklist });
+        blacklist = cleanedBlacklist;
+      }
+
       // Sort alphabetically
       blacklist.sort();
 
@@ -152,10 +168,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const url = new URL(str);
-      const host = url.hostname;
+      let host = url.hostname;
       
       // Basic domain check: must have at least one dot, and length > 3
       if (host && host.includes('.') && host.length > 3) {
+        if (host.startsWith('www.')) {
+          host = host.substring(4);
+        }
         return host;
       }
       return null;

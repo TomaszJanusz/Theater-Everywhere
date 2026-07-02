@@ -23,8 +23,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Check for valid http/https pages
       if (url.protocol.startsWith('http')) {
-        currentDomain = url.hostname;
-        domainNameEl.textContent = currentDomain;
+        let domain = url.hostname;
+        if (domain.startsWith('www.')) {
+          domain = domain.substring(4);
+        }
+        currentDomain = domain;
+        domainNameEl.textContent = url.hostname;
         
         // Load settings and update UI
         await updateStatusUI();
@@ -71,6 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await chrome.storage.sync.get({ blacklist: [] });
       let blacklist = (data.blacklist || []) as string[];
 
+      // Normalize all stored blacklist entries to strip www.
+      blacklist = blacklist.map(d => d.startsWith('www.') ? d.substring(4) : d);
+
       if (isActive) {
         // Remove from blacklist to activate
         blacklist = blacklist.filter(d => d !== currentDomain);
@@ -80,6 +87,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           blacklist.push(currentDomain);
         }
       }
+
+      // Deduplicate
+      blacklist = Array.from(new Set(blacklist));
 
       await chrome.storage.sync.set({ blacklist });
       
@@ -105,7 +115,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const data = await chrome.storage.sync.get({ blacklist: [] });
       const blacklist = (data.blacklist || []) as string[];
-      const isBlacklisted = blacklist.includes(currentDomain);
+      
+      const isBlacklisted = blacklist.some(d => {
+        const clean = d.startsWith('www.') ? d.substring(4) : d;
+        return clean === currentDomain;
+      });
 
       // In blacklist = not active = checkbox unchecked
       const isActive = !isBlacklisted;

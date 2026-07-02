@@ -22,6 +22,7 @@ let ancestorsList: HTMLElement[] = [];
 let isInitialized = false;
 let isTransitioning = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
+let currentToggleFullscreen: (() => void) | null = null;
 
 function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   if (!shortcutStr) return false;
@@ -182,7 +183,9 @@ async function checkBlacklistAndInit(): Promise<void> {
     } as Shortcuts;
     
     const isBlacklisted = blacklist.some(domain => {
-      return currentHostname === domain || currentHostname.endsWith('.' + domain);
+      const cleanDomain = domain.startsWith('www.') ? domain.substring(4) : domain;
+      const cleanHostname = currentHostname.startsWith('www.') ? currentHostname.substring(4) : currentHostname;
+      return cleanHostname === cleanDomain || cleanHostname.endsWith('.' + cleanDomain);
     });
 
     if (isBlacklisted) {
@@ -254,6 +257,13 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
     e.stopImmediatePropagation();
     if (isFinite(video.duration)) {
       video.currentTime = Math.min(video.duration, video.currentTime + 0.04);
+    }
+  } else if (!e.ctrlKey && !e.altKey && !e.metaKey && e.key.toUpperCase() === 'F') {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if (currentToggleFullscreen) {
+      currentToggleFullscreen();
     }
   }
 }
@@ -654,6 +664,10 @@ function enterTheaterMode(element: HTMLElement): void {
 // Exit theater mode
 function exitTheaterMode(): void {
   if (!theaterElement) return;
+
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(console.error);
+  }
 
   // Restore HTML5 video attributes
   if (theaterElement.tagName === 'VIDEO') {
@@ -1157,12 +1171,13 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(console.error);
     } else {
-      const target = video.parentElement || video;
+      const target = theaterElement ? document.documentElement : (video.parentElement || video);
       target.requestFullscreen().catch(() => {
         video.requestFullscreen().catch(console.error);
       });
     }
   };
+  currentToggleFullscreen = toggleFullscreen;
 
   fullscreenBtn.addEventListener('click', () => {
     toggleFullscreen();
@@ -1711,6 +1726,7 @@ function destroyCustomControls(): void {
   document.removeEventListener('mousemove', showToolbar);
   if (toolbarTimer) clearTimeout(toolbarTimer);
   document.body.style.cursor = 'default';
+  currentToggleFullscreen = null;
 }
 
 // Triggers and animates the seek overlay indicator (YouTube-style)

@@ -82,15 +82,49 @@ async function run() {
     fs.rmSync(distDir, { recursive: true, force: true });
     fs.mkdirSync(distDir, { recursive: true });
 
-    // 3. Copy manifest and icons to both targets
-    console.log('Copying static manifests and icons...');
-    fs.copyFileSync(
-      path.resolve(__dirname, '../manifest.json'),
-      path.resolve(chromeStagingDir, 'manifest.json')
+    // 3. Sync version from package.json to manifest.json and copy manifests
+    console.log('Syncing version from package.json to manifest.json...');
+    const pkgPath = path.resolve(__dirname, '../package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    
+    let version = pkg.version;
+    const isCI = process.env.CI === 'true';
+
+    if (!isCI) {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      version = `0.${yy}.${mm}${dd}.${hh}${min}`;
+      console.log(`Local build detected. Generating date-based version: ${version}`);
+    } else {
+      console.log(`CI build detected. Using version from package.json: ${version}`);
+    }
+
+    const manifestPath = path.resolve(__dirname, '../manifest.json');
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    
+    if (isCI) {
+      // Sync back to root manifest.json only in CI to keep local git status clean
+      manifest.version = version;
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    } else {
+      // Just modify the manifest object in memory for local packaging
+      manifest.version = version;
+    }
+
+    // Write to staging dirs
+    fs.writeFileSync(
+      path.resolve(chromeStagingDir, 'manifest.json'),
+      JSON.stringify(manifest, null, 2),
+      'utf8'
     );
-    fs.copyFileSync(
-      path.resolve(__dirname, '../manifest.json'),
-      path.resolve(firefoxStagingDir, 'manifest.json')
+    fs.writeFileSync(
+      path.resolve(firefoxStagingDir, 'manifest.json'),
+      JSON.stringify(manifest, null, 2),
+      'utf8'
     );
 
     copyFolderRecursiveSync(

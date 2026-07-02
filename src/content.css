@@ -87,7 +87,7 @@
 
 .theater-scrubber-track {
   height: 4px !important;
-  background-color: rgba(0, 0, 0, 0.35) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
   border-radius: 2px !important;
   position: relative !important;
   transition: height 0.15s ease !important;
@@ -203,6 +203,13 @@
 .theater-volume-slider {
   -webkit-appearance: none !important;
   appearance: none !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  box-shadow: none !important;
   width: 0px !important;
   opacity: 0 !important;
   height: 4px !important;
@@ -240,6 +247,13 @@
 .theater-speed-slider {
   -webkit-appearance: none !important;
   appearance: none !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  box-shadow: none !important;
   width: 100% !important;
   height: 4px !important;
   background: rgba(255, 255, 255, 0.2) !important;
@@ -251,17 +265,39 @@
 /* Speed Slider 1x Tick */
 .speed-tick-1x {
   position: absolute !important;
-  top: 50% !important;
+  top: calc(50% + 6px) !important;
   left: calc(5px + 0.42857 * (100% - 10px)) !important;
   transform: translate(-50%, -50%) !important;
-  width: 4px !important;
-  height: 4px !important;
+  width: 3px !important;
+  height: 3px !important;
   border-radius: 50% !important;
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.6) !important;
   pointer-events: none !important;
-  z-index: 2 !important;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important;
-  opacity: 0.8 !important;
+  z-index: 1 !important;
+  box-shadow: none !important;
+}
+
+/* Range slider track overrides to prevent website styles from causing tall sliders */
+.theater-volume-slider::-webkit-slider-runnable-track,
+.theater-speed-slider::-webkit-slider-runnable-track {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.theater-volume-slider::-moz-range-track,
+.theater-speed-slider::-moz-range-track {
+  height: 4px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .theater-volume-slider::-webkit-slider-thumb,
@@ -273,6 +309,9 @@
   border-radius: 50% !important;
   background: var(--accent-color, #6366f1) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  border: none !important;
+  margin-top: -3px !important;
+  padding: 0 !important;
 }
 
 .theater-volume-slider::-moz-range-thumb,
@@ -283,6 +322,8 @@
   background: var(--accent-color, #6366f1) !important;
   border: none !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
 }
 
 /* Tooltips */
