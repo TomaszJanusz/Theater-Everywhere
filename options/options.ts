@@ -1,5 +1,13 @@
 /* Options script for Theater Everywhere */
 import { fetchAndApplyTheme } from '../src/themeHelper';
+import {
+  ACCENT_COLOR_OPTIONS,
+  ACCENT_COLOR_STORAGE_KEY,
+  DEFAULT_ACCENT_COLOR,
+  applyAccentColorPreset,
+  resolveAccentColorPreset,
+  type AccentColorPreset
+} from '../src/accentTheme';
 
 // Apply browser theme colors immediately
 fetchAndApplyTheme();
@@ -83,6 +91,10 @@ async function init() {
   // Load and bind features toggles
   await loadAndRenderFeatures();
   setupFeatureListeners();
+
+  // Load and bind appearance controls
+  renderAccentColorOptions(DEFAULT_ACCENT_COLOR);
+  await loadAndRenderAppearance();
 
   // Handle Form Submit
   form.addEventListener('submit', async (e: Event) => {
@@ -251,6 +263,77 @@ async function init() {
       }
     } catch (err) {
       console.error('Error notifying tabs:', err);
+    }
+  }
+
+  function renderAccentColorOptions(selectedPreset: AccentColorPreset) {
+    const grid = document.getElementById('accent-color-grid') as HTMLElement | null;
+    if (!grid) return;
+
+    grid.textContent = '';
+
+    ACCENT_COLOR_OPTIONS.forEach(option => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'accent-color-btn';
+      button.dataset.accentColor = option.preset;
+      button.setAttribute('role', 'radio');
+      button.setAttribute('aria-label', `Use ${option.label} as the accent color`);
+      button.setAttribute('aria-checked', option.preset === selectedPreset ? 'true' : 'false');
+      button.title = option.label;
+
+      if (option.preset === selectedPreset) {
+        button.classList.add('selected');
+      }
+
+      const swatch = document.createElement('span');
+      swatch.className = 'accent-color-swatch';
+      if (option.preset === 'system') {
+        swatch.classList.add('system-swatch');
+      } else {
+        swatch.style.backgroundColor = option.swatch;
+      }
+
+      const label = document.createElement('span');
+      label.className = 'accent-color-label';
+      label.textContent = option.label;
+
+      button.appendChild(swatch);
+      button.appendChild(label);
+      button.addEventListener('click', () => {
+        void saveAccentColor(option.preset);
+      });
+
+      grid.appendChild(button);
+    });
+  }
+
+  async function loadAndRenderAppearance() {
+    try {
+      const data = await safeGetStorage(ACCENT_COLOR_STORAGE_KEY);
+      const selectedPreset = resolveAccentColorPreset(data[ACCENT_COLOR_STORAGE_KEY]);
+      applyAccentColorPreset(document.documentElement, selectedPreset);
+      renderAccentColorOptions(selectedPreset);
+    } catch (err) {
+      console.error('Error loading appearance settings:', err);
+      applyAccentColorPreset(document.documentElement, DEFAULT_ACCENT_COLOR);
+      renderAccentColorOptions(DEFAULT_ACCENT_COLOR);
+    }
+  }
+
+  async function saveAccentColor(preset: AccentColorPreset) {
+    try {
+      applyAccentColorPreset(document.documentElement, preset);
+      renderAccentColorOptions(preset);
+
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.sync) {
+        return;
+      }
+
+      await chrome.storage.sync.set({ [ACCENT_COLOR_STORAGE_KEY]: preset });
+      await notifyAllTabs();
+    } catch (err) {
+      console.error('Error saving accent color setting:', err);
     }
   }
 

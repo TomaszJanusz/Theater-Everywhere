@@ -1,8 +1,16 @@
+import {
+  ACCENT_COLOR_STORAGE_KEY,
+  DEFAULT_ACCENT_COLOR,
+  applyAccentColorPreset,
+  resolveAccentColorPreset
+} from './accentTheme';
+
 declare const chrome: any;
 
 export function fetchAndApplyTheme() {
   if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
     applyFallbackTheme();
+    applyStoredAccentColor();
     return;
   }
 
@@ -12,6 +20,7 @@ export function fetchAndApplyTheme() {
       if (chrome.runtime.lastError) {
         console.log('[Theater Everywhere] Background page not ready, using default theme.');
         applyFallbackTheme();
+        applyStoredAccentColor();
         return;
       }
 
@@ -20,10 +29,12 @@ export function fetchAndApplyTheme() {
       } else {
         applyFallbackTheme();
       }
+      applyStoredAccentColor();
     });
   } catch (e) {
     console.error('[Theater Everywhere] Failed to query theme:', e);
     applyFallbackTheme();
+    applyStoredAccentColor();
   }
 }
 
@@ -76,14 +87,33 @@ function applyBrowserTheme(theme: any) {
 }
 
 function applyAccentFallback() {
-  const root = document.documentElement;
-  // If AccentColor keyword is supported, let the CSS @supports handle it or apply explicitly:
-  root.style.setProperty('--accent-color', 'var(--native-accent, AccentColor)');
-  root.style.setProperty('--accent-text', 'var(--native-accent-text, AccentColorText)');
-  root.style.setProperty('--accent-hover', 'color-mix(in srgb, var(--accent-color) 85%, black)');
+  applyAccentColorPreset(document.documentElement, DEFAULT_ACCENT_COLOR);
 }
 
 function applyFallbackTheme() {
   // Let the default CSS rules or system color fallbacks take care of it
   applyAccentFallback();
+}
+
+function applyStoredAccentColor() {
+  if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.sync) {
+    applyAccentColorPreset(document.documentElement, DEFAULT_ACCENT_COLOR);
+    return;
+  }
+
+  try {
+    chrome.storage.sync.get({ [ACCENT_COLOR_STORAGE_KEY]: DEFAULT_ACCENT_COLOR }, (result: any) => {
+      if (chrome.runtime.lastError) {
+        applyAccentColorPreset(document.documentElement, DEFAULT_ACCENT_COLOR);
+        return;
+      }
+
+      applyAccentColorPreset(
+        document.documentElement,
+        resolveAccentColorPreset(result && result[ACCENT_COLOR_STORAGE_KEY])
+      );
+    });
+  } catch (_) {
+    applyAccentColorPreset(document.documentElement, DEFAULT_ACCENT_COLOR);
+  }
 }

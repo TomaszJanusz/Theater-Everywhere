@@ -32,6 +32,65 @@ const defaultShortcuts: Shortcuts = {
   showHelp: 'H'
 };
 
+// Kept inline so Vite emits a standalone classic content script without shared imports.
+const ACCENT_COLOR_STORAGE_KEY = 'accentColor';
+const ACCENT_COLOR_PRESETS = [
+  'system',
+  'teal',
+  'blue',
+  'green',
+  'yellow',
+  'orange',
+  'red',
+  'pink',
+  'purple',
+  'gray',
+] as const;
+type AccentColorPreset = (typeof ACCENT_COLOR_PRESETS)[number];
+type AccentColorToken = {
+  swatch: string;
+  foreground: string;
+};
+
+const DEFAULT_ACCENT_COLOR: AccentColorPreset = 'system';
+const ACCENT_COLOR_TOKENS: Record<Exclude<AccentColorPreset, 'system'>, AccentColorToken> = {
+  teal: { swatch: '#00b894', foreground: '#ffffff' },
+  blue: { swatch: '#37adff', foreground: '#0b1020' },
+  green: { swatch: '#51cd00', foreground: '#0b1020' },
+  yellow: { swatch: '#ffcb00', foreground: '#18181b' },
+  orange: { swatch: '#ff9f00', foreground: '#18181b' },
+  red: { swatch: '#ff613d', foreground: '#ffffff' },
+  pink: { swatch: '#ff4ad8', foreground: '#ffffff' },
+  purple: { swatch: '#af51f5', foreground: '#ffffff' },
+  gray: { swatch: '#7c7c7d', foreground: '#ffffff' }
+};
+
+function resolveAccentColorPreset(value: unknown): AccentColorPreset {
+  return typeof value === 'string' && ACCENT_COLOR_PRESETS.includes(value as AccentColorPreset)
+    ? value as AccentColorPreset
+    : DEFAULT_ACCENT_COLOR;
+}
+
+function applyAccentColorPreset(target: HTMLElement, preset: AccentColorPreset): void {
+  const supportsNativeAccent =
+    typeof CSS !== 'undefined' &&
+    typeof CSS.supports === 'function' &&
+    CSS.supports('color', 'AccentColor') &&
+    CSS.supports('color', 'AccentColorText');
+
+  if (preset === 'system' && supportsNativeAccent) {
+    target.style.setProperty('--accent-color', 'var(--native-accent, AccentColor)');
+    target.style.setProperty('--accent-text', 'var(--native-accent-text, AccentColorText)');
+    target.style.setProperty('--accent-hover', 'color-mix(in srgb, var(--accent-color) 85%, black)');
+    return;
+  }
+
+  const token = preset === 'system' ? ACCENT_COLOR_TOKENS.purple : ACCENT_COLOR_TOKENS[preset];
+  target.style.setProperty('--accent-color', token.swatch);
+  target.style.setProperty('--accent-text', token.foreground);
+  target.style.setProperty('--accent-hover', `color-mix(in srgb, ${token.swatch} 85%, black)`);
+}
+
 let volumeBoostEnabled = false;
 let configuredShortcuts: Shortcuts = { ...defaultShortcuts };
 
@@ -75,6 +134,7 @@ let isTransitioning = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
 let currentToggleFullscreen: (() => void) | null = null;
 let onVolumeAdjustedCallback: (() => void) | null = null;
+let configuredAccentColor: AccentColorPreset = DEFAULT_ACCENT_COLOR;
 
 function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   if (!shortcutStr) return false;
@@ -228,15 +288,40 @@ function setTooltipContent(el: HTMLElement, rawText: string): void {
   if (last < rawText.length) el.appendChild(document.createTextNode(rawText.slice(last)));
 }
 
+function applyConfiguredAccentColor(target: HTMLElement): void {
+  applyAccentColorPreset(target, configuredAccentColor);
+}
+
+function refreshExtensionAccentColor(): void {
+  document
+    .querySelectorAll<HTMLElement>(
+      [
+        '.theater-controls-wrapper',
+        '.theater-loading-indicator',
+        '.theater-button-tooltip',
+        '.theater-help-overlay',
+        '.theater-everywhere-seek-overlay',
+        '.theater-everywhere-volume-overlay'
+      ].join(',')
+    )
+    .forEach(applyConfiguredAccentColor);
+}
+
 // Check blacklist and initialize or destroy listeners
 async function checkBlacklistAndInit(): Promise<void> {
   const currentHostname = window.location.hostname;
   
   try {
-    const data = await chrome.storage.sync.get(['blacklist', 'shortcuts', 'volumeBoostEnabled']);
+    const data = await chrome.storage.sync.get([
+      'blacklist',
+      'shortcuts',
+      'volumeBoostEnabled',
+      ACCENT_COLOR_STORAGE_KEY
+    ]);
     const blacklist = (data.blacklist || []) as string[];
     const saved = data.shortcuts || {};
     volumeBoostEnabled = data.volumeBoostEnabled !== undefined ? data.volumeBoostEnabled : false;
+    configuredAccentColor = resolveAccentColorPreset(data[ACCENT_COLOR_STORAGE_KEY]);
     
     configuredShortcuts = {
       toggle: saved.toggle || defaultShortcuts.toggle,
@@ -269,12 +354,14 @@ async function checkBlacklistAndInit(): Promise<void> {
         initialize();
       }
     }
+    refreshExtensionAccentColor();
   } catch (err) {
     console.error('[Theater Everywhere] Error loading settings:', err);
     // Safe fallback: initialize if storage fails
     if (!isInitialized) {
       initialize();
     }
+    refreshExtensionAccentColor();
   }
 }
 
@@ -791,6 +878,7 @@ function showHelpOverlay(): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-help-overlay';
+  applyConfiguredAccentColor(overlay);
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
@@ -1226,7 +1314,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 // Run blacklist check and apply theme on load
 checkBlacklistAndInit();
-fetchAndApplyTheme();
 
 interface ExtendedHTMLDivElement extends HTMLDivElement {
   _videoListenersCleanup?: () => void;
@@ -1246,6 +1333,7 @@ function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => stri
     if (!tooltipState.element) {
       tooltipState.element = document.createElement('div');
       tooltipState.element.className = 'theater-button-tooltip';
+      applyConfiguredAccentColor(tooltipState.element);
       document.body.appendChild(tooltipState.element);
     }
     
@@ -1293,10 +1381,12 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const wrapper = document.createElement('div') as ExtendedHTMLDivElement;
   wrapper.className = 'theater-controls-wrapper';
+  applyConfiguredAccentColor(wrapper);
 
   // Create loading indicator
   const loadingIndicator = document.createElement('div');
   loadingIndicator.className = 'theater-loading-indicator';
+  applyConfiguredAccentColor(loadingIndicator);
   
   const loadingSpinner = document.createElement('div');
   loadingSpinner.className = 'theater-loading-spinner';
@@ -2350,6 +2440,7 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
 
   const overlay = document.createElement('div');
   overlay.className = `theater-everywhere-seek-overlay ${direction} animate`;
+  applyConfiguredAccentColor(overlay);
 
   const iconWrapper = document.createElement('div');
   iconWrapper.className = 'seek-icon-wrapper';
@@ -2384,82 +2475,6 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
   }, 650);
 }
 
-// Browser theme application functions (inlined to prevent ES module imports in classic content script context)
-function fetchAndApplyTheme() {
-  if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
-    applyFallbackTheme();
-    return;
-  }
-
-  try {
-    chrome.runtime.sendMessage({ action: 'getBrowserTheme' }, (response: any) => {
-      if (chrome.runtime.lastError) {
-        applyFallbackTheme();
-        return;
-      }
-
-      if (response && response.theme) {
-        applyBrowserTheme(response.theme);
-      } else {
-        applyFallbackTheme();
-      }
-    });
-  } catch (e) {
-    applyFallbackTheme();
-  }
-}
-
-function applyBrowserTheme(theme: any) {
-  const root = document.documentElement;
-  const colors = theme.colors;
-
-  if (!colors) {
-    applyFallbackTheme();
-    return;
-  }
-
-  const setVar = (name: string, value: string | undefined) => {
-    if (value) {
-      root.style.setProperty(name, value);
-    }
-  };
-
-  const bg = colors.popup || colors.toolbar || colors.frame || colors.accentcolor || colors.ntp_background;
-  setVar('--bg-color', bg);
-
-  const cardBg = colors.tab_selected || colors.toolbar_field || colors.toolbar || colors.popup;
-  setVar('--card-bg', cardBg);
-
-  const border = colors.popup_border || colors.toolbar_field_border || colors.sidebar_border;
-  setVar('--border-color', border);
-
-  const textPrimary = colors.popup_text || colors.toolbar_text || colors.textcolor || colors.toolbar_field_text || colors.ntp_text;
-  setVar('--text-primary', textPrimary);
-
-  if (textPrimary && bg) {
-    root.style.setProperty('--text-secondary', `color-mix(in srgb, ${textPrimary} 70%, ${bg})`);
-  }
-
-  const accent = colors.tab_line || colors.popup_border || colors.sidebar_border;
-  if (accent) {
-    setVar('--accent-color', accent);
-    root.style.setProperty('--accent-hover', `color-mix(in srgb, ${accent} 85%, black)`);
-  } else {
-    applyAccentFallback();
-  }
-}
-
-function applyAccentFallback() {
-  const root = document.documentElement;
-  root.style.setProperty('--accent-color', 'var(--native-accent, AccentColor)');
-  root.style.setProperty('--accent-text', 'var(--native-accent-text, AccentColorText)');
-  root.style.setProperty('--accent-hover', 'color-mix(in srgb, var(--accent-color) 85%, black)');
-}
-
-function applyFallbackTheme() {
-  applyAccentFallback();
-}
-
 function triggerVolumeIndicator(logicalVolume: number, muted: boolean, action: 'up' | 'down'): void {
   if (!theaterElement) return;
 
@@ -2471,6 +2486,7 @@ function triggerVolumeIndicator(logicalVolume: number, muted: boolean, action: '
   const overlay = document.createElement('div');
   const isBoosted = !muted && logicalVolume > 1.0;
   overlay.className = 'theater-everywhere-volume-overlay' + (isBoosted ? ' boosted' : '');
+  applyConfiguredAccentColor(overlay);
 
   const pct = muted ? 0 : (logicalVolume <= 1.0 ? Math.round(logicalVolume * 100) : Math.round(100 + (logicalVolume - 1.0) * 400));
 
@@ -2520,6 +2536,7 @@ function triggerPlaybackIndicator(action: 'play' | 'pause'): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-everywhere-volume-overlay';
+  applyConfiguredAccentColor(overlay);
 
   let icon = '';
   if (action === 'play') {

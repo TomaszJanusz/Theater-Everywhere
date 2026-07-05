@@ -63,10 +63,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(99, 102, 241, 0.1);
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
   padding: 6px;
   border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent-color) 24%, transparent);
 }
 
 .logo-text {
@@ -210,7 +210,7 @@ body {
 }
 
 input:checked + .slider {
-  background-color: rgba(99, 102, 241, 0.15);
+  background-color: color-mix(in srgb, var(--accent-color) 16%, transparent);
   border-color: var(--accent-color);
 }
 
