@@ -569,7 +569,7 @@ async function captureKeyboardShortcutSource(
       await delay(350);
       await dispatchCaptureCommand(cdp, sessionId, 'show-help');
       await waitForExpression(cdp, sessionId, '!!document.querySelector(".theater-help-overlay")', 10_000);
-      await delay(500);
+      await delay(1_000);
 
       const { data } = await cdp.call<{ data: string }>('Page.captureScreenshot', {
         format: 'png',
@@ -697,7 +697,7 @@ function launchChrome(profileDir: string, extensionPath: string, chromeLang: str
     'about:blank',
   ];
 
-  if (process.env.CWS_CAPTURE_HEADLESS === '1') {
+  if (process.env.CWS_CAPTURE_HEADLESS !== '0') {
     args.unshift('--headless=new');
   }
 
