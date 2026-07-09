@@ -170,9 +170,6 @@ async function run() {
           required: ['none'],
           optional: []
         }
-      },
-      gecko_android: {
-        strict_min_version: '142.0'
       }
     };
     // Replace service_worker with scripts[] for Firefox (service_worker is unsupported)
