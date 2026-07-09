@@ -1,6 +1,10 @@
 export const FALLBACK_MESSAGES: Record<string, string> = {
   extensionName: 'Theater Mode Everywhere',
   extensionDescription: 'Maximize any HTML5 video player to fill the browser viewport with a single keypress.',
+  cwsPromoBeforeLabel: 'BEFORE',
+  cwsPromoAfterLabel: 'AFTER',
+  cwsPromoPlayerUiLabel: 'Player UI',
+  cwsPromoShortcutsLabel: 'Shortcuts',
   settingsTitle: 'Settings',
   settingsPageTitle: 'Theater Mode Everywhere - Settings',
   settingsSubtitle: 'Configure website exclusions, appearance, and theater mode keyboard shortcuts.',

@@ -1,6 +1,10 @@
 {
   "extensionName": { "message": "Theater Mode Everywhere" },
   "extensionDescription": { "message": "Maximize any HTML5 video player to fill the browser viewport with a single keypress." },
+  "cwsPromoBeforeLabel": { "message": "BEFORE" },
+  "cwsPromoAfterLabel": { "message": "AFTER" },
+  "cwsPromoPlayerUiLabel": { "message": "Player UI" },
+  "cwsPromoShortcutsLabel": { "message": "Shortcuts" },
   "settingsTitle": { "message": "Settings" },
   "settingsPageTitle": { "message": "Theater Mode Everywhere - Settings" },
   "settingsSubtitle": { "message": "Configure website exclusions, appearance, and theater mode keyboard shortcuts." },

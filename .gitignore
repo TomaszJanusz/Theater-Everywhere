@@ -163,3 +163,4 @@ web-ext-artifacts/
 *.xpi
 *.pem
 output/
+outputs/

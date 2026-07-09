@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsx scripts/build.ts"
+    "build": "tsx scripts/build.ts",
+    "store:cws:screenshots": "tsx scripts/render-cws-screenshots.ts"
   },
   "author": "Tomasz Janusz",
   "license": "ISC",

@@ -1,6 +1,10 @@
 {
   "extensionName": { "message": "Theater Mode Everywhere - 剧场模式" },
   "extensionDescription": { "message": "只需按一个键，即可让任何 HTML5 视频播放器填满浏览器视口。" },
+  "cwsPromoBeforeLabel": { "message": "之前" },
+  "cwsPromoAfterLabel": { "message": "之后" },
+  "cwsPromoPlayerUiLabel": { "message": "播放器界面" },
+  "cwsPromoShortcutsLabel": { "message": "快捷键" },
   "settingsTitle": { "message": "设置" },
   "settingsPageTitle": { "message": "Theater Mode Everywhere - 设置" },
   "settingsSubtitle": { "message": "配置网站排除项、外观和剧场模式键盘快捷键。" },

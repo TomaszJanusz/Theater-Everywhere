@@ -298,7 +298,7 @@ function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   return true;
 }
 
-// Show/hide floating quick actions toolbar based on mouse activity
+// Show the floating quick actions toolbar based on mouse activity.
 function showToolbar(): void {
   const controls = document.querySelector('.theater-controls-wrapper') as HTMLElement | null;
   if (!controls) return;
@@ -310,21 +310,7 @@ function showToolbar(): void {
   document.body.style.cursor = 'default';
   
   if (toolbarTimer) clearTimeout(toolbarTimer);
-  toolbarTimer = setTimeout(() => {
-    const isScrubberDragging = document.querySelector('.theater-scrubber-container.dragging') !== null;
-    if (controls && !controls.matches(':hover') && !isScrubberDragging && theaterElement) {
-      controls.classList.remove('visible');
-      if (theaterElement.tagName === 'VIDEO') {
-        theaterElement.classList.remove('controls-visible');
-      }
-      // Also hide subtitles menu if open
-      const ccMenu = controls.querySelector('.theater-cc-menu') as HTMLElement | null;
-      if (ccMenu) {
-        ccMenu.classList.remove('visible');
-      }
-      document.body.style.cursor = 'none';
-    }
-  }, 2500);
+  toolbarTimer = null;
 }
 
 // Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
@@ -359,6 +345,7 @@ function preventDoubleToggle(e: Event): void {
 
 interface Listeners {
   keydown: ((event: KeyboardEvent) => void) | null;
+  cwsCaptureCommand: ((event: Event) => void) | null;
   mousemove: ((event: MouseEvent) => void) | null;
   play: ((event: Event) => void) | null;
   pause: ((event: Event) => void) | null;
@@ -369,6 +356,7 @@ interface Listeners {
 // Event listener references for clean removal
 const listeners: Listeners = {
   keydown: null,
+  cwsCaptureCommand: null,
   mousemove: null,
   play: null,
   pause: null,
@@ -608,6 +596,16 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
 function initialize(): void {
   if (isInitialized) return;
 
+  listeners.cwsCaptureCommand = (event: Event) => {
+    const command = event as CustomEvent<{ action?: string }>;
+    if (command.detail?.action === 'enter-theater' && !theaterElement) {
+      toggleTheaterMode();
+    } else if (command.detail?.action === 'show-help' && theaterElement && !helpOverlayElement) {
+      showHelpOverlay();
+    }
+  };
+  window.addEventListener('theater-everywhere-cws-capture-command', listeners.cwsCaptureCommand, true);
+
   // 1. Keyboard Listener (T and Escape)
   listeners.keydown = (event: KeyboardEvent) => {
     // Ignore key presses in inputs/textareas/editable elements (including inside Shadow DOM)
@@ -819,6 +817,7 @@ function destroy(): void {
   }
 
   if (listeners.keydown) window.removeEventListener('keydown', listeners.keydown, true);
+  if (listeners.cwsCaptureCommand) window.removeEventListener('theater-everywhere-cws-capture-command', listeners.cwsCaptureCommand, true);
   if (listeners.mousemove) document.removeEventListener('mousemove', listeners.mousemove);
   if (listeners.play) document.removeEventListener('play', listeners.play, true);
   if (listeners.pause) document.removeEventListener('pause', listeners.pause, true);

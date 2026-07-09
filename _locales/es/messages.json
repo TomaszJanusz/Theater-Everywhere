@@ -1,6 +1,10 @@
 {
   "extensionName": { "message": "Theater Mode Everywhere - Modo teatro" },
   "extensionDescription": { "message": "Maximiza cualquier reproductor de video HTML5 para ocupar la ventana del navegador con una sola tecla." },
+  "cwsPromoBeforeLabel": { "message": "ANTES" },
+  "cwsPromoAfterLabel": { "message": "DESPUÉS" },
+  "cwsPromoPlayerUiLabel": { "message": "Interfaz" },
+  "cwsPromoShortcutsLabel": { "message": "Atajos" },
   "settingsTitle": { "message": "Configuración" },
   "settingsPageTitle": { "message": "Theater Mode Everywhere - Configuración" },
   "settingsSubtitle": { "message": "Configura exclusiones de sitios web, apariencia y atajos de teclado del modo teatro." },

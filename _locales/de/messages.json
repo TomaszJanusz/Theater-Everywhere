@@ -1,6 +1,10 @@
 {
   "extensionName": { "message": "Theater Mode Everywhere - Theatermodus" },
   "extensionDescription": { "message": "Maximiere jeden HTML5-Videoplayer mit einem einzigen Tastendruck auf die gesamte Browseransicht." },
+  "cwsPromoBeforeLabel": { "message": "VORHER" },
+  "cwsPromoAfterLabel": { "message": "NACHHER" },
+  "cwsPromoPlayerUiLabel": { "message": "Oberfläche" },
+  "cwsPromoShortcutsLabel": { "message": "Kurzbefehle" },
   "settingsTitle": { "message": "Einstellungen" },
   "settingsPageTitle": { "message": "Theater Mode Everywhere - Einstellungen" },
   "settingsSubtitle": { "message": "Konfiguriere Website-Ausschlüsse, Darstellung und Tastenkürzel für den Theatermodus." },

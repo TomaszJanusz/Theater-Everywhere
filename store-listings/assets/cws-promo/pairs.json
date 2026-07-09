@@ -1,0 +1,22 @@
+{
+  "pairs": [
+    {
+      "id": "foxnews",
+      "title": "Fox News",
+      "before": "source/foxnews-before.png",
+      "after": "source/foxnews-after.png"
+    },
+    {
+      "id": "cnn",
+      "title": "CNN Weather",
+      "before": "source/cnn-before.png",
+      "after": "source/cnn-after.png"
+    },
+    {
+      "id": "yahoo",
+      "title": "Yahoo Entertainment",
+      "before": "source/yahoo-before.png",
+      "after": "source/yahoo-after.png"
+    }
+  ]
+}
