@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Localized extension UI and manifest metadata for English, Spanish, Simplified Chinese, German, and Polish using WebExtensions `_locales`.
+- Paste-ready Chrome Web Store and AMO store listing copy for all supported locales.
+- Release helper workflow for ensuring a requested version has a GitHub Release.
+- Optional AMO, Chrome Web Store, and Microsoft Edge Add-ons publishing steps for release builds.
+- Store publishing setup documentation and helper scripts for Chrome Web Store and Microsoft Edge Add-ons APIs.
+
+### Changed
+- Popup, options, and theater overlay text now use shared localization helpers and browser-selected language.
+- Build packaging now copies `_locales` into Chrome and Firefox release artifacts.
+- Local macOS, editor, and browser extension build artifacts are ignored by Git.
+
 ## [1.1.0] - 2026-07-02
 
 Completely redesigned controls experience — volume and speed now live in vertical pop-up panels that appear on hover, the in-player help overlay groups shortcuts just like the settings page, and a new volume/playback HUD gives instant visual feedback when adjusting volume or toggling play/pause with keyboard shortcuts. Volume can now be boosted up to 300% using the Web Audio API with a non-linear slider design prioritizing the 0-100% range, controlled by a new feature toggle in the options panel to enable or disable it. On pages with multiple videos, the extension automatically picks the best candidate based on visibility, playback state, and size — and you can cycle between them with a single shortcut. Fullscreen transitions now automatically resume playback if the site's scripts pause the video during transition. The extension also works on more sites thanks to Shadow DOM support, and the overall look has been refined with glassmorphic tooltips and seek overlays.
