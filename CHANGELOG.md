@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [.1.2.0] - 2026-07-09
-
 ### Added
 - Localized extension UI and manifest metadata for English, Spanish, Simplified Chinese, German, and Polish using WebExtensions `_locales`.
 - Paste-ready Chrome Web Store and AMO store listing copy for all supported locales.
