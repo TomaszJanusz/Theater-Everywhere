@@ -42,6 +42,12 @@ function copyDirContentSync(srcDir: string, destDir: string) {
   }
 }
 
+function copyIfExistsSync(srcDir: string, destDir: string) {
+  if (fs.existsSync(srcDir)) {
+    copyFolderRecursiveSync(srcDir, destDir);
+  }
+}
+
 function zipDirectory(sourceDir: string, outPath: string): Promise<void> {
   const archive = archiver('zip', { zlib: { level: 9 } });
   const stream = fs.createWriteStream(outPath);
@@ -140,6 +146,15 @@ async function run() {
     );
     copyFolderRecursiveSync(
       path.resolve(__dirname, '../icons'),
+      firefoxStagingDir
+    );
+
+    copyIfExistsSync(
+      path.resolve(__dirname, '../_locales'),
+      chromeStagingDir
+    );
+    copyIfExistsSync(
+      path.resolve(__dirname, '../_locales'),
       firefoxStagingDir
     );
 

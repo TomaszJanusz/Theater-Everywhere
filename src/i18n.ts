@@ -1,0 +1,132 @@
+export const FALLBACK_MESSAGES: Record<string, string> = {
+  extensionName: 'Theater Mode Everywhere',
+  extensionDescription: 'Maximize any HTML5 video player to fill the browser viewport with a single keypress.',
+  settingsTitle: 'Settings',
+  settingsPageTitle: 'Theater Mode Everywhere - Settings',
+  settingsSubtitle: 'Configure website exclusions, appearance, and theater mode keyboard shortcuts.',
+  websiteLabel: 'Website',
+  loadingLabel: 'Loading...',
+  systemPage: 'System page',
+  noActivePage: 'No active page',
+  errorLoading: 'Error loading',
+  statusActive: 'Active',
+  statusDisabled: 'Disabled',
+  statusInactiveSystem: 'Inactive (system)',
+  statusUnavailable: 'Unavailable',
+  toggleTheaterModeLower: 'Toggle theater mode',
+  createdBy: 'Created by Tomasz Janusz',
+  appearanceTitle: 'Appearance',
+  appearanceDescription: 'Choose the accent used by controls, sliders, shortcuts, and highlights.',
+  accentColorLabel: 'Accent color',
+  accentColorSystem: 'System',
+  accentColorTeal: 'Teal',
+  accentColorBlue: 'Blue',
+  accentColorGreen: 'Green',
+  accentColorYellow: 'Yellow',
+  accentColorOrange: 'Orange',
+  accentColorRed: 'Red',
+  accentColorPink: 'Pink',
+  accentColorPurple: 'Purple',
+  accentColorGray: 'Gray',
+  useAccentColor: 'Use $1 as the accent color',
+  featuresTitle: 'Features',
+  featuresDescription: 'Turn optional theater mode behavior on or off.',
+  volumeBoostTitle: 'Volume Boost',
+  volumeBoostDescription: 'Amplify volume up to 300% using Web Audio API. A brief loading spinner may appear the first time you enter theater mode while this is enabled.',
+  websiteExclusionsTitle: 'Website Exclusions',
+  websiteExclusionsDescription: 'Exclude websites where you do not want theater mode to activate automatically.',
+  domainInputPlaceholder: 'e.g., youtube.com or paste a URL',
+  excludedWebsitesTitle: 'Excluded Websites',
+  exclusionsFooterTip: 'Tip: You can also manage exclusions directly by clicking the extension icon in your browser toolbar.',
+  invalidDomain: 'Invalid domain or URL format.',
+  websiteAlreadyExcluded: 'This website is already excluded.',
+  errorSavingSettings: 'Error saving settings.',
+  noExclusionsYet: 'No exclusions yet',
+  noExclusionsDescription: 'Theater mode will activate automatically on all video pages.',
+  removeExclusion: 'Remove exclusion',
+  errorLoadingSettings: 'Error loading settings.',
+  keyboardShortcutsTitle: 'Keyboard Shortcuts',
+  keyboardShortcutsDescription: 'Click any input field and press your desired key combination to configure. Modifiers like Ctrl, Alt, and Shift are supported.',
+  generalControlsTitle: 'General Controls',
+  toggleTheaterMode: 'Toggle Theater Mode',
+  exitTheaterMode: 'Exit Theater Mode',
+  cycleSwitchPlayer: 'Cycle / Switch Player',
+  cycleSwitchVideo: 'Cycle / Switch Video',
+  showHideHelp: 'Show/Hide Help',
+  playbackVolumeControlsTitle: 'Playback & Volume Controls',
+  playPause: 'Play / Pause',
+  seekBackward5: 'Seek Backward (5s)',
+  seekForward5: 'Seek Forward (5s)',
+  volumeUp5: 'Volume Up (5%)',
+  volumeDown5: 'Volume Down (5%)',
+  frameFullscreenPipTitle: 'Frame, Fullscreen & PiP',
+  frameStepBackward: 'Frame Step Backward',
+  frameStepForward: 'Frame Step Forward',
+  frameStepBackward004: 'Frame Step Backward (0.04s)',
+  frameStepForward004: 'Frame Step Forward (0.04s)',
+  toggleFullscreen: 'Toggle Fullscreen',
+  togglePictureInPicture: 'Toggle Picture-in-Picture',
+  pressKeysPlaceholder: 'Press keys...',
+  resetToDefault: 'Reset to default',
+  resetToDefaults: 'Reset to defaults',
+  copyright: '© 2026 Tomasz Janusz. All rights reserved.',
+  play: 'Play',
+  pause: 'Pause',
+  pictureInPictureTooltip: 'Picture-in-Picture <kbd>$1</kbd>',
+  exitFullscreen: 'Exit Fullscreen',
+  fullscreenTooltip: 'Fullscreen <kbd>$1</kbd>',
+  exitTheaterModeTooltip: 'Exit Theater Mode <kbd>$1</kbd> or <kbd>$2</kbd>',
+  noSubtitlesAvailable: 'No subtitles available',
+  disableSubtitles: 'Disable Subtitles',
+  enableSubtitles: 'Enable Subtitles',
+  noSubtitles: 'No subtitles',
+  subtitlesOff: 'Off',
+  trackLabel: 'Track $1',
+  switchVideoTooltip: 'Switch Video <kbd>$1</kbd>',
+  keyboardShortcutsTooltip: 'Keyboard Shortcuts <kbd>$1</kbd>',
+  fiveSeconds: '5 seconds'
+};
+
+export function t(messageName: string, substitutions?: string | string[]): string {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
+      const message = chrome.i18n.getMessage(messageName, substitutions);
+      if (message) {
+        return message;
+      }
+    }
+  } catch (_) {
+    // Fall through to the key for local file/dev-server contexts.
+  }
+
+  let fallback = FALLBACK_MESSAGES[messageName] || messageName;
+  const replacementValues = Array.isArray(substitutions)
+    ? substitutions
+    : substitutions === undefined
+      ? []
+      : [substitutions];
+
+  replacementValues.forEach((value, index) => {
+    fallback = fallback.replace(new RegExp(`\\$${index + 1}`, 'g'), () => value);
+  });
+
+  return fallback;
+}
+
+export function localizeDocument(root: ParentNode = document): void {
+  root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((element) => {
+    element.textContent = t(element.dataset.i18n || '');
+  });
+
+  root.querySelectorAll<HTMLElement>('[data-i18n-title]').forEach((element) => {
+    element.title = t(element.dataset.i18nTitle || '');
+  });
+
+  root.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]').forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder || '');
+  });
+
+  root.querySelectorAll<HTMLElement>('[data-i18n-aria-label]').forEach((element) => {
+    element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel || ''));
+  });
+}

@@ -1,5 +1,66 @@
 import './content.css';
 
+const I18N_FALLBACK_MESSAGES: Record<string, string> = {
+  keyboardShortcutsTitle: 'Keyboard Shortcuts',
+  generalControlsTitle: 'General Controls',
+  toggleTheaterMode: 'Toggle Theater Mode',
+  exitTheaterMode: 'Exit Theater Mode',
+  cycleSwitchVideo: 'Cycle / Switch Video',
+  showHideHelp: 'Show/Hide Help',
+  playbackVolumeControlsTitle: 'Playback & Volume Controls',
+  playPause: 'Play / Pause',
+  seekBackward5: 'Seek Backward (5s)',
+  seekForward5: 'Seek Forward (5s)',
+  volumeUp5: 'Volume Up (5%)',
+  volumeDown5: 'Volume Down (5%)',
+  frameFullscreenPipTitle: 'Frame, Fullscreen & PiP',
+  frameStepBackward: 'Frame Step Backward',
+  frameStepForward: 'Frame Step Forward',
+  toggleFullscreen: 'Toggle Fullscreen',
+  togglePictureInPicture: 'Toggle Picture-in-Picture',
+  play: 'Play',
+  pause: 'Pause',
+  pictureInPictureTooltip: 'Picture-in-Picture <kbd>$1</kbd>',
+  exitFullscreen: 'Exit Fullscreen',
+  fullscreenTooltip: 'Fullscreen <kbd>$1</kbd>',
+  exitTheaterModeTooltip: 'Exit Theater Mode <kbd>$1</kbd> or <kbd>$2</kbd>',
+  noSubtitlesAvailable: 'No subtitles available',
+  disableSubtitles: 'Disable Subtitles',
+  enableSubtitles: 'Enable Subtitles',
+  noSubtitles: 'No subtitles',
+  subtitlesOff: 'Off',
+  trackLabel: 'Track $1',
+  switchVideoTooltip: 'Switch Video <kbd>$1</kbd>',
+  keyboardShortcutsTooltip: 'Keyboard Shortcuts <kbd>$1</kbd>',
+  fiveSeconds: '5 seconds'
+};
+
+function t(messageName: string, substitutions?: string | string[]): string {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage) {
+      const message = chrome.i18n.getMessage(messageName, substitutions);
+      if (message) {
+        return message;
+      }
+    }
+  } catch (_) {
+    // Content scripts can run in test pages without extension i18n.
+  }
+
+  let fallback = I18N_FALLBACK_MESSAGES[messageName] || messageName;
+  const replacementValues = Array.isArray(substitutions)
+    ? substitutions
+    : substitutions === undefined
+      ? []
+      : [substitutions];
+
+  replacementValues.forEach((value, index) => {
+    fallback = fallback.replace(new RegExp(`\\$${index + 1}`, 'g'), () => value);
+  });
+
+  return fallback;
+}
+
 interface Shortcuts {
   toggle: string;
   exit: string;
@@ -893,7 +954,7 @@ function showHelpOverlay(): void {
   header.className = 'theater-help-header';
   
   const title = document.createElement('h3');
-  title.textContent = 'Keyboard Shortcuts';
+  title.textContent = t('keyboardShortcutsTitle');
   
   const closeBtn = document.createElement('button');
   closeBtn.className = 'theater-help-close-btn';
@@ -914,31 +975,31 @@ function showHelpOverlay(): void {
 
   const groups = [
     {
-      title: 'General Controls',
+      title: t('generalControlsTitle'),
       items: [
-        { label: 'Toggle Theater Mode', key: shortcuts.toggle },
-        { label: 'Exit Theater Mode', key: shortcuts.exit },
-        { label: 'Cycle / Switch Video', key: shortcuts.cycle },
-        { label: 'Show/Hide Help', key: shortcuts.showHelp }
+        { label: t('toggleTheaterMode'), key: shortcuts.toggle },
+        { label: t('exitTheaterMode'), key: shortcuts.exit },
+        { label: t('cycleSwitchVideo'), key: shortcuts.cycle },
+        { label: t('showHideHelp'), key: shortcuts.showHelp }
       ]
     },
     {
-      title: 'Playback & Volume Controls',
+      title: t('playbackVolumeControlsTitle'),
       items: [
-        { label: 'Play / Pause', key: shortcuts.playPause },
-        { label: 'Seek Backward (5s)', key: shortcuts.seekBack },
-        { label: 'Seek Forward (5s)', key: shortcuts.seekForward },
-        { label: 'Volume Up (5%)', key: shortcuts.volumeUp },
-        { label: 'Volume Down (5%)', key: shortcuts.volumeDown }
+        { label: t('playPause'), key: shortcuts.playPause },
+        { label: t('seekBackward5'), key: shortcuts.seekBack },
+        { label: t('seekForward5'), key: shortcuts.seekForward },
+        { label: t('volumeUp5'), key: shortcuts.volumeUp },
+        { label: t('volumeDown5'), key: shortcuts.volumeDown }
       ]
     },
     {
-      title: 'Frame, Fullscreen & PiP',
+      title: t('frameFullscreenPipTitle'),
       items: [
-        { label: 'Frame Step Backward', key: shortcuts.frameBack },
-        { label: 'Frame Step Forward', key: shortcuts.frameForward },
-        { label: 'Toggle Fullscreen', key: shortcuts.toggleFullscreen },
-        { label: 'Toggle Picture-in-Picture', key: shortcuts.togglePiP }
+        { label: t('frameStepBackward'), key: shortcuts.frameBack },
+        { label: t('frameStepForward'), key: shortcuts.frameForward },
+        { label: t('toggleFullscreen'), key: shortcuts.toggleFullscreen },
+        { label: t('togglePictureInPicture'), key: shortcuts.togglePiP }
       ]
     }
   ];
@@ -1445,7 +1506,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   playPauseBtn.className = 'theater-control-btn play-pause-btn';
   
   bindCustomTooltip(playPauseBtn, () => {
-    const action = video.paused ? 'Play' : 'Pause';
+    const action = video.paused ? t('play') : t('pause');
     return `${action} <kbd>${configuredShortcuts.playPause}</kbd>`;
   });
 
@@ -1744,7 +1805,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     pipBtn.style.display = 'none';
   }
 
-  bindCustomTooltip(pipBtn, () => `Picture-in-Picture <kbd>${configuredShortcuts.togglePiP}</kbd>`);
+  bindCustomTooltip(pipBtn, () => t('pictureInPictureTooltip', configuredShortcuts.togglePiP));
 
   setIcon(pipBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><rect x="13" y="11" width="7" height="7" rx="1" ry="1"></rect></svg>`);
   pipBtn.addEventListener('click', () => {
@@ -1760,7 +1821,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   fullscreenBtn.className = 'theater-control-btn fullscreen-btn';
   
   bindCustomTooltip(fullscreenBtn, () => {
-    return document.fullscreenElement ? 'Exit Fullscreen' : `Fullscreen <kbd>${configuredShortcuts.toggleFullscreen}</kbd>`;
+    return document.fullscreenElement ? t('exitFullscreen') : t('fullscreenTooltip', configuredShortcuts.toggleFullscreen);
   });
 
   const enterFullscreenIcon = `
@@ -1833,7 +1894,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   bindCustomTooltip(closeBtn, () => {
     const toggleKey = escapeHtml((configuredShortcuts.toggle || 'T').toUpperCase());
     const exitKey = escapeHtml(configuredShortcuts.exit === 'Escape' ? 'Esc' : (configuredShortcuts.exit || 'Esc'));
-    return `Exit Theater Mode <kbd>${toggleKey}</kbd> or <kbd>${exitKey}</kbd>`;
+    return t('exitTheaterModeTooltip', [toggleKey, exitKey]);
   });
 
   setIcon(closeBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`);
@@ -1849,10 +1910,10 @@ function createCustomControls(video: HTMLVideoElement): void {
     const tracks = video.textTracks;
     const hasTracks = tracks && tracks.length > 0;
     if (!hasTracks) {
-      return 'No subtitles available';
+      return t('noSubtitlesAvailable');
     }
     const isCCActive = ccBtn.classList.contains('active');
-    return isCCActive ? 'Disable Subtitles' : 'Enable Subtitles';
+    return isCCActive ? t('disableSubtitles') : t('enableSubtitles');
   });
 
   setIcon(ccBtn, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0M14 10a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0"></path></svg>`);
@@ -1910,7 +1971,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     if (!tracks || tracks.length === 0) {
       const item = document.createElement('div');
       item.className = 'theater-cc-menu-item';
-      item.textContent = 'No subtitles';
+      item.textContent = t('noSubtitles');
       item.style.opacity = '0.5';
       item.style.cursor = 'default';
       ccMenu.appendChild(item);
@@ -1920,7 +1981,7 @@ function createCustomControls(video: HTMLVideoElement): void {
     // Add "Off" option
     const offItem = document.createElement('button');
     offItem.className = 'theater-cc-menu-item';
-    offItem.textContent = 'Off';
+    offItem.textContent = t('subtitlesOff');
     
     let isAnyShowing = false;
     for (let i = 0; i < tracks.length; i++) {
@@ -1953,7 +2014,7 @@ function createCustomControls(video: HTMLVideoElement): void {
       const item = document.createElement('button');
       item.className = 'theater-cc-menu-item';
       
-      const label = track.label || track.language || `Track ${i + 1}`;
+      const label = track.label || track.language || t('trackLabel', String(i + 1));
       item.textContent = label;
       
       if (track.mode === 'showing') {
@@ -2021,7 +2082,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   if (videosOnPage.length > 1) {
     const switchVideoBtn = document.createElement('button');
     switchVideoBtn.className = 'theater-control-btn switch-video-btn';
-    bindCustomTooltip(switchVideoBtn, () => `Switch Video <kbd>${configuredShortcuts.cycle}</kbd>`);
+    bindCustomTooltip(switchVideoBtn, () => t('switchVideoTooltip', configuredShortcuts.cycle));
     setIcon(switchVideoBtn, `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
@@ -2040,7 +2101,7 @@ function createCustomControls(video: HTMLVideoElement): void {
   // Help Button (Keyboard shortcuts listing)
   const helpBtn = document.createElement('button');
   helpBtn.className = 'theater-control-btn help-btn';
-  bindCustomTooltip(helpBtn, () => `Keyboard Shortcuts <kbd>${configuredShortcuts.showHelp}</kbd>`);
+  bindCustomTooltip(helpBtn, () => t('keyboardShortcutsTooltip', configuredShortcuts.showHelp));
   setIcon(helpBtn, `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"></circle>
@@ -2462,7 +2523,7 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
   }
 
   const textSpan = document.createElement('span');
-  textSpan.textContent = '5 seconds';
+  textSpan.textContent = t('fiveSeconds');
   overlay.appendChild(textSpan);
 
   document.body.appendChild(overlay);
@@ -2550,7 +2611,7 @@ function triggerPlaybackIndicator(action: 'play' | 'pause'): void {
     </svg>`;
   }
 
-  const text = action === 'play' ? 'Play' : 'Pause';
+  const text = action === 'play' ? t('play') : t('pause');
 
   overlay.innerHTML = `
     <div class="volume-hud-content">

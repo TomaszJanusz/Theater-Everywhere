@@ -8,6 +8,7 @@ import {
   resolveAccentColorPreset,
   type AccentColorPreset
 } from '../src/accentTheme';
+import { localizeDocument, t } from '../src/i18n';
 
 // Apply browser theme colors immediately
 fetchAndApplyTheme();
@@ -75,6 +76,8 @@ function safeGetStorage(keys: string | string[]): Promise<any> {
 }
 
 async function init() {
+  localizeDocument();
+
   const form = document.getElementById('add-domain-form') as HTMLFormElement;
   const input = document.getElementById('domain-input') as HTMLInputElement;
   const validationMsg = document.getElementById('validation-msg') as HTMLElement;
@@ -105,7 +108,7 @@ async function init() {
     const domain = cleanDomain(inputValue);
 
     if (!domain) {
-      validationMsg.textContent = 'Invalid domain or URL format.';
+      validationMsg.textContent = t('invalidDomain');
       return;
     }
 
@@ -114,7 +117,7 @@ async function init() {
       const blacklist = (data.blacklist || []) as string[];
 
       if (blacklist.includes(domain)) {
-        validationMsg.textContent = 'This website is already excluded.';
+        validationMsg.textContent = t('websiteAlreadyExcluded');
         return;
       }
 
@@ -126,7 +129,7 @@ async function init() {
       await notifyAllTabs();
     } catch (err) {
       console.error('Error adding domain:', err);
-      validationMsg.textContent = 'Error saving settings.';
+      validationMsg.textContent = t('errorSavingSettings');
     }
   });
 
@@ -160,17 +163,22 @@ async function init() {
 
       if (blacklist.length === 0) {
         // Render empty state
-        container.innerHTML = `
-          <div class="empty-state">
-            <svg class="empty-state-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-            <h3>No exclusions yet</h3>
-            <p>Theater mode will activate automatically on all video pages.</p>
-          </div>
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = `
+          <svg class="empty-state-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
         `;
+        const emptyTitle = document.createElement('h3');
+        emptyTitle.textContent = t('noExclusionsYet');
+        const emptyDescription = document.createElement('p');
+        emptyDescription.textContent = t('noExclusionsDescription');
+        emptyState.appendChild(emptyTitle);
+        emptyState.appendChild(emptyDescription);
+        container.appendChild(emptyState);
         return;
       }
 
@@ -185,7 +193,7 @@ async function init() {
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-list-btn';
-        deleteBtn.title = 'Remove exclusion';
+        deleteBtn.title = t('removeExclusion');
         deleteBtn.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -201,7 +209,11 @@ async function init() {
 
     } catch (err) {
       console.error('Error loading exclusion list:', err);
-      container.innerHTML = '<div style="padding: 20px; color: var(--danger-color)">Error loading settings.</div>';
+      const errorEl = document.createElement('div');
+      errorEl.style.padding = '20px';
+      errorEl.style.color = 'var(--danger-color)';
+      errorEl.textContent = t('errorLoadingSettings');
+      container.replaceChildren(errorEl);
     }
   }
 
@@ -278,9 +290,10 @@ async function init() {
       button.className = 'accent-color-btn';
       button.dataset.accentColor = option.preset;
       button.setAttribute('role', 'radio');
-      button.setAttribute('aria-label', `Use ${option.label} as the accent color`);
+      const localizedLabel = t(`accentColor${option.preset[0].toUpperCase()}${option.preset.slice(1)}`);
+      button.setAttribute('aria-label', t('useAccentColor', localizedLabel));
       button.setAttribute('aria-checked', option.preset === selectedPreset ? 'true' : 'false');
-      button.title = option.label;
+      button.title = localizedLabel;
 
       if (option.preset === selectedPreset) {
         button.classList.add('selected');
@@ -296,7 +309,7 @@ async function init() {
 
       const label = document.createElement('span');
       label.className = 'accent-color-label';
-      label.textContent = option.label;
+      label.textContent = localizedLabel;
 
       button.appendChild(swatch);
       button.appendChild(label);

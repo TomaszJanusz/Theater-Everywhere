@@ -1,10 +1,13 @@
 /* Popup script for Theater Everywhere */
 import { fetchAndApplyTheme } from '../src/themeHelper';
+import { localizeDocument, t } from '../src/i18n';
 
 // Apply browser theme colors immediately
 fetchAndApplyTheme();
 
 document.addEventListener('DOMContentLoaded', async () => {
+  localizeDocument();
+
   const domainNameEl = document.getElementById('domain-name') as HTMLElement;
   const toggleEl = document.getElementById('extension-toggle') as HTMLInputElement;
   const statusDotEl = document.getElementById('status-dot') as HTMLElement;
@@ -34,18 +37,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         await updateStatusUI();
       } else {
         // System pages (chrome://, about://, etc.)
-        domainNameEl.textContent = 'System page';
+        domainNameEl.textContent = t('systemPage');
         toggleEl.disabled = true;
-        setUIState(false, 'Inactive (system)');
+        setUIState(false, t('statusInactiveSystem'));
       }
     } else {
-      domainNameEl.textContent = 'No active page';
+      domainNameEl.textContent = t('noActivePage');
       toggleEl.disabled = true;
-      setUIState(false, 'Unavailable');
+      setUIState(false, t('statusUnavailable'));
     }
   } catch (err) {
     console.error('Popup initialization error:', err);
-    domainNameEl.textContent = 'Error loading';
+    domainNameEl.textContent = t('errorLoading');
     toggleEl.disabled = true;
   }
 
@@ -94,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await chrome.storage.sync.set({ blacklist });
       
       // Update local UI
-      setUIState(isActive, isActive ? 'Active' : 'Disabled');
+      setUIState(isActive, isActive ? t('statusActive') : t('statusDisabled'));
 
       // Notify the active tab's content script to update its state dynamically
       if (activeTabId) {
@@ -124,7 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // In blacklist = not active = checkbox unchecked
       const isActive = !isBlacklisted;
       toggleEl.checked = isActive;
-      setUIState(isActive, isActive ? 'Active' : 'Disabled');
+      setUIState(isActive, isActive ? t('statusActive') : t('statusDisabled'));
     } catch (err) {
       console.error('Error reading storage:', err);
     }
