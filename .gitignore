@@ -1,3 +1,18 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
 # Logs
 logs
 *.log
@@ -141,3 +156,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Browser extension artifacts
+web-ext-artifacts/
+*.crx
+*.xpi
+*.pem
+output/
