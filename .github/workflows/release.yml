@@ -119,3 +119,46 @@ jobs:
             dist/theater-everywhere-firefox.zip \
             --title "Release ${{ env.RELEASE_TAG }}" \
             --notes-file dist/release_notes.md
+
+      - name: Create source archive for AMO review
+        if: vars.AMO_PUBLISH_ENABLED == 'true'
+        run: git archive --format=zip --output dist/theater-everywhere-source.zip HEAD
+
+      - name: Publish to Mozilla Add-ons
+        if: vars.AMO_PUBLISH_ENABLED == 'true'
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "AMO_PUBLISH_ENABLED is true, but AMO_JWT_ISSUER or AMO_JWT_SECRET is missing." >&2
+            exit 1
+          fi
+
+          pnpm dlx web-ext@10.4.0 sign \
+            --source-dir dist/firefox-unpacked \
+            --artifacts-dir dist/amo-artifacts \
+            --channel=listed \
+            --approval-timeout=0 \
+            --upload-source-code dist/theater-everywhere-source.zip \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET"
+
+      - name: Publish to Chrome Web Store
+        if: vars.CWS_PUBLISH_ENABLED == 'true'
+        env:
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: pnpm tsx scripts/publish-chrome-webstore.ts
+
+      - name: Publish to Microsoft Edge Add-ons
+        if: vars.EDGE_PUBLISH_ENABLED == 'true'
+        env:
+          EDGE_PRODUCT_ID: ${{ vars.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ vars.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+          EDGE_PUBLISH_NOTES: Release ${{ env.RELEASE_TAG }}
+        run: pnpm tsx scripts/publish-edge-addons.ts

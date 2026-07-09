@@ -1,0 +1,107 @@
+name: Ensure Release
+run-name: Ensure Release ${{ inputs.version }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3 or v1.2.3)'
+        required: true
+        type: string
+      ref:
+        description: 'Branch or tag ref to run the release workflow from. Defaults to the current ref.'
+        required: false
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  ensure-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release inputs
+        id: release
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_REF: ${{ inputs.ref }}
+          CURRENT_REF: ${{ github.ref_name }}
+        run: |
+          VERSION="$(printf '%s' "$INPUT_VERSION" | xargs)"
+
+          if [ -z "$VERSION" ]; then
+            echo "Version cannot be empty." >&2
+            exit 1
+          fi
+
+          if ! printf '%s' "$VERSION" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$'; then
+            echo "Version must look like 1.2.3 or v1.2.3." >&2
+            exit 1
+          fi
+
+          RELEASE_TAG="$VERSION"
+          if ! printf '%s' "$RELEASE_TAG" | grep -q '^v'; then
+            RELEASE_TAG="v$RELEASE_TAG"
+          fi
+
+          TARGET_REF="$(printf '%s' "$INPUT_REF" | xargs)"
+          if [ -z "$TARGET_REF" ]; then
+            TARGET_REF="$CURRENT_REF"
+          fi
+
+          {
+            echo "tag=$RELEASE_TAG"
+            echo "ref=$TARGET_REF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Release tag: $RELEASE_TAG"
+          echo "Release workflow ref: $TARGET_REF"
+
+      - name: Check whether GitHub release exists
+        id: github_release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release $RELEASE_TAG already exists. Nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Release $RELEASE_TAG does not exist yet."
+          fi
+
+      - name: Check whether tag exists
+        if: steps.github_release.outputs.exists == 'false'
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          TARGET_REF: ${{ steps.release.outputs.ref }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $RELEASE_TAG exists. Dispatching the release workflow from the tag."
+            echo "dispatch_ref=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $RELEASE_TAG does not exist. Dispatching the release workflow from $TARGET_REF."
+            echo "dispatch_ref=$TARGET_REF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch build and release workflow
+        if: steps.github_release.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          DISPATCH_REF: ${{ steps.tag.outputs.dispatch_ref }}
+        run: |
+          gh workflow run release.yml \
+            --ref "$DISPATCH_REF" \
+            -f tag_name="$RELEASE_TAG"
+
+          echo "Dispatched release.yml for $RELEASE_TAG on ref $DISPATCH_REF."
