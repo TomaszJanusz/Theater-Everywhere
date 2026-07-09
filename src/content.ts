@@ -197,6 +197,73 @@ let currentToggleFullscreen: (() => void) | null = null;
 let onVolumeAdjustedCallback: (() => void) | null = null;
 let configuredAccentColor: AccentColorPreset = DEFAULT_ACCENT_COLOR;
 
+const THEATER_ELEMENT_INLINE_STYLES: Record<string, string> = {
+  position: 'fixed',
+  top: '0',
+  left: '0',
+  width: '100vw',
+  height: '100vh',
+  'max-width': '100vw',
+  'max-height': '100vh',
+  'min-width': '100vw',
+  'min-height': '100vh',
+  'z-index': '2147483647',
+  'object-fit': 'contain',
+  margin: '0',
+  padding: '0',
+  transform: 'none',
+  transition: 'none',
+};
+
+type SavedInlineStyle = {
+  property: string;
+  value: string;
+  priority: string;
+};
+
+type SavedInlineStyleState = {
+  hadStyleAttribute: boolean;
+  styles: SavedInlineStyle[];
+};
+
+const theaterElementInlineStyleState = new WeakMap<HTMLElement, SavedInlineStyleState>();
+
+function applyTheaterElementInlineStyles(element: HTMLElement): void {
+  if (!theaterElementInlineStyleState.has(element)) {
+    theaterElementInlineStyleState.set(element, {
+      hadStyleAttribute: element.hasAttribute('style'),
+      styles: Object.keys(THEATER_ELEMENT_INLINE_STYLES).map(property => ({
+        property,
+        value: element.style.getPropertyValue(property),
+        priority: element.style.getPropertyPriority(property),
+      })),
+    });
+  }
+
+  Object.entries(THEATER_ELEMENT_INLINE_STYLES).forEach(([property, value]) => {
+    element.style.setProperty(property, value, 'important');
+  });
+}
+
+function restoreTheaterElementInlineStyles(element: HTMLElement): void {
+  const savedState = theaterElementInlineStyleState.get(element);
+  if (!savedState) return;
+
+  savedState.styles.forEach(({ property, value, priority }) => {
+    if (value) {
+      element.style.setProperty(property, value, priority);
+    } else {
+      element.style.removeProperty(property);
+    }
+  });
+
+  if (!savedState.hadStyleAttribute && element.getAttribute('style') === '') {
+    element.removeAttribute('style');
+  }
+
+  theaterElementInlineStyleState.delete(element);
+}
+
 function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   if (!shortcutStr) return false;
   
@@ -1088,8 +1155,10 @@ function switchTheaterVideo(newVideo: HTMLVideoElement): void {
     destroyCustomControls();
     video.classList.remove('controls-visible');
     video.classList.remove('theater-everywhere-video-active');
+    restoreTheaterElementInlineStyles(video);
   } else {
     theaterElement.classList.remove('theater-everywhere-video-active');
+    restoreTheaterElementInlineStyles(theaterElement);
   }
 
   // Set the new video as theaterElement
@@ -1100,6 +1169,7 @@ function switchTheaterVideo(newVideo: HTMLVideoElement): void {
     injectStylesIntoShadowRoot(rootNode);
   }
   newVideo.classList.add('theater-everywhere-video-active');
+  applyTheaterElementInlineStyles(newVideo);
 
   // Setup new video
   const originalControls = newVideo.hasAttribute('controls');
@@ -1210,6 +1280,7 @@ function enterTheaterMode(element: HTMLElement): void {
   }
 
   theaterElement.classList.add('theater-everywhere-video-active');
+  applyTheaterElementInlineStyles(theaterElement);
 
   // Specific setup for HTML5 <video> elements
   if (theaterElement.tagName === 'VIDEO') {
@@ -1332,6 +1403,7 @@ function exitTheaterMode(): void {
   }
 
   theaterElement.classList.remove('theater-everywhere-video-active');
+  restoreTheaterElementInlineStyles(theaterElement);
 
   // Restore ancestors styling
   ancestorsList.forEach(parent => {
