@@ -3,7 +3,7 @@
     "message": "Theater Mode Everywhere - Modo teatro"
   },
   "extensionDescription": {
-    "message": "Maximize qualquer player de vídeo HTML5 para preencher a tela do navegador com um único pressionamento de tecla."
+    "message": "Expanda qualquer player de vídeo HTML5 para preencher a tela do navegador com uma única tecla."
   },
   "cwsPromoBeforeLabel": {
     "message": "ANTES"
@@ -27,7 +27,7 @@
     "message": "Configure exclusões de sites, aparência e atalhos de teclado do modo teatro."
   },
   "websiteLabel": {
-    "message": "Website"
+    "message": "Site"
   },
   "loadingLabel": {
     "message": "Carregando..."

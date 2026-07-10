@@ -4,7 +4,7 @@
 Theater Mode Everywhere - Modo teatro
 
 ## Summary
-Maximize qualquer player de vídeo HTML5 para preencher a tela do navegador com um único clique de tecla.
+Expanda qualquer player de vídeo HTML5 para preencher a tela do navegador com uma única tecla.
 
 ## Description
 O Theater Mode Everywhere maximiza qualquer player de vídeo HTML5 para preencher toda a janela do seu navegador com um único pressionamento de tecla, proporcionando uma experiência cinematográfica limpa e sem distrações.

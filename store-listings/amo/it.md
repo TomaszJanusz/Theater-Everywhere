@@ -4,7 +4,7 @@
 Theater Mode Everywhere - Modalità cinema
 
 ## Summary
-Massimizza qualsiasi riproduttore video HTML5 per riempire l'area di visualizzazione del browser con la pressione di un singolo tasto.
+Espandi qualsiasi video HTML5 a tutta finestra nel browser con un solo tasto.
 
 ## Description
 Theater Mode Everywhere massimizza qualsiasi riproduttore video HTML5 per riempire l'intera finestra del browser con la pressione di un singolo tasto, offrendo un'esperienza cinematografica pulita e priva di distrazioni.
@@ -15,9 +15,9 @@ CARATTERISTICHE PRINCIPALI
 - Modalità immersiva a tasto singolo: Premi `T` per espandere istantaneamente il video attivo e adattarlo alla finestra del browser. Premi di nuovo `T` o `Escape` per tornare alla modalità normale. Se sulla pagina sono presenti più video, premi `Maiusc+T` per passare da uno all'altro.
 - Controlli personalizzati eleganti: Una barra di controllo pulita e moderna con pannelli pop-up verticali per la regolazione di volume e velocità di riproduzione, suggerimenti visivi traslucidi (effetto glassmorphism) e indicatori di tempo rimanente/trascorso.
 - Amplificazione volume (Fino al 300%): Amplifica l'audio dei video silenziosi fino al 300% utilizzando la Web Audio API, con un cursore non lineare per regolazioni precise e un'opzione di attivazione nelle impostazioni.
-- Feedback visivo a schermo (HUD): Ricevi eleganti indicazioni animate a schermo durante la regolazione di volume, la ricerca o l'attivazione di riproduzione/pausa.
+- Feedback visivo a schermo (HUD): Ricevi eleganti indicazioni animate a schermo durante la regolazione del volume, gli spostamenti nel video o l'attivazione di riproduzione/pausa.
 - Supporto Shadow DOM: Rileva ed espande anche i riproduttori video nidificati all'interno di radici d'ombra (shadow roots) moderne, migliorando la compatibilità con molti siti web.
-- Scorciatoie e impostazioni personalizzate: Configura i tasti preferiti per attivare la modalità, effettuare ricerche o avanzare fotogramma per fotogramma. La sovrapposizione di aiuto integrata permette di ricordarli facilmente.
+- Scorciatoie e impostazioni personalizzate: Configura i tasti preferiti per attivare la modalità, spostarti nel video o avanzare fotogramma per fotogramma. La sovrapposizione di aiuto integrata permette di ricordarli facilmente.
 - Elenco di esclusione: Escludi domini specifici tramite il menu dell'estensione o la pagina delle opzioni per prevenire conflitti con il layout nativo dei siti.
 
 COSA È SUPPORTATO

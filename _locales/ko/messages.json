@@ -230,10 +230,10 @@
     "message": "기본값으로 초기화"
   },
   "copyright": {
-    "message": "© 2026 Tomasz Janusz. All rights reserved."
+    "message": "© 2026 Tomasz Janusz. 모든 권리 보유."
   },
   "copyrightHtml": {
-    "message": "© 2026 <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>. All rights reserved."
+    "message": "© 2026 <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>. 모든 권리 보유."
   },
   "play": {
     "message": "재생"

@@ -4,7 +4,7 @@
 Theater Mode Everywhere - Mode cinéma
 
 ## Short summary
-Agrandissez n'importe quel lecteur vidéo HTML5 pour remplir le viewport du navigateur d'une seule touche.
+Agrandissez n'importe quel lecteur vidéo HTML5 pour remplir la fenêtre du navigateur d'une seule touche.
 
 ## Full description
 Theater Mode Everywhere agrandit n'importe quel lecteur vidéo HTML5 pour remplir l'intégralité de la fenêtre de votre navigateur en une seule pression de touche, vous offrant une expérience cinématographique épurée et sans distractions.
@@ -12,13 +12,13 @@ Theater Mode Everywhere agrandit n'importe quel lecteur vidéo HTML5 pour rempli
 Theater Mode Everywhere est conçu pour tous ceux qui souhaitent profiter des vidéos en ligne sans l'encombrement des en-têtes, des barres latérales, des commentaires ou des recommandations. Que vous regardiez des tutoriels, des diffusions en direct ou de courts clips, vous pouvez transformer n'importe quelle page vidéo en un cinéma chaleureux d'une seule frappe de touche.
 
 CARACTÉRISTIQUES CLÉS
-- Mode immersif à une touche : Appuyez sur `T` pour étendre instantanément la vidéo active afin de l'adapter au viewport du navigateur. Appuyez à nouveau ou sur `Échap` pour revenir à la normale. Si la page contient plusieurs vidéos, appuyez sur `Maj+T` pour basculer de l'une à l'autre.
+- Mode immersif à une touche : Appuyez sur `T` pour étendre instantanément la vidéo active afin de l'adapter à la fenêtre du navigateur. Appuyez à nouveau ou sur `Échap` pour revenir à la normale. Si la page contient plusieurs vidéos, appuyez sur `Maj+T` pour basculer de l'une à l'autre.
 - Contrôles de lecture personnalisés et élégants : Une barre de contrôle épurée et moderne avec des panneaux contextuels verticaux pour le volume et la vitesse de lecture, des info-bulles à effet verre dépoli (glassmorphism) et des indicateurs de temps restant/écoulé.
 - Amplificateur de volume (jusqu'à 300%) : Amplifiez le volume sonore des vidéos silencieuses jusqu'à 300% à l'aide de l'API Web Audio, avec un curseur non linéaire pour des ajustements précis et une option d'activation dans les paramètres.
-- Retours visuels HUD : Profitez de superpositions animées élégantes lors du réglage du volume, de la recherche ou de la mise en lecture/pause.
+- Retours visuels HUD : Profitez de superpositions animées élégantes lors du réglage du volume, du déplacement dans la vidéo ou de la mise en lecture/pause.
 - Prise en charge du Shadow DOM : Parcourt et agrandit les lecteurs vidéo masqués à l'intérieur des racines fantômes (shadow roots) modernes, améliorant ainsi la compatibilité avec un plus grand nombre de sites Web.
-- Raccourcis et paramètres personnalisés : Configurez vos propres touches pour activer le mode, effectuer des recherches ou avancer image par image. La superposition d'aide intégrée au lecteur permet de les consulter facilement.
-- Liste d'exclusions : Excluez des domaines spécifiques via le menu contextuel de la barre d'outils du navigateur ou la page des options afin d'éviter les conflits avec les mises en page natives des sites.
+- Raccourcis et paramètres personnalisés : Configurez vos propres touches pour activer le mode, vous déplacer dans la vidéo ou avancer image par image. La superposition d'aide intégrée au lecteur permet de les consulter facilement.
+- Liste d'exclusions : Excluez des domaines spécifiques via le popup de la barre d'outils du navigateur ou la page des options afin d'éviter les conflits avec les mises en page natives des sites.
 
 CE QUI EST PRIS EN CHARGE
 - Vidéo HTML5 universelle : Fonctionne sur les éléments standard HTML5 `<video>` sur l'ensemble du Web, y compris les lecteurs encapsulés dans le Shadow DOM.
