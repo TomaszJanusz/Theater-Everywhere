@@ -336,6 +336,10 @@ section h2 {
   color: #52525b;
 }
 
+.made-in-poland .heart {
+  color: var(--accent-color);
+}
+
 /* Section divider */
 .section-divider {
   border: 0;

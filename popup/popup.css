@@ -273,3 +273,7 @@ input:checked + .slider:before {
 .made-in-poland {
   margin-top: 4px;
 }
+
+.made-in-poland .heart {
+  color: var(--accent-color);
+}
