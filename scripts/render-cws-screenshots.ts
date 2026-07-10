@@ -34,6 +34,10 @@ type SingleShot = {
 
 type ChromeMessages = Record<string, { message?: string }>;
 
+type RenderOptions = {
+  localeCode?: string;
+};
+
 /** Resolved language-pack data and font choice for one locale. */
 type LocalePack = {
   code: string;
@@ -94,6 +98,8 @@ main().catch((error: unknown) => {
 });
 
 async function main(): Promise<void> {
+  const options = parseRenderOptions(process.argv.slice(2));
+
   assertExists(localesRoot);
   assertExists(templatePath);
   assertExists(templateFullPath);
@@ -109,13 +115,13 @@ async function main(): Promise<void> {
   assertExists(chromePath);
 
   const pairs = readPairs();
-  const locales = readLocales();
+  const locales = selectLocales(readLocales(), options);
   const comparisonTemplate = readFileSync(templatePath, 'utf8');
   const fullTemplate = readFileSync(templateFullPath, 'utf8');
   validateComparisonTemplate(comparisonTemplate);
   validateSingleTemplate(fullTemplate);
 
-  rmSync(pngOutputRoot, { recursive: true, force: true });
+  cleanPngOutputs(locales, options);
   rmSync(join(assetRoot, 'generated-svg'), { recursive: true, force: true });
   rmSync(join(assetRoot, 'review'), { recursive: true, force: true });
   rmSync(join(assetRoot, 'manifest.json'), { force: true });
@@ -166,7 +172,94 @@ async function main(): Promise<void> {
     rmSync(tempSvgRoot, { recursive: true, force: true });
   }
 
-  console.log(`Generated ${generatedPngs.length} PNG files at ${relative(repoRoot, pngOutputRoot)}`);
+  const outputLabel = options.localeCode
+    ? relative(repoRoot, join(pngOutputRoot, options.localeCode))
+    : relative(repoRoot, pngOutputRoot);
+  console.log(`Generated ${generatedPngs.length} PNG files at ${outputLabel}`);
+}
+
+function parseRenderOptions(args: string[]): RenderOptions {
+  const options: RenderOptions = {};
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--') {
+      continue;
+    }
+
+    if (arg === '--locale') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('-')) {
+        throw new Error('Expected a locale code after --locale, for example: --locale ko');
+      }
+      options.localeCode = normalizeLocaleCode(value);
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--locale=')) {
+      options.localeCode = normalizeLocaleCode(arg.slice('--locale='.length));
+      continue;
+    }
+
+    if (arg === '--help' || arg === '-h') {
+      console.log([
+        'Usage: pnpm store:cws:screenshots [-- --locale <code>]',
+        '',
+        'Examples:',
+        '  pnpm store:cws:screenshots',
+        '  pnpm store:cws:screenshots -- --locale ko',
+        '  pnpm store:cws:screenshots -- --locale=pt_BR',
+      ].join('\n'));
+      process.exit(0);
+    }
+
+    if (!arg.startsWith('-') && !options.localeCode) {
+      options.localeCode = normalizeLocaleCode(arg);
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${arg}`);
+  }
+
+  return options;
+}
+
+function normalizeLocaleCode(localeCode: string): string {
+  const raw = localeCode.trim().replace('-', '_');
+  if (!/^[A-Za-z]{2,3}(?:_[A-Za-z]{2})?$/.test(raw)) {
+    throw new Error(`Invalid locale code: ${localeCode}`);
+  }
+
+  const [language, region] = raw.split('_');
+  return region ? `${language.toLowerCase()}_${region.toUpperCase()}` : language.toLowerCase();
+}
+
+function selectLocales(locales: LocalePack[], options: RenderOptions): LocalePack[] {
+  if (!options.localeCode) {
+    return locales;
+  }
+
+  const locale = locales.find((candidate) => candidate.code === options.localeCode);
+  if (!locale) {
+    const supportedCodes = locales.map((candidate) => candidate.code).join(', ');
+    throw new Error(`Unsupported locale "${options.localeCode}". Supported locales: ${supportedCodes}`);
+  }
+
+  console.log(`Generating CWS screenshots for locale: ${locale.code}`);
+  return [locale];
+}
+
+function cleanPngOutputs(locales: LocalePack[], options: RenderOptions): void {
+  if (!options.localeCode) {
+    rmSync(pngOutputRoot, { recursive: true, force: true });
+    return;
+  }
+
+  for (const locale of locales) {
+    rmSync(join(pngOutputRoot, locale.code), { recursive: true, force: true });
+  }
 }
 
 function createSingleShots(): SingleShot[] {
@@ -243,6 +336,10 @@ function readLocales(): LocalePack[] {
 
 function toChromeLanguage(localeCode: string): string {
   return localeCode.replace('_', '-');
+}
+
+function getLocaleBidiDir(localeCode: string): 'ltr' | 'rtl' {
+  return localeCode === 'ar' ? 'rtl' : 'ltr';
 }
 
 function readMessages(localeCode: string): ChromeMessages {
@@ -593,6 +690,12 @@ async function captureKeyboardShortcutSource(
       await delay(350);
       await dispatchCaptureCommand(cdp, sessionId, 'show-help');
       await waitForExpression(cdp, sessionId, '!!document.querySelector(".theater-help-overlay")', 10_000);
+      await waitForExpression(
+        cdp,
+        sessionId,
+        `document.querySelector(".theater-help-overlay")?.dir === ${JSON.stringify(getLocaleBidiDir(locale.code))}`,
+        5_000,
+      );
       await delay(1_000);
 
       const { data } = await cdp.call<{ data: string }>('Page.captureScreenshot', {
@@ -819,6 +922,8 @@ async function injectContentScriptFallback(
   const messages = Object.fromEntries(
     Object.entries(locale.messages).map(([key, value]) => [key, value.message ?? '']),
   );
+  messages['@@bidi_dir'] = getLocaleBidiDir(locale.code);
+  messages['@@bidi_lang'] = locale.chromeLang;
 
   await evaluate(cdp, sessionId, [
     '(() => {',
