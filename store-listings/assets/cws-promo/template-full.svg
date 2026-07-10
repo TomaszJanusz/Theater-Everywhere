@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="100%" height="100%" viewBox="0 0 1280 800" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1280 800" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
     <path id="mask" d="M1483,0L1283,800L0,800L0,0L1483,0Z" style="fill:rgb(235,235,235);"/>
-    <g id="label_box" transform="matrix(1.110117,0,0,0.751852,-111.011683,-446.296296)">
+    <g id="label_box" transform="matrix(1.110117,0,0,0.751852,-111.011683,-416.296296)">
         <rect x="100" y="594" width="298" height="106" style="fill:rgb(99,102,241);"/>
     </g>
 </svg>
