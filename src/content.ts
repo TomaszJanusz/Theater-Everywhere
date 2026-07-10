@@ -1005,6 +1005,7 @@ function showHelpOverlay(): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-help-overlay';
+  overlay.setAttribute('dir', t('@@bidi_dir'));
   applyConfiguredAccentColor(overlay);
 
   overlay.addEventListener('click', (e) => {
@@ -1513,6 +1514,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const wrapper = document.createElement('div') as ExtendedHTMLDivElement;
   wrapper.className = 'theater-controls-wrapper';
+  wrapper.setAttribute('dir', t('@@bidi_dir'));
   applyConfiguredAccentColor(wrapper);
 
   // Create loading indicator
@@ -2618,6 +2620,7 @@ function triggerVolumeIndicator(logicalVolume: number, muted: boolean, action: '
   const overlay = document.createElement('div');
   const isBoosted = !muted && logicalVolume > 1.0;
   overlay.className = 'theater-everywhere-volume-overlay' + (isBoosted ? ' boosted' : '');
+  overlay.setAttribute('dir', t('@@bidi_dir'));
   applyConfiguredAccentColor(overlay);
 
   const pct = muted ? 0 : (logicalVolume <= 1.0 ? Math.round(logicalVolume * 100) : Math.round(100 + (logicalVolume - 1.0) * 400));
@@ -2668,6 +2671,7 @@ function triggerPlaybackIndicator(action: 'play' | 'pause'): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-everywhere-volume-overlay';
+  overlay.setAttribute('dir', t('@@bidi_dir'));
   applyConfiguredAccentColor(overlay);
 
   let icon = '';
