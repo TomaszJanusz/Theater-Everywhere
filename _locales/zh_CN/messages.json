@@ -309,5 +309,8 @@
   },
   "homepage": {
     "message": "主页"
+  },
+  "madeInPoland": {
+    "message": "用 <span class=\"heart\">❤</span> 制造于 🇵🇱"
   }
 }

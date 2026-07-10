@@ -309,5 +309,8 @@
   },
   "homepage": {
     "message": "Главная страница"
+  },
+  "madeInPoland": {
+    "message": "Сделано с <span class=\"heart\">❤</span> в 🇵🇱"
   }
 }

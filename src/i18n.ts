@@ -122,6 +122,10 @@ export function localizeDocument(root: ParentNode = document): void {
     element.textContent = t(element.dataset.i18n || '');
   });
 
+  root.querySelectorAll<HTMLElement>('[data-i18n-html]').forEach((element) => {
+    element.innerHTML = t(element.dataset.i18nHtml || '');
+  });
+
   root.querySelectorAll<HTMLElement>('[data-i18n-title]').forEach((element) => {
     element.title = t(element.dataset.i18nTitle || '');
   });

@@ -309,5 +309,8 @@
   },
   "homepage": {
     "message": "ホームページ"
+  },
+  "madeInPoland": {
+    "message": "🇵🇱で<span class=\"heart\">❤</span>を込めて作成"
   }
 }
