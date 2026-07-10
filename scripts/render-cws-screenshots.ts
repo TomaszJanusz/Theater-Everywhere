@@ -39,7 +39,7 @@ type LocalePack = {
   code: string;
   chromeLang: string;
   messages: ChromeMessages;
-  fontFamily: 'Montserrat' | 'Noto Sans SC' | 'Noto Sans JP' | 'Noto Sans Arabic';
+  fontFamily: 'Montserrat' | 'Noto Sans SC' | 'Noto Sans JP' | 'Noto Sans Arabic' | 'Noto Sans KR';
 };
 
 type ElementMatch = {
@@ -103,6 +103,7 @@ async function main(): Promise<void> {
   assertExists(join(assetRoot, 'fonts/NotoSansSC[wght].ttf'));
   assertExists(join(assetRoot, 'fonts/NotoSansJP[wght].ttf'));
   assertExists(join(assetRoot, 'fonts/NotoSansArabic[wght].ttf'));
+  assertExists(join(assetRoot, 'fonts/NotoSansKR[wght].ttf'));
   assertExists(join(assetRoot, 'fonts/OFL-Montserrat.txt'));
   assertExists(join(assetRoot, 'fonts/OFL-NotoSansSC.txt'));
   assertExists(chromePath);
@@ -226,6 +227,8 @@ function readLocales(): LocalePack[] {
         fontFamily = 'Noto Sans JP';
       } else if (code === 'ar') {
         fontFamily = 'Noto Sans Arabic';
+      } else if (code === 'ko') {
+        fontFamily = 'Noto Sans KR';
       }
 
       return {
@@ -381,6 +384,7 @@ function buildFontCss(): string {
   const notoHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansSC[wght].ttf'));
   const jpHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansJP[wght].ttf'));
   const arHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansArabic[wght].ttf'));
+  const krHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansKR[wght].ttf'));
 
   return [
     '@font-face{font-family:"Montserrat";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
@@ -394,6 +398,9 @@ function buildFontCss(): string {
       '") format("truetype");}',
     '@font-face{font-family:"Noto Sans Arabic";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
       arHref +
+      '") format("truetype");}',
+    '@font-face{font-family:"Noto Sans KR";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
+      krHref +
       '") format("truetype");}',
   ].join('\n');
 }
@@ -981,7 +988,8 @@ function validateGeneratedSvg(svg: string, locale: LocalePack, labelIds: string[
     !svg.includes('Montserrat') ||
     !svg.includes('Noto Sans SC') ||
     !svg.includes('Noto Sans JP') ||
-    !svg.includes('Noto Sans Arabic')
+    !svg.includes('Noto Sans Arabic') ||
+    !svg.includes('Noto Sans KR')
   ) {
     throw new Error(`Generated transient SVG for ${locale.code} is missing embedded @font-face declarations.`);
   }

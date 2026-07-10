@@ -209,6 +209,11 @@ body {
   transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+:dir(rtl) .slider:before {
+  left: auto;
+  right: 3px;
+}
+
 input:checked + .slider {
   background-color: color-mix(in srgb, var(--accent-color) 16%, transparent);
   border-color: var(--accent-color);
@@ -217,6 +222,10 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(20px);
   background-color: var(--accent-color);
+}
+
+:dir(rtl) input:checked + .slider:before {
+  transform: translateX(-20px);
 }
 
 .slider.round {
@@ -268,6 +277,18 @@ input:checked + .slider:before {
   color: var(--text-secondary);
   opacity: 0.65;
   letter-spacing: 0.02em;
+}
+
+.creator-credits a,
+.made-in-poland a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.creator-credits a:hover,
+.made-in-poland a:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
 }
 
 .made-in-poland {

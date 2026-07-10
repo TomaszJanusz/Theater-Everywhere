@@ -19,6 +19,7 @@ export const FALLBACK_MESSAGES: Record<string, string> = {
   statusUnavailable: 'Unavailable',
   toggleTheaterModeLower: 'Toggle theater mode',
   createdBy: 'Created by Tomasz Janusz',
+  createdByHtml: 'Created by <a href="https://tomaszjanusz.dev" target="_blank" rel="noopener noreferrer">Tomasz Janusz</a>',
   appearanceTitle: 'Appearance',
   appearanceDescription: 'Choose the accent used by controls, sliders, shortcuts, and highlights.',
   accentColorLabel: 'Accent color',
@@ -74,6 +75,7 @@ export const FALLBACK_MESSAGES: Record<string, string> = {
   resetToDefault: 'Reset to default',
   resetToDefaults: 'Reset to defaults',
   copyright: '© 2026 Tomasz Janusz. All rights reserved.',
+  copyrightHtml: '© 2026 <a href="https://tomaszjanusz.dev" target="_blank" rel="noopener noreferrer">Tomasz Janusz</a>. All rights reserved.',
   play: 'Play',
   pause: 'Pause',
   pictureInPictureTooltip: 'Picture-in-Picture <kbd>$1</kbd>',
@@ -88,7 +90,9 @@ export const FALLBACK_MESSAGES: Record<string, string> = {
   trackLabel: 'Track $1',
   switchVideoTooltip: 'Switch Video <kbd>$1</kbd>',
   keyboardShortcutsTooltip: 'Keyboard Shortcuts <kbd>$1</kbd>',
-  fiveSeconds: '5 seconds'
+  fiveSeconds: '5 seconds',
+  '@@bidi_dir': 'ltr',
+  '@@bidi_lang': 'en'
 };
 
 export function t(messageName: string, substitutions?: string | string[]): string {
@@ -118,6 +122,8 @@ export function t(messageName: string, substitutions?: string | string[]): strin
 }
 
 export function localizeDocument(root: ParentNode = document): void {
+  applyDocumentLocale(root);
+
   root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((element) => {
     element.textContent = t(element.dataset.i18n || '');
   });
@@ -137,4 +143,20 @@ export function localizeDocument(root: ParentNode = document): void {
   root.querySelectorAll<HTMLElement>('[data-i18n-aria-label]').forEach((element) => {
     element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel || ''));
   });
+}
+
+function applyDocumentLocale(root: ParentNode): void {
+  const ownerDocument = root instanceof Document ? root : root.ownerDocument;
+  const documentElement = ownerDocument?.documentElement;
+  if (!documentElement) {
+    return;
+  }
+
+  const bidiDir = t('@@bidi_dir');
+  documentElement.dir = bidiDir === 'rtl' ? 'rtl' : 'ltr';
+
+  const bidiLang = t('@@bidi_lang');
+  if (bidiLang && !bidiLang.startsWith('@@')) {
+    documentElement.lang = bidiLang.replace('_', '-');
+  }
 }

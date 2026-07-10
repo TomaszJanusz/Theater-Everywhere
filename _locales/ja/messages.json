@@ -59,6 +59,9 @@
   "createdBy": {
     "message": "作成者: Tomasz Janusz"
   },
+  "createdByHtml": {
+    "message": "作成者: <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>"
+  },
   "appearanceTitle": {
     "message": "外観"
   },
@@ -228,6 +231,9 @@
   },
   "copyright": {
     "message": "© 2026 Tomasz Janusz. All rights reserved."
+  },
+  "copyrightHtml": {
+    "message": "© 2026 <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>. All rights reserved."
   },
   "play": {
     "message": "再生"

@@ -375,7 +375,7 @@
   font-weight: 600 !important;
   color: var(--text-secondary, #a1a1aa) !important;
   user-select: none !important;
-  margin-left: 6px !important;
+  margin-inline-start: 6px !important;
 }
 
 .speed-label {
@@ -588,7 +588,7 @@
   border: none !important;
   color: #f8fafc !important;
   padding: 8px 16px !important;
-  text-align: left !important;
+  text-align: start !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   cursor: pointer !important;

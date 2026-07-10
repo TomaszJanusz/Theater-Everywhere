@@ -59,6 +59,9 @@
   "createdBy": {
     "message": "Autor: Tomasz Janusz"
   },
+  "createdByHtml": {
+    "message": "Autor: <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>"
+  },
   "appearanceTitle": {
     "message": "Wygląd"
   },
@@ -228,6 +231,9 @@
   },
   "copyright": {
     "message": "© 2026 Tomasz Janusz. Wszelkie prawa zastrzeżone."
+  },
+  "copyrightHtml": {
+    "message": "© 2026 <a href=\"https://tomaszjanusz.dev\" target=\"_blank\" rel=\"noopener noreferrer\">Tomasz Janusz</a>. Wszelkie prawa zastrzeżone."
   },
   "play": {
     "message": "Odtwórz"

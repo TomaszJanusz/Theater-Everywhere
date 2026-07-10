@@ -371,6 +371,18 @@ section h2 {
   color: #52525b;
 }
 
+.copyright a,
+.made-in-poland a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.copyright a:hover,
+.made-in-poland a:hover {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
 .made-in-poland .heart {
   color: var(--accent-color);
 }
@@ -681,7 +693,7 @@ section h2 {
   font-weight: 600;
   line-height: 1.2;
   padding: 7px 9px;
-  text-align: left;
+  text-align: start;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
@@ -836,6 +848,11 @@ section h2 {
   transition: all 0.25s ease;
 }
 
+:dir(rtl) .toggle-slider::before {
+  left: auto;
+  right: 2px;
+}
+
 .toggle-switch input:checked + .toggle-slider {
   background-color: var(--accent-color);
   border-color: var(--accent-hover);
@@ -844,6 +861,10 @@ section h2 {
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(18px);
   background-color: #ffffff;
+}
+
+:dir(rtl) .toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(-18px);
 }
 
 .toggle-switch input:focus-visible + .toggle-slider {
