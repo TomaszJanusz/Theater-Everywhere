@@ -260,11 +260,16 @@ input:checked + .slider:before {
   font-weight: 500;
 }
 
-.creator-credits {
+.creator-credits,
+.made-in-poland {
   text-align: center;
   margin-top: 10px;
   font-size: 9px;
   color: var(--text-secondary);
   opacity: 0.65;
   letter-spacing: 0.02em;
+}
+
+.made-in-poland {
+  margin-top: 4px;
 }

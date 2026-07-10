@@ -330,7 +330,8 @@ section h2 {
   gap: 8px;
 }
 
-.copyright {
+.copyright,
+.made-in-poland {
   font-size: 11px;
   color: #52525b;
 }
