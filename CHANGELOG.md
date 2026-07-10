@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added support for new extension locales: French, Brazilian Portuguese, Russian, Japanese, Italian, Arabic, and Ukrainian, including translated site-exception copy and locale-specific assets.
+- Added extension homepage link in the settings header, with localized text and an icon-styled home button.
+- Added generation of CWS promo screenshots for newly added locales and updated the screenshot pipeline.
+
+### Changed
+- Improved localization consistency by adding a localized “Made with ❤ in 🇵🇱” message across all 12 locales and styling it in footer variants.
+- Implemented full RTL layout direction compatibility for supported right-to-left locales.
+- Styled and localized footer/homepage UI elements (heart accent coloring and homepage button text/icon presentation).
+- Updated screenshot tooling configuration to bundle locale-specific fonts (Japanese and Arabic) and run Chrome screenshots in headless mode by default.
+
+### Fixed
+- Fixed theater mode video viewport positioning under edge cases.
+- Disabled AMO Android compatibility where it caused unsupported behavior.
+- Corrected the Japanese translation for “Made in Poland” copy.
 
 ## [1.2.0] - 2026-07-09
 
