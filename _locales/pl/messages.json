@@ -1,116 +1,313 @@
 {
-  "extensionName": { "message": "Theater Mode Everywhere - Tryb kinowy" },
-  "extensionDescription": { "message": "Powiększ dowolny odtwarzacz HTML5 tak, aby wypełnił okno przeglądarki, jednym naciśnięciem klawisza." },
-  "cwsPromoBeforeLabel": { "message": "PRZED" },
-  "cwsPromoAfterLabel": { "message": "PO" },
-  "cwsPromoPlayerUiLabel": { "message": "Interfejs" },
-  "cwsPromoShortcutsLabel": { "message": "Skróty" },
-  "settingsTitle": { "message": "Ustawienia" },
-  "settingsPageTitle": { "message": "Theater Mode Everywhere - Ustawienia" },
-  "settingsSubtitle": { "message": "Skonfiguruj wykluczenia stron, wygląd i skróty klawiszowe trybu kinowego." },
-  "websiteLabel": { "message": "Strona" },
-  "loadingLabel": { "message": "Ładowanie..." },
-  "systemPage": { "message": "Strona systemowa" },
-  "noActivePage": { "message": "Brak aktywnej strony" },
-  "errorLoading": { "message": "Błąd ładowania" },
-  "statusActive": { "message": "Aktywne" },
-  "statusDisabled": { "message": "Wyłączone" },
-  "statusInactiveSystem": { "message": "Nieaktywne (system)" },
-  "statusUnavailable": { "message": "Niedostępne" },
-  "toggleTheaterModeLower": { "message": "Przełącz tryb kinowy" },
-  "createdBy": { "message": "Autor: Tomasz Janusz" },
-  "appearanceTitle": { "message": "Wygląd" },
-  "appearanceDescription": { "message": "Wybierz kolor akcentu używany przez kontrolki, suwaki, skróty i podświetlenia." },
-  "accentColorLabel": { "message": "Kolor akcentu" },
-  "accentColorSystem": { "message": "Systemowy" },
-  "accentColorTeal": { "message": "Morski" },
-  "accentColorBlue": { "message": "Niebieski" },
-  "accentColorGreen": { "message": "Zielony" },
-  "accentColorYellow": { "message": "Żółty" },
-  "accentColorOrange": { "message": "Pomarańczowy" },
-  "accentColorRed": { "message": "Czerwony" },
-  "accentColorPink": { "message": "Różowy" },
-  "accentColorPurple": { "message": "Fioletowy" },
-  "accentColorGray": { "message": "Szary" },
+  "extensionName": {
+    "message": "Theater Mode Everywhere - Tryb kinowy"
+  },
+  "extensionDescription": {
+    "message": "Powiększ dowolny odtwarzacz HTML5 tak, aby wypełnił okno przeglądarki, jednym naciśnięciem klawisza."
+  },
+  "cwsPromoBeforeLabel": {
+    "message": "PRZED"
+  },
+  "cwsPromoAfterLabel": {
+    "message": "PO"
+  },
+  "cwsPromoPlayerUiLabel": {
+    "message": "Interfejs"
+  },
+  "cwsPromoShortcutsLabel": {
+    "message": "Skróty"
+  },
+  "settingsTitle": {
+    "message": "Ustawienia"
+  },
+  "settingsPageTitle": {
+    "message": "Theater Mode Everywhere - Ustawienia"
+  },
+  "settingsSubtitle": {
+    "message": "Skonfiguruj wykluczenia stron, wygląd i skróty klawiszowe trybu kinowego."
+  },
+  "websiteLabel": {
+    "message": "Strona"
+  },
+  "loadingLabel": {
+    "message": "Ładowanie..."
+  },
+  "systemPage": {
+    "message": "Strona systemowa"
+  },
+  "noActivePage": {
+    "message": "Brak aktywnej strony"
+  },
+  "errorLoading": {
+    "message": "Błąd ładowania"
+  },
+  "statusActive": {
+    "message": "Aktywne"
+  },
+  "statusDisabled": {
+    "message": "Wyłączone"
+  },
+  "statusInactiveSystem": {
+    "message": "Nieaktywne (system)"
+  },
+  "statusUnavailable": {
+    "message": "Niedostępne"
+  },
+  "toggleTheaterModeLower": {
+    "message": "Przełącz tryb kinowy"
+  },
+  "createdBy": {
+    "message": "Autor: Tomasz Janusz"
+  },
+  "appearanceTitle": {
+    "message": "Wygląd"
+  },
+  "appearanceDescription": {
+    "message": "Wybierz kolor akcentu używany przez kontrolki, suwaki, skróty i podświetlenia."
+  },
+  "accentColorLabel": {
+    "message": "Kolor akcentu"
+  },
+  "accentColorSystem": {
+    "message": "Systemowy"
+  },
+  "accentColorTeal": {
+    "message": "Morski"
+  },
+  "accentColorBlue": {
+    "message": "Niebieski"
+  },
+  "accentColorGreen": {
+    "message": "Zielony"
+  },
+  "accentColorYellow": {
+    "message": "Żółty"
+  },
+  "accentColorOrange": {
+    "message": "Pomarańczowy"
+  },
+  "accentColorRed": {
+    "message": "Czerwony"
+  },
+  "accentColorPink": {
+    "message": "Różowy"
+  },
+  "accentColorPurple": {
+    "message": "Fioletowy"
+  },
+  "accentColorGray": {
+    "message": "Szary"
+  },
   "useAccentColor": {
     "message": "Użyj koloru $COLOR$ jako akcentu",
-    "placeholders": { "color": { "content": "$1" } }
+    "placeholders": {
+      "color": {
+        "content": "$1"
+      }
+    }
   },
-  "featuresTitle": { "message": "Funkcje" },
-  "featuresDescription": { "message": "Włącz lub wyłącz opcjonalne zachowania trybu kinowego." },
-  "volumeBoostTitle": { "message": "Wzmocnienie głośności" },
-  "volumeBoostDescription": { "message": "Wzmocnij głośność do 300% za pomocą Web Audio API. Przy pierwszym wejściu w tryb kinowy z tą opcją może pojawić się krótki wskaźnik ładowania." },
-  "websiteExclusionsTitle": { "message": "Wykluczenia stron" },
-  "websiteExclusionsDescription": { "message": "Wyklucz strony, na których tryb kinowy nie powinien uruchamiać się automatycznie." },
-  "domainInputPlaceholder": { "message": "np. youtube.com albo wklej URL" },
-  "excludedWebsitesTitle": { "message": "Wykluczone strony" },
-  "exclusionsFooterTip": { "message": "Wskazówka: wykluczeniami możesz też zarządzać bezpośrednio po kliknięciu ikony rozszerzenia na pasku przeglądarki." },
-  "invalidDomain": { "message": "Nieprawidłowa domena lub format URL." },
-  "websiteAlreadyExcluded": { "message": "Ta strona jest już wykluczona." },
-  "errorSavingSettings": { "message": "Błąd zapisywania ustawień." },
-  "noExclusionsYet": { "message": "Brak wykluczeń" },
-  "noExclusionsDescription": { "message": "Tryb kinowy będzie automatycznie aktywowany na wszystkich stronach z wideo." },
-  "removeExclusion": { "message": "Usuń wykluczenie" },
-  "errorLoadingSettings": { "message": "Błąd ładowania ustawień." },
-  "keyboardShortcutsTitle": { "message": "Skróty klawiszowe" },
-  "keyboardShortcutsDescription": { "message": "Kliknij dowolne pole i naciśnij wybraną kombinację klawiszy. Obsługiwane są modyfikatory takie jak Ctrl, Alt i Shift." },
-  "generalControlsTitle": { "message": "Sterowanie ogólne" },
-  "toggleTheaterMode": { "message": "Przełącz tryb kinowy" },
-  "exitTheaterMode": { "message": "Wyjdź z trybu kinowego" },
-  "cycleSwitchPlayer": { "message": "Przełącz odtwarzacz" },
-  "cycleSwitchVideo": { "message": "Przełącz wideo" },
-  "showHideHelp": { "message": "Pokaż/ukryj pomoc" },
-  "playbackVolumeControlsTitle": { "message": "Odtwarzanie i głośność" },
-  "playPause": { "message": "Odtwórz / pauza" },
-  "seekBackward5": { "message": "Cofnij (5 s)" },
-  "seekForward5": { "message": "Przewiń do przodu (5 s)" },
-  "volumeUp5": { "message": "Głośniej (5%)" },
-  "volumeDown5": { "message": "Ciszej (5%)" },
-  "frameFullscreenPipTitle": { "message": "Klatki, pełny ekran i PiP" },
-  "frameStepBackward": { "message": "Cofnij o klatkę" },
-  "frameStepForward": { "message": "Przejdź o klatkę do przodu" },
-  "frameStepBackward004": { "message": "Cofnij o klatkę (0,04 s)" },
-  "frameStepForward004": { "message": "Przejdź o klatkę do przodu (0,04 s)" },
-  "toggleFullscreen": { "message": "Przełącz pełny ekran" },
-  "togglePictureInPicture": { "message": "Przełącz obraz w obrazie" },
-  "pressKeysPlaceholder": { "message": "Naciśnij klawisze..." },
-  "resetToDefault": { "message": "Przywróć domyślne" },
-  "resetToDefaults": { "message": "Przywróć domyślne" },
-  "copyright": { "message": "© 2026 Tomasz Janusz. Wszelkie prawa zastrzeżone." },
-  "play": { "message": "Odtwórz" },
-  "pause": { "message": "Pauza" },
+  "featuresTitle": {
+    "message": "Funkcje"
+  },
+  "featuresDescription": {
+    "message": "Włącz lub wyłącz opcjonalne zachowania trybu kinowego."
+  },
+  "volumeBoostTitle": {
+    "message": "Wzmocnienie głośności"
+  },
+  "volumeBoostDescription": {
+    "message": "Wzmocnij głośność do 300% za pomocą Web Audio API. Przy pierwszym wejściu w tryb kinowy z tą opcją może pojawić się krótki wskaźnik ładowania."
+  },
+  "websiteExclusionsTitle": {
+    "message": "Wykluczenia stron"
+  },
+  "websiteExclusionsDescription": {
+    "message": "Wyklucz strony, na których tryb kinowy nie powinien uruchamiać się automatycznie."
+  },
+  "domainInputPlaceholder": {
+    "message": "np. youtube.com albo wklej URL"
+  },
+  "excludedWebsitesTitle": {
+    "message": "Wykluczone strony"
+  },
+  "exclusionsFooterTip": {
+    "message": "Wskazówka: wykluczeniami możesz też zarządzać bezpośrednio po kliknięciu ikony rozszerzenia na pasku przeglądarki."
+  },
+  "invalidDomain": {
+    "message": "Nieprawidłowa domena lub format URL."
+  },
+  "websiteAlreadyExcluded": {
+    "message": "Ta strona jest już wykluczona."
+  },
+  "errorSavingSettings": {
+    "message": "Błąd zapisywania ustawień."
+  },
+  "noExclusionsYet": {
+    "message": "Brak wykluczeń"
+  },
+  "noExclusionsDescription": {
+    "message": "Tryb kinowy będzie automatycznie aktywowany na wszystkich stronach z wideo."
+  },
+  "removeExclusion": {
+    "message": "Usuń wykluczenie"
+  },
+  "errorLoadingSettings": {
+    "message": "Błąd ładowania ustawień."
+  },
+  "keyboardShortcutsTitle": {
+    "message": "Skróty klawiszowe"
+  },
+  "keyboardShortcutsDescription": {
+    "message": "Kliknij dowolne pole i naciśnij wybraną kombinację klawiszy. Obsługiwane są modyfikatory takie jak Ctrl, Alt i Shift."
+  },
+  "generalControlsTitle": {
+    "message": "Sterowanie ogólne"
+  },
+  "toggleTheaterMode": {
+    "message": "Przełącz tryb kinowy"
+  },
+  "exitTheaterMode": {
+    "message": "Wyjdź z trybu kinowego"
+  },
+  "cycleSwitchPlayer": {
+    "message": "Przełącz odtwarzacz"
+  },
+  "cycleSwitchVideo": {
+    "message": "Przełącz wideo"
+  },
+  "showHideHelp": {
+    "message": "Pokaż/ukryj pomoc"
+  },
+  "playbackVolumeControlsTitle": {
+    "message": "Odtwarzanie i głośność"
+  },
+  "playPause": {
+    "message": "Odtwórz / pauza"
+  },
+  "seekBackward5": {
+    "message": "Cofnij (5 s)"
+  },
+  "seekForward5": {
+    "message": "Przewiń do przodu (5 s)"
+  },
+  "volumeUp5": {
+    "message": "Głośniej (5%)"
+  },
+  "volumeDown5": {
+    "message": "Ciszej (5%)"
+  },
+  "frameFullscreenPipTitle": {
+    "message": "Klatki, pełny ekran i PiP"
+  },
+  "frameStepBackward": {
+    "message": "Cofnij o klatkę"
+  },
+  "frameStepForward": {
+    "message": "Przejdź o klatkę do przodu"
+  },
+  "frameStepBackward004": {
+    "message": "Cofnij o klatkę (0,04 s)"
+  },
+  "frameStepForward004": {
+    "message": "Przejdź o klatkę do przodu (0,04 s)"
+  },
+  "toggleFullscreen": {
+    "message": "Przełącz pełny ekran"
+  },
+  "togglePictureInPicture": {
+    "message": "Przełącz obraz w obrazie"
+  },
+  "pressKeysPlaceholder": {
+    "message": "Naciśnij klawisze..."
+  },
+  "resetToDefault": {
+    "message": "Przywróć domyślne"
+  },
+  "resetToDefaults": {
+    "message": "Przywróć domyślne"
+  },
+  "copyright": {
+    "message": "© 2026 Tomasz Janusz. Wszelkie prawa zastrzeżone."
+  },
+  "play": {
+    "message": "Odtwórz"
+  },
+  "pause": {
+    "message": "Pauza"
+  },
   "pictureInPictureTooltip": {
     "message": "Obraz w obrazie <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "exitFullscreen": { "message": "Opuść pełny ekran" },
+  "exitFullscreen": {
+    "message": "Opuść pełny ekran"
+  },
   "fullscreenTooltip": {
     "message": "Pełny ekran <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "exitTheaterModeTooltip": {
     "message": "Wyjdź z trybu kinowego <kbd>$TOGGLE$</kbd> lub <kbd>$EXIT$</kbd>",
     "placeholders": {
-      "toggle": { "content": "$1" },
-      "exit": { "content": "$2" }
+      "toggle": {
+        "content": "$1"
+      },
+      "exit": {
+        "content": "$2"
+      }
     }
   },
-  "noSubtitlesAvailable": { "message": "Brak dostępnych napisów" },
-  "disableSubtitles": { "message": "Wyłącz napisy" },
-  "enableSubtitles": { "message": "Włącz napisy" },
-  "noSubtitles": { "message": "Brak napisów" },
-  "subtitlesOff": { "message": "Wyłączone" },
+  "noSubtitlesAvailable": {
+    "message": "Brak dostępnych napisów"
+  },
+  "disableSubtitles": {
+    "message": "Wyłącz napisy"
+  },
+  "enableSubtitles": {
+    "message": "Włącz napisy"
+  },
+  "noSubtitles": {
+    "message": "Brak napisów"
+  },
+  "subtitlesOff": {
+    "message": "Wyłączone"
+  },
   "trackLabel": {
     "message": "Ścieżka $NUMBER$",
-    "placeholders": { "number": { "content": "$1" } }
+    "placeholders": {
+      "number": {
+        "content": "$1"
+      }
+    }
   },
   "switchVideoTooltip": {
     "message": "Przełącz wideo <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "keyboardShortcutsTooltip": {
     "message": "Skróty klawiszowe <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "fiveSeconds": { "message": "5 sekund" }
+  "fiveSeconds": {
+    "message": "5 sekund"
+  },
+  "homepage": {
+    "message": "Strona główna"
+  }
 }

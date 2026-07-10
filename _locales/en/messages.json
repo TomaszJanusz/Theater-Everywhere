@@ -1,116 +1,313 @@
 {
-  "extensionName": { "message": "Theater Mode Everywhere" },
-  "extensionDescription": { "message": "Maximize any HTML5 video player to fill the browser viewport with a single keypress." },
-  "cwsPromoBeforeLabel": { "message": "BEFORE" },
-  "cwsPromoAfterLabel": { "message": "AFTER" },
-  "cwsPromoPlayerUiLabel": { "message": "Player UI" },
-  "cwsPromoShortcutsLabel": { "message": "Shortcuts" },
-  "settingsTitle": { "message": "Settings" },
-  "settingsPageTitle": { "message": "Theater Mode Everywhere - Settings" },
-  "settingsSubtitle": { "message": "Configure website exclusions, appearance, and theater mode keyboard shortcuts." },
-  "websiteLabel": { "message": "Website" },
-  "loadingLabel": { "message": "Loading..." },
-  "systemPage": { "message": "System page" },
-  "noActivePage": { "message": "No active page" },
-  "errorLoading": { "message": "Error loading" },
-  "statusActive": { "message": "Active" },
-  "statusDisabled": { "message": "Disabled" },
-  "statusInactiveSystem": { "message": "Inactive (system)" },
-  "statusUnavailable": { "message": "Unavailable" },
-  "toggleTheaterModeLower": { "message": "Toggle theater mode" },
-  "createdBy": { "message": "Created by Tomasz Janusz" },
-  "appearanceTitle": { "message": "Appearance" },
-  "appearanceDescription": { "message": "Choose the accent used by controls, sliders, shortcuts, and highlights." },
-  "accentColorLabel": { "message": "Accent color" },
-  "accentColorSystem": { "message": "System" },
-  "accentColorTeal": { "message": "Teal" },
-  "accentColorBlue": { "message": "Blue" },
-  "accentColorGreen": { "message": "Green" },
-  "accentColorYellow": { "message": "Yellow" },
-  "accentColorOrange": { "message": "Orange" },
-  "accentColorRed": { "message": "Red" },
-  "accentColorPink": { "message": "Pink" },
-  "accentColorPurple": { "message": "Purple" },
-  "accentColorGray": { "message": "Gray" },
+  "extensionName": {
+    "message": "Theater Mode Everywhere"
+  },
+  "extensionDescription": {
+    "message": "Maximize any HTML5 video player to fill the browser viewport with a single keypress."
+  },
+  "cwsPromoBeforeLabel": {
+    "message": "BEFORE"
+  },
+  "cwsPromoAfterLabel": {
+    "message": "AFTER"
+  },
+  "cwsPromoPlayerUiLabel": {
+    "message": "Player UI"
+  },
+  "cwsPromoShortcutsLabel": {
+    "message": "Shortcuts"
+  },
+  "settingsTitle": {
+    "message": "Settings"
+  },
+  "settingsPageTitle": {
+    "message": "Theater Mode Everywhere - Settings"
+  },
+  "settingsSubtitle": {
+    "message": "Configure website exclusions, appearance, and theater mode keyboard shortcuts."
+  },
+  "websiteLabel": {
+    "message": "Website"
+  },
+  "loadingLabel": {
+    "message": "Loading..."
+  },
+  "systemPage": {
+    "message": "System page"
+  },
+  "noActivePage": {
+    "message": "No active page"
+  },
+  "errorLoading": {
+    "message": "Error loading"
+  },
+  "statusActive": {
+    "message": "Active"
+  },
+  "statusDisabled": {
+    "message": "Disabled"
+  },
+  "statusInactiveSystem": {
+    "message": "Inactive (system)"
+  },
+  "statusUnavailable": {
+    "message": "Unavailable"
+  },
+  "toggleTheaterModeLower": {
+    "message": "Toggle theater mode"
+  },
+  "createdBy": {
+    "message": "Created by Tomasz Janusz"
+  },
+  "appearanceTitle": {
+    "message": "Appearance"
+  },
+  "appearanceDescription": {
+    "message": "Choose the accent used by controls, sliders, shortcuts, and highlights."
+  },
+  "accentColorLabel": {
+    "message": "Accent color"
+  },
+  "accentColorSystem": {
+    "message": "System"
+  },
+  "accentColorTeal": {
+    "message": "Teal"
+  },
+  "accentColorBlue": {
+    "message": "Blue"
+  },
+  "accentColorGreen": {
+    "message": "Green"
+  },
+  "accentColorYellow": {
+    "message": "Yellow"
+  },
+  "accentColorOrange": {
+    "message": "Orange"
+  },
+  "accentColorRed": {
+    "message": "Red"
+  },
+  "accentColorPink": {
+    "message": "Pink"
+  },
+  "accentColorPurple": {
+    "message": "Purple"
+  },
+  "accentColorGray": {
+    "message": "Gray"
+  },
   "useAccentColor": {
     "message": "Use $COLOR$ as the accent color",
-    "placeholders": { "color": { "content": "$1" } }
+    "placeholders": {
+      "color": {
+        "content": "$1"
+      }
+    }
   },
-  "featuresTitle": { "message": "Features" },
-  "featuresDescription": { "message": "Turn optional theater mode behavior on or off." },
-  "volumeBoostTitle": { "message": "Volume Boost" },
-  "volumeBoostDescription": { "message": "Amplify volume up to 300% using Web Audio API. A brief loading spinner may appear the first time you enter theater mode while this is enabled." },
-  "websiteExclusionsTitle": { "message": "Website Exclusions" },
-  "websiteExclusionsDescription": { "message": "Exclude websites where you do not want theater mode to activate automatically." },
-  "domainInputPlaceholder": { "message": "e.g., youtube.com or paste a URL" },
-  "excludedWebsitesTitle": { "message": "Excluded Websites" },
-  "exclusionsFooterTip": { "message": "Tip: You can also manage exclusions directly by clicking the extension icon in your browser toolbar." },
-  "invalidDomain": { "message": "Invalid domain or URL format." },
-  "websiteAlreadyExcluded": { "message": "This website is already excluded." },
-  "errorSavingSettings": { "message": "Error saving settings." },
-  "noExclusionsYet": { "message": "No exclusions yet" },
-  "noExclusionsDescription": { "message": "Theater mode will activate automatically on all video pages." },
-  "removeExclusion": { "message": "Remove exclusion" },
-  "errorLoadingSettings": { "message": "Error loading settings." },
-  "keyboardShortcutsTitle": { "message": "Keyboard Shortcuts" },
-  "keyboardShortcutsDescription": { "message": "Click any input field and press your desired key combination to configure. Modifiers like Ctrl, Alt, and Shift are supported." },
-  "generalControlsTitle": { "message": "General Controls" },
-  "toggleTheaterMode": { "message": "Toggle Theater Mode" },
-  "exitTheaterMode": { "message": "Exit Theater Mode" },
-  "cycleSwitchPlayer": { "message": "Cycle / Switch Player" },
-  "cycleSwitchVideo": { "message": "Cycle / Switch Video" },
-  "showHideHelp": { "message": "Show/Hide Help" },
-  "playbackVolumeControlsTitle": { "message": "Playback & Volume Controls" },
-  "playPause": { "message": "Play / Pause" },
-  "seekBackward5": { "message": "Seek Backward (5s)" },
-  "seekForward5": { "message": "Seek Forward (5s)" },
-  "volumeUp5": { "message": "Volume Up (5%)" },
-  "volumeDown5": { "message": "Volume Down (5%)" },
-  "frameFullscreenPipTitle": { "message": "Frame, Fullscreen & PiP" },
-  "frameStepBackward": { "message": "Frame Step Backward" },
-  "frameStepForward": { "message": "Frame Step Forward" },
-  "frameStepBackward004": { "message": "Frame Step Backward (0.04s)" },
-  "frameStepForward004": { "message": "Frame Step Forward (0.04s)" },
-  "toggleFullscreen": { "message": "Toggle Fullscreen" },
-  "togglePictureInPicture": { "message": "Toggle Picture-in-Picture" },
-  "pressKeysPlaceholder": { "message": "Press keys..." },
-  "resetToDefault": { "message": "Reset to default" },
-  "resetToDefaults": { "message": "Reset to defaults" },
-  "copyright": { "message": "© 2026 Tomasz Janusz. All rights reserved." },
-  "play": { "message": "Play" },
-  "pause": { "message": "Pause" },
+  "featuresTitle": {
+    "message": "Features"
+  },
+  "featuresDescription": {
+    "message": "Turn optional theater mode behavior on or off."
+  },
+  "volumeBoostTitle": {
+    "message": "Volume Boost"
+  },
+  "volumeBoostDescription": {
+    "message": "Amplify volume up to 300% using Web Audio API. A brief loading spinner may appear the first time you enter theater mode while this is enabled."
+  },
+  "websiteExclusionsTitle": {
+    "message": "Website Exclusions"
+  },
+  "websiteExclusionsDescription": {
+    "message": "Exclude websites where you do not want theater mode to activate automatically."
+  },
+  "domainInputPlaceholder": {
+    "message": "e.g., youtube.com or paste a URL"
+  },
+  "excludedWebsitesTitle": {
+    "message": "Excluded Websites"
+  },
+  "exclusionsFooterTip": {
+    "message": "Tip: You can also manage exclusions directly by clicking the extension icon in your browser toolbar."
+  },
+  "invalidDomain": {
+    "message": "Invalid domain or URL format."
+  },
+  "websiteAlreadyExcluded": {
+    "message": "This website is already excluded."
+  },
+  "errorSavingSettings": {
+    "message": "Error saving settings."
+  },
+  "noExclusionsYet": {
+    "message": "No exclusions yet"
+  },
+  "noExclusionsDescription": {
+    "message": "Theater mode will activate automatically on all video pages."
+  },
+  "removeExclusion": {
+    "message": "Remove exclusion"
+  },
+  "errorLoadingSettings": {
+    "message": "Error loading settings."
+  },
+  "keyboardShortcutsTitle": {
+    "message": "Keyboard Shortcuts"
+  },
+  "keyboardShortcutsDescription": {
+    "message": "Click any input field and press your desired key combination to configure. Modifiers like Ctrl, Alt, and Shift are supported."
+  },
+  "generalControlsTitle": {
+    "message": "General Controls"
+  },
+  "toggleTheaterMode": {
+    "message": "Toggle Theater Mode"
+  },
+  "exitTheaterMode": {
+    "message": "Exit Theater Mode"
+  },
+  "cycleSwitchPlayer": {
+    "message": "Cycle / Switch Player"
+  },
+  "cycleSwitchVideo": {
+    "message": "Cycle / Switch Video"
+  },
+  "showHideHelp": {
+    "message": "Show/Hide Help"
+  },
+  "playbackVolumeControlsTitle": {
+    "message": "Playback & Volume Controls"
+  },
+  "playPause": {
+    "message": "Play / Pause"
+  },
+  "seekBackward5": {
+    "message": "Seek Backward (5s)"
+  },
+  "seekForward5": {
+    "message": "Seek Forward (5s)"
+  },
+  "volumeUp5": {
+    "message": "Volume Up (5%)"
+  },
+  "volumeDown5": {
+    "message": "Volume Down (5%)"
+  },
+  "frameFullscreenPipTitle": {
+    "message": "Frame, Fullscreen & PiP"
+  },
+  "frameStepBackward": {
+    "message": "Frame Step Backward"
+  },
+  "frameStepForward": {
+    "message": "Frame Step Forward"
+  },
+  "frameStepBackward004": {
+    "message": "Frame Step Backward (0.04s)"
+  },
+  "frameStepForward004": {
+    "message": "Frame Step Forward (0.04s)"
+  },
+  "toggleFullscreen": {
+    "message": "Toggle Fullscreen"
+  },
+  "togglePictureInPicture": {
+    "message": "Toggle Picture-in-Picture"
+  },
+  "pressKeysPlaceholder": {
+    "message": "Press keys..."
+  },
+  "resetToDefault": {
+    "message": "Reset to default"
+  },
+  "resetToDefaults": {
+    "message": "Reset to defaults"
+  },
+  "copyright": {
+    "message": "© 2026 Tomasz Janusz. All rights reserved."
+  },
+  "play": {
+    "message": "Play"
+  },
+  "pause": {
+    "message": "Pause"
+  },
   "pictureInPictureTooltip": {
     "message": "Picture-in-Picture <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "exitFullscreen": { "message": "Exit Fullscreen" },
+  "exitFullscreen": {
+    "message": "Exit Fullscreen"
+  },
   "fullscreenTooltip": {
     "message": "Fullscreen <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "exitTheaterModeTooltip": {
     "message": "Exit Theater Mode <kbd>$TOGGLE$</kbd> or <kbd>$EXIT$</kbd>",
     "placeholders": {
-      "toggle": { "content": "$1" },
-      "exit": { "content": "$2" }
+      "toggle": {
+        "content": "$1"
+      },
+      "exit": {
+        "content": "$2"
+      }
     }
   },
-  "noSubtitlesAvailable": { "message": "No subtitles available" },
-  "disableSubtitles": { "message": "Disable Subtitles" },
-  "enableSubtitles": { "message": "Enable Subtitles" },
-  "noSubtitles": { "message": "No subtitles" },
-  "subtitlesOff": { "message": "Off" },
+  "noSubtitlesAvailable": {
+    "message": "No subtitles available"
+  },
+  "disableSubtitles": {
+    "message": "Disable Subtitles"
+  },
+  "enableSubtitles": {
+    "message": "Enable Subtitles"
+  },
+  "noSubtitles": {
+    "message": "No subtitles"
+  },
+  "subtitlesOff": {
+    "message": "Off"
+  },
   "trackLabel": {
     "message": "Track $NUMBER$",
-    "placeholders": { "number": { "content": "$1" } }
+    "placeholders": {
+      "number": {
+        "content": "$1"
+      }
+    }
   },
   "switchVideoTooltip": {
     "message": "Switch Video <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "keyboardShortcutsTooltip": {
     "message": "Keyboard Shortcuts <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "fiveSeconds": { "message": "5 seconds" }
+  "fiveSeconds": {
+    "message": "5 seconds"
+  },
+  "homepage": {
+    "message": "Homepage"
+  }
 }

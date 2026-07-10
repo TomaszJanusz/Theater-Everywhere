@@ -1,116 +1,313 @@
 {
-  "extensionName": { "message": "Theater Mode Everywhere - 剧场模式" },
-  "extensionDescription": { "message": "只需按一个键，即可让任何 HTML5 视频播放器填满浏览器视口。" },
-  "cwsPromoBeforeLabel": { "message": "之前" },
-  "cwsPromoAfterLabel": { "message": "之后" },
-  "cwsPromoPlayerUiLabel": { "message": "播放器界面" },
-  "cwsPromoShortcutsLabel": { "message": "快捷键" },
-  "settingsTitle": { "message": "设置" },
-  "settingsPageTitle": { "message": "Theater Mode Everywhere - 设置" },
-  "settingsSubtitle": { "message": "配置网站排除项、外观和剧场模式键盘快捷键。" },
-  "websiteLabel": { "message": "网站" },
-  "loadingLabel": { "message": "正在加载..." },
-  "systemPage": { "message": "系统页面" },
-  "noActivePage": { "message": "没有活动页面" },
-  "errorLoading": { "message": "加载出错" },
-  "statusActive": { "message": "已启用" },
-  "statusDisabled": { "message": "已禁用" },
-  "statusInactiveSystem": { "message": "未启用（系统）" },
-  "statusUnavailable": { "message": "不可用" },
-  "toggleTheaterModeLower": { "message": "切换剧场模式" },
-  "createdBy": { "message": "由 Tomasz Janusz 创建" },
-  "appearanceTitle": { "message": "外观" },
-  "appearanceDescription": { "message": "选择用于控件、滑块、快捷键和高亮的强调色。" },
-  "accentColorLabel": { "message": "强调色" },
-  "accentColorSystem": { "message": "系统" },
-  "accentColorTeal": { "message": "青绿" },
-  "accentColorBlue": { "message": "蓝色" },
-  "accentColorGreen": { "message": "绿色" },
-  "accentColorYellow": { "message": "黄色" },
-  "accentColorOrange": { "message": "橙色" },
-  "accentColorRed": { "message": "红色" },
-  "accentColorPink": { "message": "粉色" },
-  "accentColorPurple": { "message": "紫色" },
-  "accentColorGray": { "message": "灰色" },
+  "extensionName": {
+    "message": "Theater Mode Everywhere - 剧场模式"
+  },
+  "extensionDescription": {
+    "message": "只需按一个键，即可让任何 HTML5 视频播放器填满浏览器视口。"
+  },
+  "cwsPromoBeforeLabel": {
+    "message": "之前"
+  },
+  "cwsPromoAfterLabel": {
+    "message": "之后"
+  },
+  "cwsPromoPlayerUiLabel": {
+    "message": "播放器界面"
+  },
+  "cwsPromoShortcutsLabel": {
+    "message": "快捷键"
+  },
+  "settingsTitle": {
+    "message": "设置"
+  },
+  "settingsPageTitle": {
+    "message": "Theater Mode Everywhere - 设置"
+  },
+  "settingsSubtitle": {
+    "message": "配置网站排除项、外观和剧场模式键盘快捷键。"
+  },
+  "websiteLabel": {
+    "message": "网站"
+  },
+  "loadingLabel": {
+    "message": "正在加载..."
+  },
+  "systemPage": {
+    "message": "系统页面"
+  },
+  "noActivePage": {
+    "message": "没有活动页面"
+  },
+  "errorLoading": {
+    "message": "加载出错"
+  },
+  "statusActive": {
+    "message": "已启用"
+  },
+  "statusDisabled": {
+    "message": "已禁用"
+  },
+  "statusInactiveSystem": {
+    "message": "未启用（系统）"
+  },
+  "statusUnavailable": {
+    "message": "不可用"
+  },
+  "toggleTheaterModeLower": {
+    "message": "切换剧场模式"
+  },
+  "createdBy": {
+    "message": "由 Tomasz Janusz 创建"
+  },
+  "appearanceTitle": {
+    "message": "外观"
+  },
+  "appearanceDescription": {
+    "message": "选择用于控件、滑块、快捷键和高亮的强调色。"
+  },
+  "accentColorLabel": {
+    "message": "强调色"
+  },
+  "accentColorSystem": {
+    "message": "系统"
+  },
+  "accentColorTeal": {
+    "message": "青绿"
+  },
+  "accentColorBlue": {
+    "message": "蓝色"
+  },
+  "accentColorGreen": {
+    "message": "绿色"
+  },
+  "accentColorYellow": {
+    "message": "黄色"
+  },
+  "accentColorOrange": {
+    "message": "橙色"
+  },
+  "accentColorRed": {
+    "message": "红色"
+  },
+  "accentColorPink": {
+    "message": "粉色"
+  },
+  "accentColorPurple": {
+    "message": "紫色"
+  },
+  "accentColorGray": {
+    "message": "灰色"
+  },
   "useAccentColor": {
     "message": "使用 $COLOR$ 作为强调色",
-    "placeholders": { "color": { "content": "$1" } }
+    "placeholders": {
+      "color": {
+        "content": "$1"
+      }
+    }
   },
-  "featuresTitle": { "message": "功能" },
-  "featuresDescription": { "message": "开启或关闭可选的剧场模式行为。" },
-  "volumeBoostTitle": { "message": "音量增强" },
-  "volumeBoostDescription": { "message": "使用 Web Audio API 将音量放大到最高 300%。启用后首次进入剧场模式时，可能会短暂显示加载指示器。" },
-  "websiteExclusionsTitle": { "message": "网站排除项" },
-  "websiteExclusionsDescription": { "message": "排除不希望自动启用剧场模式的网站。" },
-  "domainInputPlaceholder": { "message": "例如 youtube.com，或粘贴 URL" },
-  "excludedWebsitesTitle": { "message": "已排除的网站" },
-  "exclusionsFooterTip": { "message": "提示：也可以点击浏览器工具栏中的扩展图标，直接管理排除项。" },
-  "invalidDomain": { "message": "域名或 URL 格式无效。" },
-  "websiteAlreadyExcluded": { "message": "此网站已被排除。" },
-  "errorSavingSettings": { "message": "保存设置时出错。" },
-  "noExclusionsYet": { "message": "还没有排除项" },
-  "noExclusionsDescription": { "message": "剧场模式会在所有视频页面上自动启用。" },
-  "removeExclusion": { "message": "移除排除项" },
-  "errorLoadingSettings": { "message": "加载设置时出错。" },
-  "keyboardShortcutsTitle": { "message": "键盘快捷键" },
-  "keyboardShortcutsDescription": { "message": "点击任意输入框，然后按下想要的按键组合。支持 Ctrl、Alt 和 Shift 等修饰键。" },
-  "generalControlsTitle": { "message": "常规控制" },
-  "toggleTheaterMode": { "message": "切换剧场模式" },
-  "exitTheaterMode": { "message": "退出剧场模式" },
-  "cycleSwitchPlayer": { "message": "循环 / 切换播放器" },
-  "cycleSwitchVideo": { "message": "循环 / 切换视频" },
-  "showHideHelp": { "message": "显示/隐藏帮助" },
-  "playbackVolumeControlsTitle": { "message": "播放和音量控制" },
-  "playPause": { "message": "播放 / 暂停" },
-  "seekBackward5": { "message": "后退（5 秒）" },
-  "seekForward5": { "message": "前进（5 秒）" },
-  "volumeUp5": { "message": "提高音量（5%）" },
-  "volumeDown5": { "message": "降低音量（5%）" },
-  "frameFullscreenPipTitle": { "message": "逐帧、全屏和画中画" },
-  "frameStepBackward": { "message": "后退一帧" },
-  "frameStepForward": { "message": "前进一帧" },
-  "frameStepBackward004": { "message": "后退一帧（0.04 秒）" },
-  "frameStepForward004": { "message": "前进一帧（0.04 秒）" },
-  "toggleFullscreen": { "message": "切换全屏" },
-  "togglePictureInPicture": { "message": "切换画中画" },
-  "pressKeysPlaceholder": { "message": "按下按键..." },
-  "resetToDefault": { "message": "恢复默认值" },
-  "resetToDefaults": { "message": "恢复默认值" },
-  "copyright": { "message": "© 2026 Tomasz Janusz。保留所有权利。" },
-  "play": { "message": "播放" },
-  "pause": { "message": "暂停" },
+  "featuresTitle": {
+    "message": "功能"
+  },
+  "featuresDescription": {
+    "message": "开启或关闭可选的剧场模式行为。"
+  },
+  "volumeBoostTitle": {
+    "message": "音量增强"
+  },
+  "volumeBoostDescription": {
+    "message": "使用 Web Audio API 将音量放大到最高 300%。启用后首次进入剧场模式时，可能会短暂显示加载指示器。"
+  },
+  "websiteExclusionsTitle": {
+    "message": "网站排除项"
+  },
+  "websiteExclusionsDescription": {
+    "message": "排除不希望自动启用剧场模式的网站。"
+  },
+  "domainInputPlaceholder": {
+    "message": "例如 youtube.com，或粘贴 URL"
+  },
+  "excludedWebsitesTitle": {
+    "message": "已排除的网站"
+  },
+  "exclusionsFooterTip": {
+    "message": "提示：也可以点击浏览器工具栏中的扩展图标，直接管理排除项。"
+  },
+  "invalidDomain": {
+    "message": "域名或 URL 格式无效。"
+  },
+  "websiteAlreadyExcluded": {
+    "message": "此网站已被排除。"
+  },
+  "errorSavingSettings": {
+    "message": "保存设置时出错。"
+  },
+  "noExclusionsYet": {
+    "message": "还没有排除项"
+  },
+  "noExclusionsDescription": {
+    "message": "剧场模式会在所有视频页面上自动启用。"
+  },
+  "removeExclusion": {
+    "message": "移除排除项"
+  },
+  "errorLoadingSettings": {
+    "message": "加载设置时出错。"
+  },
+  "keyboardShortcutsTitle": {
+    "message": "键盘快捷键"
+  },
+  "keyboardShortcutsDescription": {
+    "message": "点击任意输入框，然后按下想要的按键组合。支持 Ctrl、Alt 和 Shift 等修饰键。"
+  },
+  "generalControlsTitle": {
+    "message": "常规控制"
+  },
+  "toggleTheaterMode": {
+    "message": "切换剧场模式"
+  },
+  "exitTheaterMode": {
+    "message": "退出剧场模式"
+  },
+  "cycleSwitchPlayer": {
+    "message": "循环 / 切换播放器"
+  },
+  "cycleSwitchVideo": {
+    "message": "循环 / 切换视频"
+  },
+  "showHideHelp": {
+    "message": "显示/隐藏帮助"
+  },
+  "playbackVolumeControlsTitle": {
+    "message": "播放和音量控制"
+  },
+  "playPause": {
+    "message": "播放 / 暂停"
+  },
+  "seekBackward5": {
+    "message": "后退（5 秒）"
+  },
+  "seekForward5": {
+    "message": "前进（5 秒）"
+  },
+  "volumeUp5": {
+    "message": "提高音量（5%）"
+  },
+  "volumeDown5": {
+    "message": "降低音量（5%）"
+  },
+  "frameFullscreenPipTitle": {
+    "message": "逐帧、全屏和画中画"
+  },
+  "frameStepBackward": {
+    "message": "后退一帧"
+  },
+  "frameStepForward": {
+    "message": "前进一帧"
+  },
+  "frameStepBackward004": {
+    "message": "后退一帧（0.04 秒）"
+  },
+  "frameStepForward004": {
+    "message": "前进一帧（0.04 秒）"
+  },
+  "toggleFullscreen": {
+    "message": "切换全屏"
+  },
+  "togglePictureInPicture": {
+    "message": "切换画中画"
+  },
+  "pressKeysPlaceholder": {
+    "message": "按下按键..."
+  },
+  "resetToDefault": {
+    "message": "恢复默认值"
+  },
+  "resetToDefaults": {
+    "message": "恢复默认值"
+  },
+  "copyright": {
+    "message": "© 2026 Tomasz Janusz。保留所有权利。"
+  },
+  "play": {
+    "message": "播放"
+  },
+  "pause": {
+    "message": "暂停"
+  },
   "pictureInPictureTooltip": {
     "message": "画中画 <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "exitFullscreen": { "message": "退出全屏" },
+  "exitFullscreen": {
+    "message": "退出全屏"
+  },
   "fullscreenTooltip": {
     "message": "全屏 <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "exitTheaterModeTooltip": {
     "message": "退出剧场模式 <kbd>$TOGGLE$</kbd> 或 <kbd>$EXIT$</kbd>",
     "placeholders": {
-      "toggle": { "content": "$1" },
-      "exit": { "content": "$2" }
+      "toggle": {
+        "content": "$1"
+      },
+      "exit": {
+        "content": "$2"
+      }
     }
   },
-  "noSubtitlesAvailable": { "message": "没有可用字幕" },
-  "disableSubtitles": { "message": "关闭字幕" },
-  "enableSubtitles": { "message": "开启字幕" },
-  "noSubtitles": { "message": "无字幕" },
-  "subtitlesOff": { "message": "关闭" },
+  "noSubtitlesAvailable": {
+    "message": "没有可用字幕"
+  },
+  "disableSubtitles": {
+    "message": "关闭字幕"
+  },
+  "enableSubtitles": {
+    "message": "开启字幕"
+  },
+  "noSubtitles": {
+    "message": "无字幕"
+  },
+  "subtitlesOff": {
+    "message": "关闭"
+  },
   "trackLabel": {
     "message": "轨道 $NUMBER$",
-    "placeholders": { "number": { "content": "$1" } }
+    "placeholders": {
+      "number": {
+        "content": "$1"
+      }
+    }
   },
   "switchVideoTooltip": {
     "message": "切换视频 <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "keyboardShortcutsTooltip": {
     "message": "键盘快捷键 <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "fiveSeconds": { "message": "5 秒" }
+  "fiveSeconds": {
+    "message": "5 秒"
+  },
+  "homepage": {
+    "message": "主页"
+  }
 }

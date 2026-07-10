@@ -1,116 +1,313 @@
 {
-  "extensionName": { "message": "Theater Mode Everywhere - Modo teatro" },
-  "extensionDescription": { "message": "Maximize qualquer player de vídeo HTML5 para preencher a tela do navegador com um único pressionamento de tecla." },
-  "cwsPromoBeforeLabel": { "message": "ANTES" },
-  "cwsPromoAfterLabel": { "message": "DEPOIS" },
-  "cwsPromoPlayerUiLabel": { "message": "Controles do Player" },
-  "cwsPromoShortcutsLabel": { "message": "Atalhos" },
-  "settingsTitle": { "message": "Configurações" },
-  "settingsPageTitle": { "message": "Theater Mode Everywhere - Configurações" },
-  "settingsSubtitle": { "message": "Configure exclusões de sites, aparência e atalhos de teclado do modo teatro." },
-  "websiteLabel": { "message": "Website" },
-  "loadingLabel": { "message": "Carregando..." },
-  "systemPage": { "message": "Página do sistema" },
-  "noActivePage": { "message": "Nenhuma página ativa" },
-  "errorLoading": { "message": "Erro ao carregar" },
-  "statusActive": { "message": "Ativo" },
-  "statusDisabled": { "message": "Desativado" },
-  "statusInactiveSystem": { "message": "Inativo (sistema)" },
-  "statusUnavailable": { "message": "Indisponível" },
-  "toggleTheaterModeLower": { "message": "alternar modo teatro" },
-  "createdBy": { "message": "Criado por Tomasz Janusz" },
-  "appearanceTitle": { "message": "Aparência" },
-  "appearanceDescription": { "message": "Escolha a cor de destaque usada pelos controles, seletores, atalhos e marcações." },
-  "accentColorLabel": { "message": "Cor de destaque" },
-  "accentColorSystem": { "message": "Sistema" },
-  "accentColorTeal": { "message": "Turquesa" },
-  "accentColorBlue": { "message": "Azul" },
-  "accentColorGreen": { "message": "Verde" },
-  "accentColorYellow": { "message": "Amarelo" },
-  "accentColorOrange": { "message": "Laranja" },
-  "accentColorRed": { "message": "Vermelho" },
-  "accentColorPink": { "message": "Rosa" },
-  "accentColorPurple": { "message": "Roxo" },
-  "accentColorGray": { "message": "Cinza" },
+  "extensionName": {
+    "message": "Theater Mode Everywhere - Modo teatro"
+  },
+  "extensionDescription": {
+    "message": "Maximize qualquer player de vídeo HTML5 para preencher a tela do navegador com um único pressionamento de tecla."
+  },
+  "cwsPromoBeforeLabel": {
+    "message": "ANTES"
+  },
+  "cwsPromoAfterLabel": {
+    "message": "DEPOIS"
+  },
+  "cwsPromoPlayerUiLabel": {
+    "message": "Controles do Player"
+  },
+  "cwsPromoShortcutsLabel": {
+    "message": "Atalhos"
+  },
+  "settingsTitle": {
+    "message": "Configurações"
+  },
+  "settingsPageTitle": {
+    "message": "Theater Mode Everywhere - Configurações"
+  },
+  "settingsSubtitle": {
+    "message": "Configure exclusões de sites, aparência e atalhos de teclado do modo teatro."
+  },
+  "websiteLabel": {
+    "message": "Website"
+  },
+  "loadingLabel": {
+    "message": "Carregando..."
+  },
+  "systemPage": {
+    "message": "Página do sistema"
+  },
+  "noActivePage": {
+    "message": "Nenhuma página ativa"
+  },
+  "errorLoading": {
+    "message": "Erro ao carregar"
+  },
+  "statusActive": {
+    "message": "Ativo"
+  },
+  "statusDisabled": {
+    "message": "Desativado"
+  },
+  "statusInactiveSystem": {
+    "message": "Inativo (sistema)"
+  },
+  "statusUnavailable": {
+    "message": "Indisponível"
+  },
+  "toggleTheaterModeLower": {
+    "message": "alternar modo teatro"
+  },
+  "createdBy": {
+    "message": "Criado por Tomasz Janusz"
+  },
+  "appearanceTitle": {
+    "message": "Aparência"
+  },
+  "appearanceDescription": {
+    "message": "Escolha a cor de destaque usada pelos controles, seletores, atalhos e marcações."
+  },
+  "accentColorLabel": {
+    "message": "Cor de destaque"
+  },
+  "accentColorSystem": {
+    "message": "Sistema"
+  },
+  "accentColorTeal": {
+    "message": "Turquesa"
+  },
+  "accentColorBlue": {
+    "message": "Azul"
+  },
+  "accentColorGreen": {
+    "message": "Verde"
+  },
+  "accentColorYellow": {
+    "message": "Amarelo"
+  },
+  "accentColorOrange": {
+    "message": "Laranja"
+  },
+  "accentColorRed": {
+    "message": "Vermelho"
+  },
+  "accentColorPink": {
+    "message": "Rosa"
+  },
+  "accentColorPurple": {
+    "message": "Roxo"
+  },
+  "accentColorGray": {
+    "message": "Cinza"
+  },
   "useAccentColor": {
     "message": "Usar $COLOR$ como cor de destaque",
-    "placeholders": { "color": { "content": "$1" } }
+    "placeholders": {
+      "color": {
+        "content": "$1"
+      }
+    }
   },
-  "featuresTitle": { "message": "Recursos" },
-  "featuresDescription": { "message": "Ative ou desative o comportamento opcional do modo teatro." },
-  "volumeBoostTitle": { "message": "Amplificação de Volume" },
-  "volumeBoostDescription": { "message": "Amplifique o volume em até 300% usando a Web Audio API. Um breve indicador de carregamento pode aparecer na primeira vez que você entrar no modo teatro com esta opção ativada." },
-  "websiteExclusionsTitle": { "message": "Exclusões de Sites" },
-  "websiteExclusionsDescription": { "message": "Exclua sites onde você não deseja que o modo teatro seja ativado automaticamente." },
-  "domainInputPlaceholder": { "message": "ex: youtube.com ou cole uma URL" },
-  "excludedWebsitesTitle": { "message": "Sites Excluídos" },
-  "exclusionsFooterTip": { "message": "Dica: Você também pode gerenciar as exclusões diretamente clicando no ícone da extensão na barra de ferramentas do seu navegador." },
-  "invalidDomain": { "message": "Formato de domínio ou URL inválido." },
-  "websiteAlreadyExcluded": { "message": "Este site já está excluído." },
-  "errorSavingSettings": { "message": "Erro ao salvar as configurações." },
-  "noExclusionsYet": { "message": "Nenhuma exclusão ainda" },
-  "noExclusionsDescription": { "message": "O modo teatro será ativado automaticamente em todas as páginas de vídeo." },
-  "removeExclusion": { "message": "Remover exclusão" },
-  "errorLoadingSettings": { "message": "Erro ao carregar as configurações." },
-  "keyboardShortcutsTitle": { "message": "Atalhos de Teclado" },
-  "keyboardShortcutsDescription": { "message": "Clique em qualquer campo de entrada e pressione a combinação de teclas desejada para configurar. Modificadores como Ctrl, Alt e Shift são suportados." },
-  "generalControlsTitle": { "message": "Controles Gerais" },
-  "toggleTheaterMode": { "message": "Alternar Modo Teatro" },
-  "exitTheaterMode": { "message": "Sair do Modo Teatro" },
-  "cycleSwitchPlayer": { "message": "Alternar Player" },
-  "cycleSwitchVideo": { "message": "Alternar Vídeo" },
-  "showHideHelp": { "message": "Mostrar/Ocultar Ajuda" },
-  "playbackVolumeControlsTitle": { "message": "Controles de Reprodução e Volume" },
-  "playPause": { "message": "Reproduzir / Pausar" },
-  "seekBackward5": { "message": "Retroceder (5s)" },
-  "seekForward5": { "message": "Avançar (5s)" },
-  "volumeUp5": { "message": "Aumentar Volume (5%)" },
-  "volumeDown5": { "message": "Diminuir Volume (5%)" },
-  "frameFullscreenPipTitle": { "message": "Quadro, Tela Cheia e PiP" },
-  "frameStepBackward": { "message": "Voltar um Quadro" },
-  "frameStepForward": { "message": "Avançar um Quadro" },
-  "frameStepBackward004": { "message": "Voltar um Quadro (0,04s)" },
-  "frameStepForward004": { "message": "Avançar um Quadro (0,04s)" },
-  "toggleFullscreen": { "message": "Alternar Tela Cheia" },
-  "togglePictureInPicture": { "message": "Alternar Picture-in-Picture" },
-  "pressKeysPlaceholder": { "message": "Pressione as teclas..." },
-  "resetToDefault": { "message": "Restaurar padrão" },
-  "resetToDefaults": { "message": "Restaurar padrões" },
-  "copyright": { "message": "© 2026 Tomasz Janusz. Todos os direitos reservados." },
-  "play": { "message": "Reproduzir" },
-  "pause": { "message": "Pausar" },
+  "featuresTitle": {
+    "message": "Recursos"
+  },
+  "featuresDescription": {
+    "message": "Ative ou desative o comportamento opcional do modo teatro."
+  },
+  "volumeBoostTitle": {
+    "message": "Amplificação de Volume"
+  },
+  "volumeBoostDescription": {
+    "message": "Amplifique o volume em até 300% usando a Web Audio API. Um breve indicador de carregamento pode aparecer na primeira vez que você entrar no modo teatro com esta opção ativada."
+  },
+  "websiteExclusionsTitle": {
+    "message": "Exclusões de Sites"
+  },
+  "websiteExclusionsDescription": {
+    "message": "Exclua sites onde você não deseja que o modo teatro seja ativado automaticamente."
+  },
+  "domainInputPlaceholder": {
+    "message": "ex: youtube.com ou cole uma URL"
+  },
+  "excludedWebsitesTitle": {
+    "message": "Sites Excluídos"
+  },
+  "exclusionsFooterTip": {
+    "message": "Dica: Você também pode gerenciar as exclusões diretamente clicando no ícone da extensão na barra de ferramentas do seu navegador."
+  },
+  "invalidDomain": {
+    "message": "Formato de domínio ou URL inválido."
+  },
+  "websiteAlreadyExcluded": {
+    "message": "Este site já está excluído."
+  },
+  "errorSavingSettings": {
+    "message": "Erro ao salvar as configurações."
+  },
+  "noExclusionsYet": {
+    "message": "Nenhuma exclusão ainda"
+  },
+  "noExclusionsDescription": {
+    "message": "O modo teatro será ativado automaticamente em todas as páginas de vídeo."
+  },
+  "removeExclusion": {
+    "message": "Remover exclusão"
+  },
+  "errorLoadingSettings": {
+    "message": "Erro ao carregar as configurações."
+  },
+  "keyboardShortcutsTitle": {
+    "message": "Atalhos de Teclado"
+  },
+  "keyboardShortcutsDescription": {
+    "message": "Clique em qualquer campo de entrada e pressione a combinação de teclas desejada para configurar. Modificadores como Ctrl, Alt e Shift são suportados."
+  },
+  "generalControlsTitle": {
+    "message": "Controles Gerais"
+  },
+  "toggleTheaterMode": {
+    "message": "Alternar Modo Teatro"
+  },
+  "exitTheaterMode": {
+    "message": "Sair do Modo Teatro"
+  },
+  "cycleSwitchPlayer": {
+    "message": "Alternar Player"
+  },
+  "cycleSwitchVideo": {
+    "message": "Alternar Vídeo"
+  },
+  "showHideHelp": {
+    "message": "Mostrar/Ocultar Ajuda"
+  },
+  "playbackVolumeControlsTitle": {
+    "message": "Controles de Reprodução e Volume"
+  },
+  "playPause": {
+    "message": "Reproduzir / Pausar"
+  },
+  "seekBackward5": {
+    "message": "Retroceder (5s)"
+  },
+  "seekForward5": {
+    "message": "Avançar (5s)"
+  },
+  "volumeUp5": {
+    "message": "Aumentar Volume (5%)"
+  },
+  "volumeDown5": {
+    "message": "Diminuir Volume (5%)"
+  },
+  "frameFullscreenPipTitle": {
+    "message": "Quadro, Tela Cheia e PiP"
+  },
+  "frameStepBackward": {
+    "message": "Voltar um Quadro"
+  },
+  "frameStepForward": {
+    "message": "Avançar um Quadro"
+  },
+  "frameStepBackward004": {
+    "message": "Voltar um Quadro (0,04s)"
+  },
+  "frameStepForward004": {
+    "message": "Avançar um Quadro (0,04s)"
+  },
+  "toggleFullscreen": {
+    "message": "Alternar Tela Cheia"
+  },
+  "togglePictureInPicture": {
+    "message": "Alternar Picture-in-Picture"
+  },
+  "pressKeysPlaceholder": {
+    "message": "Pressione as teclas..."
+  },
+  "resetToDefault": {
+    "message": "Restaurar padrão"
+  },
+  "resetToDefaults": {
+    "message": "Restaurar padrões"
+  },
+  "copyright": {
+    "message": "© 2026 Tomasz Janusz. Todos os direitos reservados."
+  },
+  "play": {
+    "message": "Reproduzir"
+  },
+  "pause": {
+    "message": "Pausar"
+  },
   "pictureInPictureTooltip": {
     "message": "Picture-in-Picture <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "exitFullscreen": { "message": "Sair da Tela Cheia" },
+  "exitFullscreen": {
+    "message": "Sair da Tela Cheia"
+  },
   "fullscreenTooltip": {
     "message": "Tela Cheia <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "exitTheaterModeTooltip": {
     "message": "Sair do Modo Teatro <kbd>$TOGGLE$</kbd> ou <kbd>$EXIT$</kbd>",
     "placeholders": {
-      "toggle": { "content": "$1" },
-      "exit": { "content": "$2" }
+      "toggle": {
+        "content": "$1"
+      },
+      "exit": {
+        "content": "$2"
+      }
     }
   },
-  "noSubtitlesAvailable": { "message": "Nenhuma legenda disponível" },
-  "disableSubtitles": { "message": "Desativar legendas" },
-  "enableSubtitles": { "message": "Ativar legendas" },
-  "noSubtitles": { "message": "Sem legendas" },
-  "subtitlesOff": { "message": "Desativadas" },
+  "noSubtitlesAvailable": {
+    "message": "Nenhuma legenda disponível"
+  },
+  "disableSubtitles": {
+    "message": "Desativar legendas"
+  },
+  "enableSubtitles": {
+    "message": "Ativar legendas"
+  },
+  "noSubtitles": {
+    "message": "Sem legendas"
+  },
+  "subtitlesOff": {
+    "message": "Desativadas"
+  },
   "trackLabel": {
     "message": "Faixa $NUMBER$",
-    "placeholders": { "number": { "content": "$1" } }
+    "placeholders": {
+      "number": {
+        "content": "$1"
+      }
+    }
   },
   "switchVideoTooltip": {
     "message": "Alternar Vídeo <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
   "keyboardShortcutsTooltip": {
     "message": "Atalhos de Teclado <kbd>$KEY$</kbd>",
-    "placeholders": { "key": { "content": "$1" } }
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   },
-  "fiveSeconds": { "message": "5 segundos" }
+  "fiveSeconds": {
+    "message": "5 segundos"
+  },
+  "homepage": {
+    "message": "Página inicial"
+  }
 }
