@@ -32,8 +32,12 @@ const I18N_FALLBACK_MESSAGES: Record<string, string> = {
   trackLabel: 'Track $1',
   switchVideoTooltip: 'Switch Video <kbd>$1</kbd>',
   keyboardShortcutsTooltip: 'Keyboard Shortcuts <kbd>$1</kbd>',
-  fiveSeconds: '5 seconds'
+  fiveSeconds: '5 seconds',
+  '@@bidi_dir': 'ltr',
+  '@@bidi_lang': 'en'
 };
+
+type UiDirection = 'ltr' | 'rtl';
 
 function t(messageName: string, substitutions?: string | string[]): string {
   try {
@@ -59,6 +63,19 @@ function t(messageName: string, substitutions?: string | string[]): string {
   });
 
   return fallback;
+}
+
+function getUiDirection(): UiDirection {
+  return t('@@bidi_dir') === 'rtl' ? 'rtl' : 'ltr';
+}
+
+function applyUiDirection(element: HTMLElement): void {
+  element.dir = getUiDirection();
+
+  const language = t('@@bidi_lang');
+  if (language && !language.startsWith('@@')) {
+    element.lang = language.replace('_', '-');
+  }
 }
 
 interface Shortcuts {
@@ -1005,7 +1022,7 @@ function showHelpOverlay(): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-help-overlay';
-  overlay.setAttribute('dir', t('@@bidi_dir'));
+  applyUiDirection(overlay);
   applyConfiguredAccentColor(overlay);
 
   overlay.addEventListener('click', (e) => {
@@ -1090,6 +1107,7 @@ function showHelpOverlay(): void {
 
       const keyWrapper = document.createElement('div');
       keyWrapper.className = 'theater-help-key-wrapper';
+      keyWrapper.dir = 'ltr';
 
       const keys = item.key.split('+');
       keys.forEach((k, idx) => {
@@ -1466,6 +1484,7 @@ function bindCustomTooltip(button: HTMLButtonElement, getTooltipText: () => stri
     if (!tooltipState.element) {
       tooltipState.element = document.createElement('div');
       tooltipState.element.className = 'theater-button-tooltip';
+      applyUiDirection(tooltipState.element);
       applyConfiguredAccentColor(tooltipState.element);
       document.body.appendChild(tooltipState.element);
     }
@@ -1514,12 +1533,13 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const wrapper = document.createElement('div') as ExtendedHTMLDivElement;
   wrapper.className = 'theater-controls-wrapper';
-  wrapper.setAttribute('dir', t('@@bidi_dir'));
+  applyUiDirection(wrapper);
   applyConfiguredAccentColor(wrapper);
 
   // Create loading indicator
   const loadingIndicator = document.createElement('div');
   loadingIndicator.className = 'theater-loading-indicator';
+  applyUiDirection(loadingIndicator);
   applyConfiguredAccentColor(loadingIndicator);
   
   const loadingSpinner = document.createElement('div');
@@ -1993,6 +2013,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const ccMenu = document.createElement('div');
   ccMenu.className = 'theater-cc-menu';
+  applyUiDirection(ccMenu);
   wrapper.appendChild(ccMenu);
 
   const checkCCActive = () => {
@@ -2574,6 +2595,7 @@ function triggerSeekIndicator(direction: 'left' | 'right'): void {
 
   const overlay = document.createElement('div');
   overlay.className = `theater-everywhere-seek-overlay ${direction} animate`;
+  applyUiDirection(overlay);
   applyConfiguredAccentColor(overlay);
 
   const iconWrapper = document.createElement('div');
@@ -2620,7 +2642,7 @@ function triggerVolumeIndicator(logicalVolume: number, muted: boolean, action: '
   const overlay = document.createElement('div');
   const isBoosted = !muted && logicalVolume > 1.0;
   overlay.className = 'theater-everywhere-volume-overlay' + (isBoosted ? ' boosted' : '');
-  overlay.setAttribute('dir', t('@@bidi_dir'));
+  applyUiDirection(overlay);
   applyConfiguredAccentColor(overlay);
 
   const pct = muted ? 0 : (logicalVolume <= 1.0 ? Math.round(logicalVolume * 100) : Math.round(100 + (logicalVolume - 1.0) * 400));
@@ -2671,7 +2693,7 @@ function triggerPlaybackIndicator(action: 'play' | 'pause'): void {
 
   const overlay = document.createElement('div');
   overlay.className = 'theater-everywhere-volume-overlay';
-  overlay.setAttribute('dir', t('@@bidi_dir'));
+  applyUiDirection(overlay);
   applyConfiguredAccentColor(overlay);
 
   let icon = '';

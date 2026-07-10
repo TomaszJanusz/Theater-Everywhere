@@ -70,6 +70,10 @@
   transition: opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
+.theater-controls-wrapper[dir="rtl"] {
+  direction: rtl !important;
+}
+
 .theater-controls-wrapper.visible {
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -145,6 +149,10 @@
   justify-content: space-between !important;
   align-items: center !important;
   width: 100% !important;
+}
+
+.theater-controls-wrapper[dir="rtl"] .theater-controls-row {
+  direction: rtl !important;
 }
 
 .theater-controls-left,
@@ -651,6 +659,14 @@ video::-webkit-media-text-track-display {
   gap: 8px !important;
 }
 
+.theater-button-tooltip[dir="rtl"] {
+  direction: rtl !important;
+}
+
+.theater-button-tooltip[dir="rtl"] kbd {
+  direction: ltr !important;
+}
+
 .theater-button-tooltip.visible {
   opacity: 1 !important;
 }
@@ -688,6 +704,10 @@ video::-webkit-media-text-track-display {
   animation: theaterFadeIn 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
+.theater-help-overlay[dir="rtl"] {
+  direction: rtl !important;
+}
+
 .theater-help-card {
   background-color: #18181b !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -697,6 +717,7 @@ video::-webkit-media-text-track-display {
   padding: 24px !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
   animation: theaterScaleIn 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  direction: inherit !important;
 }
 
 .theater-help-header {
@@ -706,6 +727,7 @@ video::-webkit-media-text-track-display {
   margin-bottom: 20px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   padding-bottom: 12px !important;
+  direction: inherit !important;
 }
 
 .theater-help-header h3 {
@@ -738,12 +760,14 @@ video::-webkit-media-text-track-display {
   display: flex !important;
   flex-direction: column !important;
   gap: 20px !important;
+  direction: inherit !important;
 }
 
 .theater-help-group {
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
+  direction: inherit !important;
 }
 
 .theater-help-group + .theater-help-group {
@@ -759,6 +783,7 @@ video::-webkit-media-text-track-display {
   color: #a1a1aa !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   margin-bottom: 2px !important;
+  text-align: start !important;
 }
 
 .theater-help-row {
@@ -766,12 +791,14 @@ video::-webkit-media-text-track-display {
   justify-content: space-between !important;
   align-items: center !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  direction: inherit !important;
 }
 
 .theater-help-label {
   font-size: 13px !important;
   color: #d4d4d8 !important;
   font-weight: 500 !important;
+  text-align: start !important;
 }
 
 .theater-help-key-wrapper {
@@ -781,6 +808,8 @@ video::-webkit-media-text-track-display {
   color: #71717a !important;
   font-size: 11px !important;
   font-weight: 500 !important;
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
 }
 
 .theater-help-key-wrapper kbd {
@@ -834,6 +863,10 @@ video::-webkit-media-text-track-display {
   transition: opacity 0.15s ease, transform 0.15s ease !important;
 }
 
+.theater-everywhere-volume-overlay[dir="rtl"] {
+  direction: rtl !important;
+}
+
 .theater-everywhere-volume-overlay.boosted {
   border-color: rgba(245, 158, 11, 0.4) !important;
 }
@@ -852,6 +885,7 @@ video::-webkit-media-text-track-display {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
+  direction: inherit !important;
 }
 
 .volume-hud-text.zoom-in {
