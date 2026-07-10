@@ -39,7 +39,7 @@ type LocalePack = {
   code: string;
   chromeLang: string;
   messages: ChromeMessages;
-  fontFamily: 'Montserrat' | 'Noto Sans SC';
+  fontFamily: 'Montserrat' | 'Noto Sans SC' | 'Noto Sans JP' | 'Noto Sans Arabic';
 };
 
 type ElementMatch = {
@@ -101,6 +101,8 @@ async function main(): Promise<void> {
   assertExists(join(sourceRoot, 'full_ui.png'));
   assertExists(join(assetRoot, 'fonts/Montserrat[wght].ttf'));
   assertExists(join(assetRoot, 'fonts/NotoSansSC[wght].ttf'));
+  assertExists(join(assetRoot, 'fonts/NotoSansJP[wght].ttf'));
+  assertExists(join(assetRoot, 'fonts/NotoSansArabic[wght].ttf'));
   assertExists(join(assetRoot, 'fonts/OFL-Montserrat.txt'));
   assertExists(join(assetRoot, 'fonts/OFL-NotoSansSC.txt'));
   assertExists(chromePath);
@@ -217,7 +219,14 @@ function readLocales(): LocalePack[] {
     .map((entry) => {
       const code = entry.name;
       const messages = readMessages(code);
-      const fontFamily: LocalePack['fontFamily'] = code === 'zh_CN' ? 'Noto Sans SC' : 'Montserrat';
+      let fontFamily: LocalePack['fontFamily'] = 'Montserrat';
+      if (code === 'zh_CN') {
+        fontFamily = 'Noto Sans SC';
+      } else if (code === 'ja') {
+        fontFamily = 'Noto Sans JP';
+      } else if (code === 'ar') {
+        fontFamily = 'Noto Sans Arabic';
+      }
 
       return {
         code,
@@ -370,6 +379,8 @@ function buildStyleBlock(): string {
 function buildFontCss(): string {
   const montserratHref = fileUrlHref(join(assetRoot, 'fonts/Montserrat[wght].ttf'));
   const notoHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansSC[wght].ttf'));
+  const jpHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansJP[wght].ttf'));
+  const arHref = fileUrlHref(join(assetRoot, 'fonts/NotoSansArabic[wght].ttf'));
 
   return [
     '@font-face{font-family:"Montserrat";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
@@ -377,6 +388,12 @@ function buildFontCss(): string {
       '") format("truetype");}',
     '@font-face{font-family:"Noto Sans SC";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
       notoHref +
+      '") format("truetype");}',
+    '@font-face{font-family:"Noto Sans JP";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
+      jpHref +
+      '") format("truetype");}',
+    '@font-face{font-family:"Noto Sans Arabic";font-style:normal;font-weight:100 900;font-display:block;src:url("' +
+      arHref +
       '") format("truetype");}',
   ].join('\n');
 }
@@ -959,7 +976,13 @@ function renderSvg(svgPath: string, pngPath: string): void {
 }
 
 function validateGeneratedSvg(svg: string, locale: LocalePack, labelIds: string[]): void {
-  if (!svg.includes('@font-face') || !svg.includes('Montserrat') || !svg.includes('Noto Sans SC')) {
+  if (
+    !svg.includes('@font-face') ||
+    !svg.includes('Montserrat') ||
+    !svg.includes('Noto Sans SC') ||
+    !svg.includes('Noto Sans JP') ||
+    !svg.includes('Noto Sans Arabic')
+  ) {
     throw new Error(`Generated transient SVG for ${locale.code} is missing embedded @font-face declarations.`);
   }
 
