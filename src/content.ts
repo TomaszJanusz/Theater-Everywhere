@@ -210,9 +210,13 @@ let ancestorsList: HTMLElement[] = [];
 let isInitialized = false;
 let isTransitioning = false;
 let toolbarTimer: ReturnType<typeof setTimeout> | null = null;
+let toolbarKeyboardInteractionActive = false;
 let currentToggleFullscreen: (() => void) | null = null;
 let onVolumeAdjustedCallback: (() => void) | null = null;
 let configuredAccentColor: AccentColorPreset = DEFAULT_ACCENT_COLOR;
+
+const TOOLBAR_AUTO_HIDE_DELAY_MS = 2500;
+const CURSOR_HIDDEN_CLASS = 'theater-everywhere-cursor-hidden';
 
 const THEATER_ELEMENT_INLINE_STYLES: Record<string, string> = {
   position: 'fixed',
@@ -315,19 +319,58 @@ function matchesShortcut(e: KeyboardEvent, shortcutStr: string): boolean {
   return true;
 }
 
-// Show the floating quick actions toolbar based on mouse activity.
-function showToolbar(): void {
+function scheduleToolbarHide(): void {
+  if (toolbarTimer) clearTimeout(toolbarTimer);
+
+  toolbarTimer = setTimeout(() => {
+    toolbarTimer = null;
+    hideToolbar();
+  }, TOOLBAR_AUTO_HIDE_DELAY_MS);
+}
+
+function shouldKeepToolbarVisible(controls: HTMLElement): boolean {
+  const isScrubberDragging = controls.querySelector('.theater-scrubber-container.dragging') !== null;
+  const isCcMenuOpen = controls.querySelector('.theater-cc-menu.visible') !== null;
+  const hasKeyboardFocus = toolbarKeyboardInteractionActive && controls.querySelector(':focus-visible') !== null;
+
+  return controls.matches(':hover') || isScrubberDragging || isCcMenuOpen || hasKeyboardFocus || helpOverlayElement !== null;
+}
+
+function hideToolbar(): void {
+  const controls = document.querySelector('.theater-controls-wrapper') as HTMLElement | null;
+  if (!controls || !theaterElement) return;
+
+  if (shouldKeepToolbarVisible(controls)) {
+    scheduleToolbarHide();
+    return;
+  }
+
+  controls.classList.remove('visible');
+  if (theaterElement.tagName === 'VIDEO') {
+    theaterElement.classList.remove('controls-visible');
+  }
+  document.querySelector('.theater-button-tooltip')?.classList.remove('visible');
+  document.documentElement.classList.add(CURSOR_HIDDEN_CLASS);
+}
+
+// Show the floating quick actions toolbar based on pointer or keyboard activity.
+function showToolbar(event?: Event): void {
   const controls = document.querySelector('.theater-controls-wrapper') as HTMLElement | null;
   if (!controls) return;
+
+  if (event?.type === 'pointermove' || event?.type === 'pointerdown') {
+    toolbarKeyboardInteractionActive = false;
+  } else if (event?.type === 'focusin') {
+    toolbarKeyboardInteractionActive = event.target instanceof Element && event.target.matches(':focus-visible');
+  }
   
   controls.classList.add('visible');
   if (theaterElement && theaterElement.tagName === 'VIDEO') {
     theaterElement.classList.add('controls-visible');
   }
-  document.body.style.cursor = 'default';
-  
-  if (toolbarTimer) clearTimeout(toolbarTimer);
-  toolbarTimer = null;
+  document.documentElement.classList.remove(CURSOR_HIDDEN_CLASS);
+
+  scheduleToolbarHide();
 }
 
 // Prevent custom player containers from double-toggling play/pause and handle clicks/pointers
@@ -362,7 +405,6 @@ function preventDoubleToggle(e: Event): void {
 
 interface Listeners {
   keydown: ((event: KeyboardEvent) => void) | null;
-  cwsCaptureCommand: ((event: Event) => void) | null;
   mousemove: ((event: MouseEvent) => void) | null;
   play: ((event: Event) => void) | null;
   pause: ((event: Event) => void) | null;
@@ -373,7 +415,6 @@ interface Listeners {
 // Event listener references for clean removal
 const listeners: Listeners = {
   keydown: null,
-  cwsCaptureCommand: null,
   mousemove: null,
   play: null,
   pause: null,
@@ -613,16 +654,6 @@ function handleVideoKey(e: KeyboardEvent, video: HTMLVideoElement) {
 function initialize(): void {
   if (isInitialized) return;
 
-  listeners.cwsCaptureCommand = (event: Event) => {
-    const command = event as CustomEvent<{ action?: string }>;
-    if (command.detail?.action === 'enter-theater' && !theaterElement) {
-      toggleTheaterMode();
-    } else if (command.detail?.action === 'show-help' && theaterElement && !helpOverlayElement) {
-      showHelpOverlay();
-    }
-  };
-  window.addEventListener('theater-everywhere-cws-capture-command', listeners.cwsCaptureCommand, true);
-
   // 1. Keyboard Listener (T and Escape)
   listeners.keydown = (event: KeyboardEvent) => {
     // Ignore key presses in inputs/textareas/editable elements (including inside Shadow DOM)
@@ -801,7 +832,9 @@ function initialize(): void {
           altKey: data.altKey,
           shiftKey: data.shiftKey,
           metaKey: data.metaKey,
-          preventDefault: () => {}
+          preventDefault: () => {},
+          stopPropagation: () => {},
+          stopImmediatePropagation: () => {}
         } as KeyboardEvent, video);
       }
     }
@@ -834,7 +867,6 @@ function destroy(): void {
   }
 
   if (listeners.keydown) window.removeEventListener('keydown', listeners.keydown, true);
-  if (listeners.cwsCaptureCommand) window.removeEventListener('theater-everywhere-cws-capture-command', listeners.cwsCaptureCommand, true);
   if (listeners.mousemove) document.removeEventListener('mousemove', listeners.mousemove);
   if (listeners.play) document.removeEventListener('play', listeners.play, true);
   if (listeners.pause) document.removeEventListener('pause', listeners.pause, true);
@@ -1018,6 +1050,8 @@ let helpOverlayElement: HTMLElement | null = null;
 function showHelpOverlay(): void {
   if (helpOverlayElement) return;
 
+  showToolbar();
+
   const shortcuts = configuredShortcuts || defaultShortcuts;
 
   const overlay = document.createElement('div');
@@ -1138,6 +1172,7 @@ function hideHelpOverlay(): void {
   if (!helpOverlayElement) return;
   helpOverlayElement.remove();
   helpOverlayElement = null;
+  scheduleToolbarHide();
 }
 
 // Smart video selection algorithm (viewport-aware and priority ranking)
@@ -1970,6 +2005,7 @@ function createCustomControls(video: HTMLVideoElement): void {
 
   const onFullscreenChange = () => {
     setIcon(fullscreenBtn, document.fullscreenElement ? exitFullscreenIcon : enterFullscreenIcon);
+    showToolbar();
     if (wasPlayingBeforeFullscreen && video.paused) {
       setTimeout(() => {
         if (video.paused) {
@@ -2557,8 +2593,10 @@ function createCustomControls(video: HTMLVideoElement): void {
     loadingIndicator.remove();
   };
 
-  // Setup mousemove listeners
-  document.addEventListener('mousemove', showToolbar, { passive: true });
+  // Reveal controls for mouse, touch, pen, and keyboard users.
+  document.addEventListener('pointermove', showToolbar, { passive: true });
+  document.addEventListener('pointerdown', showToolbar, { passive: true });
+  wrapper.addEventListener('focusin', showToolbar);
   showToolbar();
 }
 
@@ -2577,9 +2615,17 @@ function destroyCustomControls(): void {
     tooltipState.element = null;
   }
   
-  document.removeEventListener('mousemove', showToolbar);
-  if (toolbarTimer) clearTimeout(toolbarTimer);
-  document.body.style.cursor = 'default';
+  document.removeEventListener('pointermove', showToolbar);
+  document.removeEventListener('pointerdown', showToolbar);
+  if (toolbarTimer) {
+    clearTimeout(toolbarTimer);
+    toolbarTimer = null;
+  }
+  toolbarKeyboardInteractionActive = false;
+  document.documentElement.classList.remove(CURSOR_HIDDEN_CLASS);
+  document
+    .querySelectorAll('.theater-everywhere-seek-overlay, .theater-everywhere-volume-overlay')
+    .forEach(overlay => overlay.remove());
   currentToggleFullscreen = null;
 }
 

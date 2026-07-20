@@ -680,15 +680,16 @@ async function captureKeyboardShortcutSource(
         '})()',
       ].join(''), 30_000);
 
+      await assertLegacyCaptureEventIsIgnored(cdp, sessionId);
       await cdp.call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 640, y: 400 }, sessionId);
-      await dispatchCaptureCommand(cdp, sessionId, 'enter-theater');
+      await dispatchCaptureShortcut(cdp, sessionId, 'T');
       if (!(await waitForExpressionResult(cdp, sessionId, '!!document.querySelector(".theater-everywhere-video-active")', 2_000))) {
         await injectContentScriptFallback(cdp, sessionId, locale, extensionPath);
-        await dispatchCaptureCommand(cdp, sessionId, 'enter-theater');
+        await dispatchCaptureShortcut(cdp, sessionId, 'T');
       }
       await waitForExpression(cdp, sessionId, '!!document.querySelector(".theater-everywhere-video-active")', 20_000);
       await delay(350);
-      await dispatchCaptureCommand(cdp, sessionId, 'show-help');
+      await dispatchCaptureShortcut(cdp, sessionId, 'H');
       await waitForExpression(cdp, sessionId, '!!document.querySelector(".theater-help-overlay")', 10_000);
       await waitForExpression(
         cdp,
@@ -901,14 +902,33 @@ async function waitForBrowserWebSocketUrl(
   return version.webSocketDebuggerUrl;
 }
 
-async function dispatchCaptureCommand(cdp: CdpClient, sessionId: string, action: 'enter-theater' | 'show-help'): Promise<void> {
-  await evaluate(cdp, sessionId, [
+async function dispatchCaptureShortcut(cdp: CdpClient, sessionId: string, key: 'T' | 'H'): Promise<void> {
+  const event = {
+    key: key.toLowerCase(),
+    code: `Key${key}`,
+    windowsVirtualKeyCode: key.charCodeAt(0),
+    nativeVirtualKeyCode: key.charCodeAt(0),
+  };
+
+  await cdp.call('Input.dispatchKeyEvent', { type: 'keyDown', ...event }, sessionId);
+  await cdp.call('Input.dispatchKeyEvent', { type: 'keyUp', ...event }, sessionId);
+}
+
+async function assertLegacyCaptureEventIsIgnored(cdp: CdpClient, sessionId: string): Promise<void> {
+  const enteredTheater = await evaluate(cdp, sessionId, [
+    '(() => {',
     'window.dispatchEvent(new CustomEvent("theater-everywhere-cws-capture-command", {',
-    `detail: { action: ${JSON.stringify(action)} },`,
+    'detail: { action: "enter-theater" },',
     'bubbles: true,',
     'cancelable: true',
     '}));',
+    'return !!document.querySelector(".theater-everywhere-video-active");',
+    '})()',
   ].join(''));
+
+  if (enteredTheater) {
+    throw new Error('Legacy page-triggerable CWS capture event unexpectedly entered theater mode.');
+  }
 }
 
 async function injectContentScriptFallback(

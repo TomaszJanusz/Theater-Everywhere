@@ -45,6 +45,11 @@
   padding: 0 !important;
 }
 
+.theater-everywhere-cursor-hidden,
+.theater-everywhere-cursor-hidden * {
+  cursor: none !important;
+}
+
 /* Custom player controls container card */
 .theater-controls-wrapper {
   position: fixed !important;
